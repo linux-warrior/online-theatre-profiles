@@ -1,0 +1,143 @@
+name: online-theatre-user-profiles
+
+services:
+  nginx:
+    build:
+      context: ./compose/nginx
+      target: dev
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    ports:
+      - '8000:8080'
+    networks:
+      - movies-network
+    volumes:
+      - nginx-logs-data:/opt/bitnami/nginx/logs/
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./compose/nginx/conf
+          target: /opt/bitnami/nginx/conf/
+
+  auth-service:
+    build:
+      context: ./compose/auth
+    depends_on:
+      auth-postgresql:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+      auth-service-init:
+        condition: service_completed_successfully
+    networks:
+      - movies-network
+    environment:
+      - AUTH_SECRET_KEY=$AUTH_SECRET_KEY
+      - AUTH_ACCESS_JWT_LIFETIME=${AUTH_ACCESS_JWT_LIFETIME:-3600}
+      - AUTH_REFRESH_JWT_LIFETIME=${AUTH_REFRESH_JWT_LIFETIME:-86400}
+      - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-True}
+      - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
+      - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
+      - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - POSTGRESQL_HOST=auth-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+      - RATELIMITER_TIMES=$RATELIMITER_TIMES
+      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
+      - REDIS_HOST=auth-redis
+      - REDIS_PORT=6379
+    command: [ '/opt/app/commands/fastapi.sh', 'dev' ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/auth/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    develop:
+      watch:
+        - action: sync
+          path: ./compose/auth/auth
+          target: /opt/app/auth
+        - action: sync
+          path: ./compose/auth/scripts
+          target: /opt/app/scripts
+        - action: rebuild
+          path: ./compose/auth/commands
+        - action: rebuild
+          path: ./compose/auth/pyproject.toml
+        - action: rebuild
+          path: ./compose/auth/poetry.lock
+
+  auth-service-init:
+    build:
+      context: ./compose/auth
+    depends_on:
+      auth-postgresql:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - AUTH_SECRET_KEY=$AUTH_SECRET_KEY
+      - AUTH_ACCESS_JWT_LIFETIME=${AUTH_ACCESS_JWT_LIFETIME:-3600}
+      - AUTH_REFRESH_JWT_LIFETIME=${AUTH_REFRESH_JWT_LIFETIME:-86400}
+      - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-True}
+      - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
+      - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - POSTGRESQL_HOST=auth-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+      - REDIS_HOST=auth-redis
+      - REDIS_PORT=6379
+    command: [ '/opt/app/commands/init.sh' ]
+
+  auth-postgresql:
+    image: 'bitnami/postgresql:17.2.0-debian-12-r5'
+    networks:
+      - movies-network
+    volumes:
+      - 'auth-postgresql-data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready --username=$AUTH_POSTGRESQL_USERNAME --dbname=$AUTH_POSTGRESQL_DATABASE' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  auth-redis:
+    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    networks:
+      - movies-network
+    volumes:
+      - 'auth-redis-data:/bitnami/redis/data'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: [ '/opt/bitnami/scripts/redis/run.sh', '--maxmemory', '${AUTH_REDIS_MAXMEMORY:-200mb}' ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD', '/bin/bash', '-c', '[[ $(redis-cli ping) == "PONG" ]]' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  movies-network:
+
+volumes:
+  nginx-logs-data:
+  auth-postgresql-data:
+  auth-redis-data:
