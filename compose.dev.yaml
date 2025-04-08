@@ -6,6 +6,8 @@ services:
       context: ./compose/nginx
       target: dev
     depends_on:
+      movies:
+        condition: service_healthy
       auth-service:
         condition: service_healthy
     ports:
@@ -20,6 +22,83 @@ services:
           path: ./compose/nginx/conf
           target: /opt/bitnami/nginx/conf/
 
+  movies:
+    build:
+      context: ./src
+    depends_on:
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - PROJECT_NAME=$PROJECT_NAME
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-movies}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+    command: [ '/opt/app/commands/fastapi.sh', 'dev' ]
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    develop:
+      watch:
+        - action: sync
+          path: ./src/movies
+          target: /opt/app/movies
+        - action: rebuild
+          path: ./src/commands
+        - action: rebuild
+          path: ./src/pyproject.toml
+        - action: rebuild
+          path: ./src/poetry.lock
+
+  redis:
+    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    networks:
+      - movies-network
+    volumes:
+      - 'redis-data:/bitnami/redis/data'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: [ '/opt/bitnami/scripts/redis/run.sh', '--maxmemory', '${REDIS_MAXMEMORY:-200mb}' ]
+    healthcheck:
+      test: [ 'CMD', '/bin/bash', '-c', '[[ $(redis-cli ping) == "PONG" ]]' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  elasticsearch:
+    image: 'bitnami/elasticsearch:8.16.1-debian-12-r1'
+    networks:
+      - movies-network
+    volumes:
+      - 'elasticsearch-data:/bitnami/elasticsearch/data'
+    environment:
+      - ELASTICSEARCH_HEAP_SIZE=${ELASTICSEARCH_HEAP_SIZE:-200m}
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD-SHELL', '/opt/bitnami/scripts/elasticsearch/healthcheck.sh' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   auth-service:
     build:
       context: ./compose/auth
@@ -30,6 +109,8 @@ services:
         condition: service_healthy
       auth-service-init:
         condition: service_completed_successfully
+      jaeger:
+        condition: service_healthy
     networks:
       - movies-network
     environment:
@@ -39,15 +120,19 @@ services:
       - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-True}
       - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
       - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${AUTH_OTEL_SERVICE_NAME:-auth}
       - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
       - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - RATELIMITER_TIMES=$RATELIMITER_TIMES
+      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
       - POSTGRESQL_HOST=auth-postgresql
       - POSTGRESQL_PORT=5432
       - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
       - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
       - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
-      - RATELIMITER_TIMES=$RATELIMITER_TIMES
-      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
       - REDIS_HOST=auth-redis
       - REDIS_PORT=6379
     command: [ '/opt/app/commands/fastapi.sh', 'dev' ]
@@ -81,6 +166,8 @@ services:
         condition: service_healthy
       auth-redis:
         condition: service_healthy
+      jaeger:
+        condition: service_healthy
     networks:
       - movies-network
     environment:
@@ -88,8 +175,16 @@ services:
       - AUTH_ACCESS_JWT_LIFETIME=${AUTH_ACCESS_JWT_LIFETIME:-3600}
       - AUTH_REFRESH_JWT_LIFETIME=${AUTH_REFRESH_JWT_LIFETIME:-86400}
       - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-True}
+      - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
+      - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${AUTH_OTEL_SERVICE_NAME:-auth}
       - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
       - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - RATELIMITER_TIMES=$RATELIMITER_TIMES
+      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
       - POSTGRESQL_HOST=auth-postgresql
       - POSTGRESQL_PORT=5432
       - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
@@ -134,10 +229,25 @@ services:
       retries: 5
       start_period: 10s
 
+  jaeger:
+    image: 'jaegertracing/jaeger:2.2.0'
+    ports:
+      - '16686:16686'
+    networks:
+      - movies-network
+    healthcheck:
+      test: [ 'CMD-SHELL', 'wget -q --spider http://localhost:16686' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
 networks:
   movies-network:
 
 volumes:
+  redis-data:
+  elasticsearch-data:
   nginx-logs-data:
   auth-postgresql-data:
   auth-redis-data:

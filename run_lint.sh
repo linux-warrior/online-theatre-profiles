@@ -36,6 +36,7 @@ run_command() {
     )
 
     local services=(
+        movies
         auth
     )
 

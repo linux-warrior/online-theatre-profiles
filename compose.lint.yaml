@@ -1,6 +1,28 @@
 name: online-theatre-user-profiles-lint
 
 services:
+  movies:
+    build:
+      context: ./src
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'movies-mypy-cache:/opt/app/.mypy_cache'
+      - './src/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./src/movies
+          target: /opt/app/movies
+        - action: rebuild
+          path: ./src/commands
+        - action: rebuild
+          path: ./src/pyproject.toml
+        - action: rebuild
+          path: ./src/poetry.lock
+
   auth:
     build:
       context: ./compose/auth
@@ -30,4 +52,5 @@ networks:
   movies-network:
 
 volumes:
+  movies-mypy-cache:
   auth-mypy-cache:
