@@ -99,6 +99,62 @@ services:
       retries: 5
       start_period: 60s
 
+  etl:
+    build:
+      context: ./compose/etl
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - movies-network
+    volumes:
+      - 'etl-data:/opt/app/data'
+      - 'etl-logs:/opt/app/logs'
+    environment:
+      - POSTGRESQL_HOST=postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$POSTGRESQL_PASSWORD
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./compose/etl/etl
+          target: /opt/app/etl
+        - action: sync+restart
+          path: ./compose/etl/schema
+          target: /opt/app/schema
+        - action: rebuild
+          path: ./compose/etl/commands
+        - action: rebuild
+          path: ./compose/etl/pyproject.toml
+        - action: rebuild
+          path: ./compose/etl/poetry.lock
+
+  postgresql:
+    image: 'bitnami/postgresql:17.2.0-debian-12-r5'
+    networks:
+      - movies-network
+    volumes:
+      - 'postgresql-data:/bitnami/postgresql'
+      - './compose/postgresql/database_dump.sql:/docker-entrypoint-initdb.d/init.sql'
+    environment:
+      - POSTGRESQL_DATABASE=$POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$POSTGRESQL_PASSWORD
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready --username=$POSTGRESQL_USERNAME --dbname=$POSTGRESQL_DATABASE' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   auth-service:
     build:
       context: ./compose/auth
@@ -246,8 +302,11 @@ networks:
   movies-network:
 
 volumes:
+  nginx-logs-data:
   redis-data:
   elasticsearch-data:
-  nginx-logs-data:
+  etl-data:
+  etl-logs:
+  postgresql-data:
   auth-postgresql-data:
   auth-redis-data:

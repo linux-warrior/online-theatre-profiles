@@ -48,9 +48,35 @@ services:
         - action: rebuild
           path: ./compose/auth/poetry.lock
 
+  etl:
+    build:
+      context: ./compose/etl
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'etl-mypy-cache:/opt/app/.mypy_cache'
+      - './compose/etl/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./compose/etl/etl
+          target: /opt/app/etl
+        - action: sync
+          path: ./compose/etl/schema
+          target: /opt/app/schema
+        - action: rebuild
+          path: ./compose/etl/commands
+        - action: rebuild
+          path: ./compose/etl/pyproject.toml
+        - action: rebuild
+          path: ./compose/etl/poetry.lock
+
 networks:
   movies-network:
 
 volumes:
   movies-mypy-cache:
   auth-mypy-cache:
+  etl-mypy-cache:
