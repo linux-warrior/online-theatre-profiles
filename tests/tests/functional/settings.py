@@ -33,11 +33,11 @@ class ElasticsearchSettings(BaseSettings):
 class AuthPostgresqlSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='auth_postgresql_')
 
-    database: str = 'auth'
-    username: str = 'auth'
-    password: str
-    host: str = 'localhost'
-    port: int = 5432
+    host: str | None = 'localhost'
+    port: int | None = 5432
+    database: str
+    username: str | None = None
+    password: str | None = None
 
 
 class AuthRedisConfig(BaseSettings):
@@ -61,16 +61,6 @@ class RateLimiterConfig(BaseSettings):
     seconds: int = 60
 
 
-class MongoSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix='mongo_')
-
-    db: str = ''
-
-    host: str = 'localhost'
-    port: int = 27017
-
-
-
 class Settings(BaseSettings):
     redis: RedisSettings = RedisSettings()
     elasticsearch: ElasticsearchSettings = ElasticsearchSettings()
@@ -78,12 +68,9 @@ class Settings(BaseSettings):
     auth_redis: AuthRedisConfig = AuthRedisConfig()
     superuser: SuperUserSettings = SuperUserSettings()  # type: ignore[call-arg]
     ratelimiter: RateLimiterConfig = RateLimiterConfig()
-    mongo: MongoSettings = MongoSettings()
 
     movies_url: str = 'http://localhost:8000'
     auth_service_url: str = 'http://localhost:8000'
-    ugc_url: str = 'http://localhost:8000/ugc-mongo'
-    notification_service_url: str = 'http://localhost:8000/notification'
 
     @property
     def movies_api_url(self) -> str:
@@ -100,18 +87,6 @@ class Settings(BaseSettings):
     @property
     def auth_api_v1_url(self) -> str:
         return urljoin(self.auth_api_url, 'v1/')
-
-    @property
-    def ugc_api_v1_url(self) -> str:
-        return urljoin(self.ugc_url, '/v1/')
-
-    @property
-    def url_notification_api_events(self) -> str:
-        return urljoin(self.notification_service_url, '/notification/api/v1/events')
-
-    @property
-    def url_notification_api_messages(self) -> str:
-        return urljoin(self.notification_service_url, '/notification/api/v1/messages')
 
 
 settings = Settings()

@@ -22,7 +22,7 @@ class RedisConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='redis_')
 
     host: str = 'localhost'
-    port: int = 5432
+    port: int = 6379
     cache_expire_in_seconds: int = 60 * 5
 
 
