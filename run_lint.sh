@@ -37,6 +37,7 @@ run_command() {
 
     local services=(
         movies
+        tests
         auth
         etl
     )

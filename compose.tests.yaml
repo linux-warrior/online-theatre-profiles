@@ -1,0 +1,238 @@
+name: online-theatre-user-profiles-tests
+
+services:
+  tests:
+    build:
+      context: ./tests
+    depends_on:
+      movies:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - MOVIES_URL=http://movies:8000
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - AUTH_POSTGRESQL_HOST=auth-postgresql
+      - AUTH_POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+      - AUTH_REDIS_HOST=auth-redis
+      - AUTH_REDIS_PORT=6379
+      - AUTH_SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
+      - AUTH_SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+      - RATELIMITER_TIMES=$RATELIMITER_TIMES
+      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
+    develop:
+      watch:
+        - action: sync
+          path: ./tests/tests
+          target: /opt/app/tests
+        - action: rebuild
+          path: ./tests/commands
+        - action: rebuild
+          path: ./tests/pyproject.toml
+        - action: rebuild
+          path: ./tests/poetry.lock
+
+  movies:
+    build:
+      context: ./src
+      args:
+        - PYTHON_VERSION
+    depends_on:
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - PROJECT_NAME=$PROJECT_NAME
+      - FASTAPI_WORKERS=${FASTAPI_WORKERS:-}
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_CACHE_EXPIRE_IN_SECONDS=3600
+      - ELASTIC_HOST=elasticsearch
+      - ELASTIC_PORT=9200
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s http://localhost:8000/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src/movies
+          target: /opt/app/movies
+        - action: rebuild
+          path: ./src/commands
+        - action: rebuild
+          path: ./src/pyproject.toml
+        - action: rebuild
+          path: ./src/poetry.lock
+
+  redis:
+    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    networks:
+      - movies-network
+    volumes:
+      - 'redis-data:/bitnami/redis/data'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: [ '/opt/bitnami/scripts/redis/run.sh', '--maxmemory', '${REDIS_MAXMEMORY:-200mb}' ]
+    healthcheck:
+      test: [ 'CMD', '/bin/bash', '-c', '[[ $(redis-cli ping) == "PONG" ]]' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  elasticsearch:
+    image: 'bitnami/elasticsearch:8.16.1-debian-12-r1'
+    networks:
+      - movies-network
+    volumes:
+      - 'elasticsearch-data:/bitnami/elasticsearch/data'
+    environment:
+      - ELASTICSEARCH_HEAP_SIZE=${ELASTICSEARCH_HEAP_SIZE:-200m}
+    healthcheck:
+      test: [ 'CMD-SHELL', '/opt/bitnami/scripts/elasticsearch/healthcheck.sh' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  auth-service:
+    build:
+      context: ./compose/auth
+      args:
+        - PYTHON_VERSION
+    depends_on:
+      auth-postgresql:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+      auth-service-init:
+        condition: service_completed_successfully
+    networks:
+      - movies-network
+    environment:
+      - FASTAPI_WORKERS=${AUTH_FASTAPI_WORKERS:-}
+      - AUTH_TEST_MODE=True
+      - AUTH_SECRET_KEY=$AUTH_SECRET_KEY
+      - AUTH_ACCESS_JWT_LIFETIME=${AUTH_ACCESS_JWT_LIFETIME:-3600}
+      - AUTH_REFRESH_JWT_LIFETIME=${AUTH_REFRESH_JWT_LIFETIME:-86400}
+      - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-False}
+      - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
+      - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - RATELIMITER_TIMES=$RATELIMITER_TIMES
+      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
+      - POSTGRESQL_HOST=auth-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+      - REDIS_HOST=auth-redis
+      - REDIS_PORT=6379
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s http://localhost:8000/auth/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./compose/auth/auth
+          target: /opt/app/auth
+        - action: sync+restart
+          path: ./compose/auth/scripts
+          target: /opt/app/scripts
+        - action: rebuild
+          path: ./compose/auth/commands
+        - action: rebuild
+          path: ./compose/auth/pyproject.toml
+        - action: rebuild
+          path: ./compose/auth/poetry.lock
+
+  auth-service-init:
+    build:
+      context: ./compose/auth
+      args:
+        - PYTHON_VERSION
+    depends_on:
+      auth-postgresql:
+        condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - AUTH_TEST_MODE=True
+      - AUTH_SECRET_KEY=$AUTH_SECRET_KEY
+      - AUTH_ACCESS_JWT_LIFETIME=${AUTH_ACCESS_JWT_LIFETIME:-3600}
+      - AUTH_REFRESH_JWT_LIFETIME=${AUTH_REFRESH_JWT_LIFETIME:-86400}
+      - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-False}
+      - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
+      - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
+      - RATELIMITER_TIMES=$RATELIMITER_TIMES
+      - RATELIMITER_SECONDS=$RATELIMITER_SECONDS
+      - POSTGRESQL_HOST=auth-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+      - REDIS_HOST=auth-redis
+      - REDIS_PORT=6379
+    command: [ '/opt/app/commands/init.sh' ]
+
+  auth-postgresql:
+    image: 'bitnami/postgresql:17.2.0-debian-12-r5'
+    networks:
+      - movies-network
+    volumes:
+      - 'auth-postgresql-data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_DATABASE=$AUTH_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$AUTH_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$AUTH_POSTGRESQL_PASSWORD
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready --username=$AUTH_POSTGRESQL_USERNAME --dbname=$AUTH_POSTGRESQL_DATABASE' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  auth-redis:
+    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    networks:
+      - movies-network
+    volumes:
+      - 'auth-redis-data:/bitnami/redis/data'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: [ '/opt/bitnami/scripts/redis/run.sh', '--maxmemory', '${AUTH_REDIS_MAXMEMORY:-200mb}' ]
+    healthcheck:
+      test: [ 'CMD', '/bin/bash', '-c', '[[ $(redis-cli ping) == "PONG" ]]' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  movies-network:
+
+volumes:
+  redis-data:
+  elasticsearch-data:
+  auth-postgresql-data:
+  auth-redis-data:

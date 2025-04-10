@@ -1,0 +1,44 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+aiohttp = { version = "^3.11.11", extras = ["speedups"] }
+asyncpg = "0.30.0"
+elasticsearch = { version = "^8.17.0", extras = ["async"] }
+pydantic = "^2.10.4"
+pydantic-settings = "^2.7.0"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.0"
+redis = { version = "^5.2.1", extras = ["hiredis"] }
+SQLAlchemy = { version = "2.0.37", extras = ["asyncio"] }
+motor = "3.7.0"
+python-dateutil = "2.9.0"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+ciqar = "1.0.0"
+mypy = "1.15.0"
+ruff = "0.9.9"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    'ignore:enable_cleanup_closed ignored:DeprecationWarning',
+]
+asyncio_default_fixture_loop_scope = "session"

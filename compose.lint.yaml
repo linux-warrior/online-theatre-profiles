@@ -23,6 +23,28 @@ services:
         - action: rebuild
           path: ./src/poetry.lock
 
+  tests:
+    build:
+      context: ./tests
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'tests-mypy-cache:/opt/app/.mypy_cache'
+      - './tests/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./tests/tests
+          target: /opt/app/tests
+        - action: rebuild
+          path: ./tests/commands
+        - action: rebuild
+          path: ./tests/pyproject.toml
+        - action: rebuild
+          path: ./tests/poetry.lock
+
   auth:
     build:
       context: ./compose/auth
@@ -78,5 +100,6 @@ networks:
 
 volumes:
   movies-mypy-cache:
+  tests-mypy-cache:
   auth-mypy-cache:
   etl-mypy-cache:
