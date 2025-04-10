@@ -68,7 +68,8 @@ services:
           path: ./src/poetry.lock
 
   redis:
-    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    build:
+      context: ./compose/redis
     networks:
       - movies-network
     volumes:
@@ -84,7 +85,8 @@ services:
       start_period: 10s
 
   elasticsearch:
-    image: 'bitnami/elasticsearch:8.16.1-debian-12-r1'
+    build:
+      context: ./compose/elasticsearch
     networks:
       - movies-network
     volumes:
@@ -137,12 +139,13 @@ services:
           path: ./compose/etl/poetry.lock
 
   postgresql:
-    image: 'bitnami/postgresql:17.2.0-debian-12-r5'
+    build:
+      context: ./compose/postgresql
     networks:
       - movies-network
     volumes:
       - 'postgresql-data:/bitnami/postgresql'
-      - './compose/postgresql/database_dump.sql:/docker-entrypoint-initdb.d/init.sql'
+      - './compose/postgresql/db/database_dump.sql:/docker-entrypoint-initdb.d/init.sql'
     environment:
       - POSTGRESQL_DATABASE=$POSTGRESQL_DATABASE
       - POSTGRESQL_USERNAME=$POSTGRESQL_USERNAME
@@ -251,7 +254,8 @@ services:
     command: [ '/opt/app/commands/init.sh' ]
 
   auth-postgresql:
-    image: 'bitnami/postgresql:17.2.0-debian-12-r5'
+    build:
+      context: ./compose/postgresql
     networks:
       - movies-network
     volumes:
@@ -269,7 +273,8 @@ services:
       start_period: 30s
 
   auth-redis:
-    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    build:
+      context: ./compose/redis
     networks:
       - movies-network
     volumes:
@@ -286,7 +291,8 @@ services:
       start_period: 10s
 
   jaeger:
-    image: 'jaegertracing/jaeger:2.2.0'
+    build:
+      context: ./compose/jaeger
     ports:
       - '16686:16686'
     networks:

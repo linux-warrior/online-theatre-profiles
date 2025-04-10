@@ -3,11 +3,11 @@
 set -e
 
 run_server() {
-    docker compose up "$@"
+    COMPOSE_BAKE=true docker compose up "$@"
 }
 
 run_server_dev() {
-    docker compose -f compose.dev.yaml up --watch "$@"
+    COMPOSE_BAKE=true docker compose -f compose.dev.yaml up --watch "$@"
 }
 
 main() {

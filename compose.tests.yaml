@@ -81,7 +81,8 @@ services:
           path: ./src/poetry.lock
 
   redis:
-    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    build:
+      context: ./compose/redis
     networks:
       - movies-network
     volumes:
@@ -97,7 +98,8 @@ services:
       start_period: 10s
 
   elasticsearch:
-    image: 'bitnami/elasticsearch:8.16.1-debian-12-r1'
+    build:
+      context: ./compose/elasticsearch
     networks:
       - movies-network
     volumes:
@@ -196,7 +198,8 @@ services:
     command: [ '/opt/app/commands/init.sh' ]
 
   auth-postgresql:
-    image: 'bitnami/postgresql:17.2.0-debian-12-r5'
+    build:
+      context: ./compose/postgresql
     networks:
       - movies-network
     volumes:
@@ -213,7 +216,8 @@ services:
       start_period: 30s
 
   auth-redis:
-    image: 'bitnami/redis:7.4.2-debian-12-r0'
+    build:
+      context: ./compose/redis
     networks:
       - movies-network
     volumes:
