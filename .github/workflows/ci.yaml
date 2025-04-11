@@ -108,6 +108,6 @@ jobs:
         uses: appleboy/telegram-action@master
         with:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          to: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
           format: markdown
           message_file: ./.github/.message_file.md
