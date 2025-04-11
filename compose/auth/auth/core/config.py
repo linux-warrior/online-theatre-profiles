@@ -70,16 +70,6 @@ class RateLimiterConfig(BaseSettings):
     seconds: int = 60
 
 
-class SentryConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix='sentry_')
-
-    dsn: str = ''
-    enable_sdk: bool = False
-    enable_tracing: bool = False
-    traces_sample_rate: float = 1.0
-    profiles_sample_rate: float = 1.0
-
-
 # noinspection PyArgumentList
 class Settings(BaseSettings):
     auth: AuthConfig = AuthConfig()
@@ -89,7 +79,6 @@ class Settings(BaseSettings):
     cache: CacheConfig = CacheConfig()
     ratelimiter: RateLimiterConfig = RateLimiterConfig()
     otel: OpenTelemetryConfig = OpenTelemetryConfig()
-    sentry: SentryConfig = SentryConfig()
 
     @property
     def test_mode(self) -> bool:
