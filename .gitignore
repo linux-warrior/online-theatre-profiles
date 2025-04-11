@@ -1,1 +1,13 @@
 /.idea
+
+*.log
+*.pyc
+.env
+.lint
+!.gitkeep
+
+compose.override.yaml
+compose.*.override.yaml
+
+/compose/etl/data/*
+!/compose/etl/data/.gitkeep

@@ -1,0 +1,105 @@
+name: online-theatre-user-profiles-lint
+
+services:
+  movies:
+    build:
+      context: ./src
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'movies-mypy-cache:/opt/app/.mypy_cache'
+      - './src/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./src/movies
+          target: /opt/app/movies
+        - action: rebuild
+          path: ./src/commands
+        - action: rebuild
+          path: ./src/pyproject.toml
+        - action: rebuild
+          path: ./src/poetry.lock
+
+  tests:
+    build:
+      context: ./tests
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'tests-mypy-cache:/opt/app/.mypy_cache'
+      - './tests/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./tests/tests
+          target: /opt/app/tests
+        - action: rebuild
+          path: ./tests/commands
+        - action: rebuild
+          path: ./tests/pyproject.toml
+        - action: rebuild
+          path: ./tests/poetry.lock
+
+  auth:
+    build:
+      context: ./compose/auth
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'auth-mypy-cache:/opt/app/.mypy_cache'
+      - './compose/auth/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./compose/auth/auth
+          target: /opt/app/auth
+        - action: sync
+          path: ./compose/auth/scripts
+          target: /opt/app/scripts
+        - action: rebuild
+          path: ./compose/auth/commands
+        - action: rebuild
+          path: ./compose/auth/pyproject.toml
+        - action: rebuild
+          path: ./compose/auth/poetry.lock
+
+  etl:
+    build:
+      context: ./compose/etl
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'etl-mypy-cache:/opt/app/.mypy_cache'
+      - './compose/etl/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./compose/etl/etl
+          target: /opt/app/etl
+        - action: sync
+          path: ./compose/etl/schema
+          target: /opt/app/schema
+        - action: rebuild
+          path: ./compose/etl/commands
+        - action: rebuild
+          path: ./compose/etl/pyproject.toml
+        - action: rebuild
+          path: ./compose/etl/poetry.lock
+
+networks:
+  movies-network:
+
+volumes:
+  movies-mypy-cache:
+  tests-mypy-cache:
+  auth-mypy-cache:
+  etl-mypy-cache:
