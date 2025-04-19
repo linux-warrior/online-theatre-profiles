@@ -12,13 +12,12 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     UniqueConstraint,
-    Index,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
-    relationship
+    relationship,
 )
 
 auth_metadata_obj = MetaData(
@@ -59,22 +58,89 @@ class User(AuthBase):
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
 
-    roles: Mapped[list[UserRole]] = relationship(
-        "UserRole", cascade="all, delete", back_populates="user"
+    user_roles: Mapped[list[UserRole]] = relationship(
+        'UserRole',
+        back_populates='user',
+        cascade='all, delete-orphan',
     )
     login_history: Mapped[list[LoginHistory]] = relationship(
-        "LoginHistory", cascade="all, delete-orphan", back_populates="user"
+        'LoginHistory',
+        back_populates='user',
+        cascade='all, delete-orphan',
     )
     oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
         'OAuthAccount',
         back_populates='user',
         cascade='all, delete-orphan',
-        lazy='joined',
     )
 
 
 class Role(AuthBase):
     __tablename__ = 'role'
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    name: Mapped[str] = mapped_column(TEXT)
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+    modified: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.UTC),
+        onupdate=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+    user_roles: Mapped[list[UserRole]] = relationship(
+        'UserRole',
+        back_populates='role',
+        cascade='all, delete-orphan',
+    )
+
+
+class UserRole(AuthBase):
+    __tablename__ = 'user_role'
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('auth.user.id', ondelete='CASCADE'),
+        index=True,
+    )
+    role_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('auth.role.id', ondelete='CASCADE'),
+        index=True,
+    )
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            'user_id',
+            'role_id',
+        ),
+    )
+
+    user: Mapped[User] = relationship(
+        'User',
+        back_populates='user_roles',
+    )
+    role: Mapped[Role] = relationship(
+        'Role',
+        back_populates='user_roles',
+    )
+
+
+class Permission(AuthBase):
+    __tablename__ = 'permission'
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID,
@@ -93,21 +159,23 @@ class Role(AuthBase):
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
 
-    user_roles: Mapped[list[UserRole]] = relationship(
-        "UserRole", cascade="all, delete", back_populates="role"
-    )
 
-
-class UserRole(AuthBase):
-    __tablename__ = 'user_role'
+class RolePermission(AuthBase):
+    __tablename__ = 'role_permission'
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         primary_key=True,
         default=uuid.uuid4,
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('auth.user.id', ondelete='CASCADE'))
-    role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey('auth.role.id', ondelete='CASCADE'))
+    role_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('auth.role.id', ondelete='CASCADE'),
+        index=True,
+    )
+    permission_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('auth.permission.id', ondelete='CASCADE'),
+        index=True,
+    )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
@@ -115,16 +183,18 @@ class UserRole(AuthBase):
 
     __table_args__ = (
         UniqueConstraint(
-            'user_id',
             'role_id',
+            'permission_id',
         ),
     )
 
-    user: Mapped[User] = relationship(
-        "User", back_populates="roles"
-    )
     role: Mapped[Role] = relationship(
-        "Role", back_populates="user_roles"
+        'Role',
+        back_populates='role_permissions',
+    )
+    permission: Mapped[Permission] = relationship(
+        'Permission',
+        back_populates='role_permissions',
     )
 
 
@@ -141,18 +211,11 @@ class LoginHistory(AuthBase):
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
-        primary_key=True
-    )
-
-    __table_args__ = (
-        Index('ix_login_history_user_id_created', 'user_id', 'created'),
-        {
-            'postgresql_partition_by': 'RANGE (created)',
-        }
     )
 
     user: Mapped[User] = relationship(
-        "User", cascade='all, delete', back_populates="login_history"
+        'User',
+        back_populates='login_history',
     )
 
 
@@ -175,8 +238,11 @@ class OAuthAccount(AuthBase):
     account_id: Mapped[str] = mapped_column(TEXT, index=True)
     account_email: Mapped[str] = mapped_column(TEXT)
 
-    user: Mapped[User] = relationship('User', back_populates='oauth_accounts')
-
     __table_args__ = (
         UniqueConstraint('oauth_name', 'account_id'),
+    )
+
+    user: Mapped[User] = relationship(
+        'User',
+        back_populates='oauth_accounts',
     )
