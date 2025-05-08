@@ -2,7 +2,7 @@
 
 Revision ID: 86397c34b138
 Revises:
-Create Date: 2025-04-19 16:33:22.297180
+Create Date: 2025-05-08 18:05:00.877894
 
 """
 from typing import Sequence, Union
@@ -79,8 +79,16 @@ def upgrade() -> None:
             ['user_id'],
             ['auth.user.id'],
             name=op.f('fk_login_history_user_id_user'),
+            ondelete='CASCADE',
         ),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_login_history')),
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_login_history_user_id'),
+        'login_history',
+        ['user_id'],
+        unique=False,
         schema='auth',
     )
 
@@ -215,6 +223,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_auth_oauth_account_account_id'), table_name='oauth_account', schema='auth')
     op.drop_table('oauth_account', schema='auth')
 
+    op.drop_index(op.f('ix_auth_login_history_user_id'), table_name='login_history', schema='auth')
     op.drop_table('login_history', schema='auth')
 
     op.drop_index(op.f('ix_auth_user_login'), table_name='user', schema='auth')
@@ -224,4 +233,5 @@ def downgrade() -> None:
     op.drop_table('role', schema='auth')
 
     op.drop_table('permission', schema='auth')
+
     op.execute('DROP SCHEMA auth')
