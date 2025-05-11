@@ -2,7 +2,7 @@
 
 Revision ID: 86397c34b138
 Revises:
-Create Date: 2025-05-08 18:05:00.877894
+Create Date: 2025-05-11 18:17:28.462601
 
 """
 from typing import Sequence, Union
@@ -28,6 +28,7 @@ def upgrade() -> None:
         sa.Column('created', sa.DateTime(timezone=True), nullable=False),
         sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_permission')),
+        sa.UniqueConstraint('name', name=op.f('uq_permission_name')),
         sa.UniqueConstraint('code', name=op.f('uq_permission_code')),
         schema='auth',
     )
@@ -39,6 +40,7 @@ def upgrade() -> None:
         sa.Column('created', sa.DateTime(timezone=True), nullable=False),
         sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_role')),
+        sa.UniqueConstraint('name', name=op.f('uq_role_name')),
         schema='auth',
     )
 
@@ -52,20 +54,8 @@ def upgrade() -> None:
         sa.Column('created', sa.DateTime(timezone=True), nullable=False),
         sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
-        schema='auth',
-    )
-    op.create_index(
-        op.f('ix_auth_user_email'),
-        'user',
-        ['email'],
-        unique=True,
-        schema='auth',
-    )
-    op.create_index(
-        op.f('ix_auth_user_login'),
-        'user',
-        ['login'],
-        unique=True,
+        sa.UniqueConstraint('login', name=op.f('uq_user_login')),
+        sa.UniqueConstraint('email', name=op.f('uq_user_email')),
         schema='auth',
     )
 
@@ -226,8 +216,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_auth_login_history_user_id'), table_name='login_history', schema='auth')
     op.drop_table('login_history', schema='auth')
 
-    op.drop_index(op.f('ix_auth_user_login'), table_name='user', schema='auth')
-    op.drop_index(op.f('ix_auth_user_email'), table_name='user', schema='auth')
     op.drop_table('user', schema='auth')
 
     op.drop_table('role', schema='auth')

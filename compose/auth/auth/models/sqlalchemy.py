@@ -44,10 +44,24 @@ class User(AuthBase):
         primary_key=True,
         default=uuid.uuid4,
     )
-    login: Mapped[str] = mapped_column(TEXT, unique=True, index=True, nullable=True)
-    password: Mapped[str] = mapped_column(TEXT, nullable=True)
-    email: Mapped[str] = mapped_column(TEXT, unique=True, index=True, nullable=True)
-    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    login: Mapped[str] = mapped_column(
+        TEXT,
+        unique=True,
+        nullable=True,
+    )
+    password: Mapped[str] = mapped_column(
+        TEXT,
+        nullable=True,
+    )
+    email: Mapped[str] = mapped_column(
+        TEXT,
+        unique=True,
+        nullable=True,
+    )
+    is_superuser: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
@@ -83,7 +97,10 @@ class Role(AuthBase):
         primary_key=True,
         default=uuid.uuid4,
     )
-    name: Mapped[str] = mapped_column(TEXT)
+    name: Mapped[str] = mapped_column(
+        TEXT,
+        unique=True,
+    )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
@@ -96,6 +113,11 @@ class Role(AuthBase):
 
     user_roles: Mapped[list[UserRole]] = relationship(
         'UserRole',
+        back_populates='role',
+        cascade='all, delete-orphan',
+    )
+    role_permissions: Mapped[list[RolePermission]] = relationship(
+        'RolePermission',
         back_populates='role',
         cascade='all, delete-orphan',
     )
@@ -147,8 +169,14 @@ class Permission(AuthBase):
         primary_key=True,
         default=uuid.uuid4,
     )
-    name: Mapped[str] = mapped_column(TEXT)
-    code: Mapped[str] = mapped_column(TEXT, unique=True)
+    name: Mapped[str] = mapped_column(
+        TEXT,
+        unique=True,
+    )
+    code: Mapped[str] = mapped_column(
+        TEXT,
+        unique=True,
+    )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
@@ -157,6 +185,12 @@ class Permission(AuthBase):
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+    role_permissions: Mapped[list[RolePermission]] = relationship(
+        'RolePermission',
+        back_populates='permission',
+        cascade='all, delete-orphan',
     )
 
 
@@ -210,7 +244,9 @@ class LoginHistory(AuthBase):
         ForeignKey('auth.user.id', ondelete='CASCADE'),
         index=True,
     )
-    user_agent: Mapped[str] = mapped_column(TEXT)
+    user_agent: Mapped[str] = mapped_column(
+        TEXT,
+    )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.datetime.now(datetime.UTC),
@@ -234,12 +270,28 @@ class OAuthAccount(AuthBase):
         ForeignKey('auth.user.id', ondelete='CASCADE'),
         index=True,
     )
-    oauth_name: Mapped[str] = mapped_column(TEXT, index=True)
-    access_token: Mapped[str] = mapped_column(TEXT)
-    expires_at: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    refresh_token: Mapped[str | None] = mapped_column(TEXT, nullable=True)
-    account_id: Mapped[str] = mapped_column(TEXT, index=True)
-    account_email: Mapped[str] = mapped_column(TEXT)
+    oauth_name: Mapped[str] = mapped_column(
+        TEXT,
+        index=True,
+    )
+    access_token: Mapped[str] = mapped_column(
+        TEXT,
+    )
+    expires_at: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+    refresh_token: Mapped[str | None] = mapped_column(
+        TEXT,
+        nullable=True,
+    )
+    account_id: Mapped[str] = mapped_column(
+        TEXT,
+        index=True,
+    )
+    account_email: Mapped[str] = mapped_column(
+        TEXT,
+    )
 
     __table_args__ = (
         UniqueConstraint('oauth_name', 'account_id'),
