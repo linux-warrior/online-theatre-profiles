@@ -1,100 +1,101 @@
 from __future__ import annotations
 
 import uuid
-from http import HTTPStatus
 
 from fastapi import (
     APIRouter,
-    HTTPException
+    HTTPException,
+    status,
 )
 
-from ....services.base.exceptions import (
-    AddError,
-    DeleteError
+from ....services.permissions import (
+    PermissionServiceDep,
+    PermissionRead,
+    PermissionCreate,
+    PermissionUpdate,
+    PermissionDelete,
 )
-from ....services.permissions.exceptions import DuplicateUserPermissionError
-from ....services.permissions.models import (
-    CreatePermissionDto,
-    PermissionInDb,
-    DeletePermission
-)
-from ....services.permissions.service import PermissionServiceDep
 from ....services.users import CurrentSuperuserDep
 
 router = APIRouter()
 
 
-@router.post(
-    '/assign',
-    response_model=PermissionInDb,
-    status_code=HTTPStatus.CREATED,
-    summary='Assign permission',
-    description='Addition user into role'
-)
-async def assign(
-        permission: CreatePermissionDto,
-        permission_service: PermissionServiceDep,
-        _superuser: CurrentSuperuserDep
-) -> PermissionInDb:
-    try:
-        user_role = await permission_service.assign(permission)
-    except DuplicateUserPermissionError:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail='Duplicate permission'
-        )
-    except AddError:
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail='Add error'
-        )
-
-    return PermissionInDb.model_validate(user_role, from_attributes=True)
-
-
 @router.get(
-    '/get_by_user/{user_id}',
-    response_model=list[PermissionInDb],
-    status_code=HTTPStatus.OK,
-    summary='Get permissions',
-    description='Get list of roles for user'
+    '/list',
+    response_model=list[PermissionRead],
+    summary='Get a list of permissions',
 )
-async def get_by_user(
-        user_id: uuid.UUID,
-        permission_service: PermissionServiceDep,
-        _superuser: CurrentSuperuserDep
-) -> list[PermissionInDb]:
-    user_roles_list = await permission_service.get_by_user(user_id)
+async def get_permissions_list(permission_service: PermissionServiceDep,
+                               _current_superuser: CurrentSuperuserDep) -> list[PermissionRead]:
+    permissions_list = await permission_service.get_list()
+
     return [
-        PermissionInDb.model_validate(user_role, from_attributes=True)
-        for user_role in user_roles_list
+        PermissionRead.model_validate(permission, from_attributes=True)
+        for permission in permissions_list
     ]
 
 
-@router.delete(
-    '/revoke/{id}',
-    response_model=DeletePermission,
-    status_code=HTTPStatus.OK,
-    summary='Revoke permissions',
-    description='Deleting user from role'
+@router.get(
+    '/get/{permission_id}',
+    response_model=PermissionRead,
+    summary='Get permission details',
 )
-async def revoke(
-        id: uuid.UUID,
-        permission_service: PermissionServiceDep,
-        _superuser: CurrentSuperuserDep
-) -> DeletePermission:
-    try:
-        user_role = await permission_service.revoke(id)
-    except DeleteError:
+async def get_permission(permission_id: uuid.UUID,
+                         permission_service: PermissionServiceDep,
+                         _current_superuser: CurrentSuperuserDep) -> PermissionRead:
+    permission = await permission_service.get(permission_id=permission_id)
+
+    if permission is None:
         raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail='Delete error'
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Permission not found',
         )
 
-    if user_role is None:
+    return PermissionRead.model_validate(permission, from_attributes=True)
+
+
+@router.post(
+    '/create',
+    response_model=PermissionRead,
+    status_code=status.HTTP_201_CREATED,
+    summary='Create a new permission',
+)
+async def create_permission(permission_create: PermissionCreate,
+                            permission_service: PermissionServiceDep,
+                            _current_superuser: CurrentSuperuserDep) -> PermissionRead:
+    permission = await permission_service.create(permission_create=permission_create)
+
+    return PermissionRead.model_validate(permission, from_attributes=True)
+
+
+@router.patch(
+    '/update/{permission_id}',
+    response_model=PermissionRead,
+    summary='Update an existing permission',
+)
+async def update_permission(permission_id: uuid.UUID,
+                            permission_update: PermissionUpdate,
+                            permission_service: PermissionServiceDep,
+                            _current_superuser: CurrentSuperuserDep) -> PermissionRead:
+    permission = await permission_service.update(permission_id=permission_id, permission_update=permission_update)
+
+    if permission is None:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='Permission not found'
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Permission not found',
         )
 
-    return DeletePermission.model_validate(user_role, from_attributes=True)
+    return PermissionRead.model_validate(permission, from_attributes=True)
+
+
+@router.delete(
+    '/delete/{permission_id}',
+    response_model=PermissionDelete,
+    summary='Delete a permission',
+)
+async def delete_permission(permission_id: uuid.UUID,
+                            permission_service: PermissionServiceDep,
+                            _current_superuser: CurrentSuperuserDep) -> PermissionDelete:
+    await permission_service.delete(permission_id=permission_id)
+
+    return PermissionDelete(id=permission_id)

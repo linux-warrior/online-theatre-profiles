@@ -1,54 +1,67 @@
 from __future__ import annotations
 
+import abc
 import uuid
 from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import Depends
 
-from .exceptions import DuplicateUserPermissionError
 from .models import (
-    CreatePermissionDto
+    PermissionCreate,
+    PermissionUpdate,
 )
-from .repository import PermissionRepository, PermissionRepositoryDep
-from ...models.sqlalchemy import UserRole
+from .repository import (
+    PermissionRepository,
+    PermissionRepositoryDep,
+)
+from ...models.sqlalchemy import (
+    Permission,
+)
 
 
-class PermissionService:
-    _repository: PermissionRepository
+class AbstractPermissionService(abc.ABC):
+    @abc.abstractmethod
+    async def get_list(self) -> Sequence[Permission]: ...
 
-    def __init__(self, repository: PermissionRepository):
-        self._repository = repository
+    @abc.abstractmethod
+    async def get(self, *, permission_id: uuid.UUID) -> Permission | None: ...
 
-    async def assign(self, permission: CreatePermissionDto) -> UserRole:
-        user_permission = await self._repository.get_by_user_role(
-            user_id=permission.user_id,
-            role_id=permission.role_id
-        )
-        if user_permission is not None:
-            raise DuplicateUserPermissionError
+    @abc.abstractmethod
+    async def create(self, *, permission_create: PermissionCreate) -> Permission: ...
 
-        return await self._repository.add(permission)
+    @abc.abstractmethod
+    async def update(self, *, permission_id: uuid.UUID, permission_update: PermissionUpdate) -> Permission | None: ...
 
-    async def get_by_user(self, user_id: uuid.UUID) -> Sequence[UserRole]:
-        return await self._repository.get_by_user(user_id)
-
-    async def revoke(self, id: uuid.UUID) -> UserRole | None:
-        user_permission = await self._repository.get(id)
-        if user_permission is None:
-            return None
-
-        await self._repository.delete(id)
-        return user_permission
+    @abc.abstractmethod
+    async def delete(self, *, permission_id: uuid.UUID) -> None: ...
 
 
-async def get_permission_service(
-        repository: PermissionRepositoryDep
-) -> PermissionService:
-    return PermissionService(repository)
+class PermissionService(AbstractPermissionService):
+    repository: PermissionRepository
+
+    def __init__(self, *, repository: PermissionRepository) -> None:
+        self.repository = repository
+
+    async def get_list(self) -> Sequence[Permission]:
+        return await self.repository.get_list()
+
+    async def get(self, *, permission_id: uuid.UUID) -> Permission | None:
+        return await self.repository.get(permission_id=permission_id)
+
+    async def create(self, *, permission_create: PermissionCreate) -> Permission:
+        return await self.repository.create(permission_create=permission_create)
+
+    async def update(self, *, permission_id: uuid.UUID, permission_update: PermissionUpdate) -> Permission | None:
+        await self.repository.update(permission_id=permission_id, permission_update=permission_update)
+        return await self.repository.get(permission_id=permission_id)
+
+    async def delete(self, *, permission_id: uuid.UUID) -> None:
+        await self.repository.delete(permission_id=permission_id)
 
 
-PermissionServiceDep = Annotated[
-    PermissionService,
-    Depends(get_permission_service)
-]
+async def get_permission_service(repository: PermissionRepositoryDep) -> AbstractPermissionService:
+    return PermissionService(repository=repository)
+
+
+PermissionServiceDep = Annotated[AbstractPermissionService, Depends(get_permission_service)]

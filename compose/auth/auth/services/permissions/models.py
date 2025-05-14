@@ -1,22 +1,28 @@
 from __future__ import annotations
 
+import datetime
 import uuid
-from datetime import datetime
 
 from pydantic import BaseModel
 
 
-class CreatePermissionDto(BaseModel):
-    user_id: uuid.UUID
-    role_id: uuid.UUID
-
-
-class PermissionInDb(BaseModel):
+class PermissionRead(BaseModel):
     id: uuid.UUID
-    role_id: uuid.UUID
-    created: datetime
+    name: str
+    code: str
+    created: datetime.datetime
+    modified: datetime.datetime
 
 
-class DeletePermission(BaseModel):
+class PermissionCreate(BaseModel):
+    name: str
+    code: str
+
+
+class PermissionUpdate(BaseModel):
+    name: str | None = None
+    code: str | None = None
+
+
+class PermissionDelete(BaseModel):
     id: uuid.UUID
-    role_id: uuid.UUID
