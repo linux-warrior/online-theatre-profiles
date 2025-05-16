@@ -27,12 +27,7 @@ router = APIRouter()
 )
 async def get_roles_list(role_service: RoleServiceDep,
                          _current_superuser: CurrentSuperuserDep) -> list[RoleRead]:
-    roles_list = await role_service.get_list()
-
-    return [
-        RoleRead.model_validate(role, from_attributes=True)
-        for role in roles_list
-    ]
+    return await role_service.get_list()
 
 
 @router.get(
@@ -43,15 +38,15 @@ async def get_roles_list(role_service: RoleServiceDep,
 async def get_role(role_id: uuid.UUID,
                    role_service: RoleServiceDep,
                    _current_superuser: CurrentSuperuserDep) -> RoleRead:
-    role = await role_service.get(role_id=role_id)
+    role_read = await role_service.get(role_id=role_id)
 
-    if role is None:
+    if role_read is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Role not found',
         )
 
-    return RoleRead.model_validate(role, from_attributes=True)
+    return role_read
 
 
 @router.post(
@@ -63,9 +58,7 @@ async def get_role(role_id: uuid.UUID,
 async def create_role(role_create: RoleCreate,
                       role_service: RoleServiceDep,
                       _current_superuser: CurrentSuperuserDep) -> RoleRead:
-    role = await role_service.create(role_create=role_create)
-
-    return RoleRead.model_validate(role, from_attributes=True)
+    return await role_service.create(role_create=role_create)
 
 
 @router.patch(
@@ -77,15 +70,18 @@ async def update_role(role_id: uuid.UUID,
                       role_update: RoleUpdate,
                       role_service: RoleServiceDep,
                       _current_superuser: CurrentSuperuserDep) -> RoleRead:
-    role = await role_service.update(role_id=role_id, role_update=role_update)
+    role_read = await role_service.update(
+        role_id=role_id,
+        role_update=role_update,
+    )
 
-    if role is None:
+    if role_read is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Role not found',
         )
 
-    return RoleRead.model_validate(role, from_attributes=True)
+    return role_read
 
 
 @router.delete(
@@ -96,6 +92,12 @@ async def update_role(role_id: uuid.UUID,
 async def delete_role(role_id: uuid.UUID,
                       role_service: RoleServiceDep,
                       _current_superuser: CurrentSuperuserDep) -> RoleDelete:
-    await role_service.delete(role_id=role_id)
+    role_delete = await role_service.delete(role_id=role_id)
 
-    return RoleDelete(id=role_id)
+    if role_delete is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Role not found',
+        )
+
+    return role_delete

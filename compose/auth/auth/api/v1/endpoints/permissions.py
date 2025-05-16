@@ -27,12 +27,7 @@ router = APIRouter()
 )
 async def get_permissions_list(permission_service: PermissionServiceDep,
                                _current_superuser: CurrentSuperuserDep) -> list[PermissionRead]:
-    permissions_list = await permission_service.get_list()
-
-    return [
-        PermissionRead.model_validate(permission, from_attributes=True)
-        for permission in permissions_list
-    ]
+    return await permission_service.get_list()
 
 
 @router.get(
@@ -43,15 +38,15 @@ async def get_permissions_list(permission_service: PermissionServiceDep,
 async def get_permission(permission_id: uuid.UUID,
                          permission_service: PermissionServiceDep,
                          _current_superuser: CurrentSuperuserDep) -> PermissionRead:
-    permission = await permission_service.get(permission_id=permission_id)
+    permission_read = await permission_service.get(permission_id=permission_id)
 
-    if permission is None:
+    if permission_read is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Permission not found',
         )
 
-    return PermissionRead.model_validate(permission, from_attributes=True)
+    return permission_read
 
 
 @router.post(
@@ -63,9 +58,7 @@ async def get_permission(permission_id: uuid.UUID,
 async def create_permission(permission_create: PermissionCreate,
                             permission_service: PermissionServiceDep,
                             _current_superuser: CurrentSuperuserDep) -> PermissionRead:
-    permission = await permission_service.create(permission_create=permission_create)
-
-    return PermissionRead.model_validate(permission, from_attributes=True)
+    return await permission_service.create(permission_create=permission_create)
 
 
 @router.patch(
@@ -77,15 +70,18 @@ async def update_permission(permission_id: uuid.UUID,
                             permission_update: PermissionUpdate,
                             permission_service: PermissionServiceDep,
                             _current_superuser: CurrentSuperuserDep) -> PermissionRead:
-    permission = await permission_service.update(permission_id=permission_id, permission_update=permission_update)
+    permission_read = await permission_service.update(
+        permission_id=permission_id,
+        permission_update=permission_update,
+    )
 
-    if permission is None:
+    if permission_read is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Permission not found',
         )
 
-    return PermissionRead.model_validate(permission, from_attributes=True)
+    return permission_read
 
 
 @router.delete(
@@ -96,6 +92,12 @@ async def update_permission(permission_id: uuid.UUID,
 async def delete_permission(permission_id: uuid.UUID,
                             permission_service: PermissionServiceDep,
                             _current_superuser: CurrentSuperuserDep) -> PermissionDelete:
-    await permission_service.delete(permission_id=permission_id)
+    permission_delete = await permission_service.delete(permission_id=permission_id)
 
-    return PermissionDelete(id=permission_id)
+    if permission_delete is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Permission not found',
+        )
+
+    return permission_delete

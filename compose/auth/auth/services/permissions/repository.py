@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import Depends
 from sqlalchemy import (
@@ -50,18 +50,22 @@ class PermissionRepository:
 
         return permission
 
-    async def update(self, *, permission_id: uuid.UUID, permission_update: PermissionUpdate) -> None:
+    async def update(self, *, permission_id: uuid.UUID, permission_update: PermissionUpdate) -> int:
         permission_update_dict = permission_update.model_dump(exclude_unset=True)
         statement = update(Permission).where(Permission.id == permission_id).values(permission_update_dict)
 
-        await self.session.execute(statement)
+        result = await self.session.execute(statement)
         await self.session.commit()
 
-    async def delete(self, *, permission_id: uuid.UUID) -> None:
+        return cast(int, result.rowcount)
+
+    async def delete(self, *, permission_id: uuid.UUID) -> int:
         statement = delete(Permission).where(Permission.id == permission_id)
 
-        await self.session.execute(statement)
+        result = await self.session.execute(statement)
         await self.session.commit()
+
+        return cast(int, result.rowcount)
 
 
 async def get_permission_repository(session: AsyncSessionDep) -> PermissionRepository:
