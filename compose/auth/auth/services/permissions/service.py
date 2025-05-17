@@ -5,7 +5,12 @@ import uuid
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 
+from .exceptions import (
+    PermissionNotFound,
+    PermissionAlreadyExists,
+)
 from .models import (
     PermissionRead,
     PermissionCreate,
@@ -23,7 +28,7 @@ class AbstractPermissionService(abc.ABC):
     async def get_list(self) -> list[PermissionRead]: ...
 
     @abc.abstractmethod
-    async def get(self, *, permission_id: uuid.UUID) -> PermissionRead | None: ...
+    async def get(self, *, permission_id: uuid.UUID) -> PermissionRead: ...
 
     @abc.abstractmethod
     async def create(self, *, permission_create: PermissionCreate) -> PermissionRead: ...
@@ -32,10 +37,10 @@ class AbstractPermissionService(abc.ABC):
     async def update(self,
                      *,
                      permission_id: uuid.UUID,
-                     permission_update: PermissionUpdate) -> PermissionRead | None: ...
+                     permission_update: PermissionUpdate) -> PermissionRead: ...
 
     @abc.abstractmethod
-    async def delete(self, *, permission_id: uuid.UUID) -> PermissionDelete | None: ...
+    async def delete(self, *, permission_id: uuid.UUID) -> PermissionDelete: ...
 
 
 class PermissionService(AbstractPermissionService):
@@ -52,37 +57,44 @@ class PermissionService(AbstractPermissionService):
             for permission in permissions_list
         ]
 
-    async def get(self, *, permission_id: uuid.UUID) -> PermissionRead | None:
+    async def get(self, *, permission_id: uuid.UUID) -> PermissionRead:
         permission = await self.repository.get(permission_id=permission_id)
 
         if permission is None:
-            return None
+            raise PermissionNotFound
 
         return PermissionRead.model_validate(permission, from_attributes=True)
 
     async def create(self, *, permission_create: PermissionCreate) -> PermissionRead:
-        permission = await self.repository.create(permission_create=permission_create)
+        try:
+            permission = await self.repository.create(permission_create=permission_create)
+        except IntegrityError as e:
+            raise PermissionAlreadyExists from e
+
         return PermissionRead.model_validate(permission, from_attributes=True)
 
     async def update(self,
                      *,
                      permission_id: uuid.UUID,
-                     permission_update: PermissionUpdate) -> PermissionRead | None:
-        rows_count = await self.repository.update(
-            permission_id=permission_id,
-            permission_update=permission_update,
-        )
+                     permission_update: PermissionUpdate) -> PermissionRead:
+        try:
+            rows_count = await self.repository.update(
+                permission_id=permission_id,
+                permission_update=permission_update,
+            )
+        except IntegrityError as e:
+            raise PermissionAlreadyExists from e
 
         if not rows_count:
-            return None
+            raise PermissionNotFound
 
         return await self.get(permission_id=permission_id)
 
-    async def delete(self, *, permission_id: uuid.UUID) -> PermissionDelete | None:
+    async def delete(self, *, permission_id: uuid.UUID) -> PermissionDelete:
         rows_count = await self.repository.delete(permission_id=permission_id)
 
         if not rows_count:
-            return None
+            raise PermissionNotFound
 
         return PermissionDelete(id=permission_id)
 
