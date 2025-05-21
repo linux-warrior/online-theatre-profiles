@@ -8,7 +8,7 @@ from fastapi import (
     status,
 )
 
-from ....services.roles import (
+from .....services.roles import (
     RoleServiceDep,
     RoleRead,
     RoleCreate,
@@ -17,7 +17,7 @@ from ....services.roles import (
     RoleNotFound,
     RoleServiceException,
 )
-from ....services.users import CurrentSuperuserDep
+from .....services.users import CurrentSuperuserDep
 
 router = APIRouter()
 

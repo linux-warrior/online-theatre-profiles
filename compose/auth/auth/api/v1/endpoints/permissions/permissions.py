@@ -8,7 +8,7 @@ from fastapi import (
     status,
 )
 
-from ....services.permissions import (
+from .....services.permissions import (
     PermissionServiceDep,
     PermissionRead,
     PermissionCreate,
@@ -17,7 +17,7 @@ from ....services.permissions import (
     PermissionNotFound,
     PermissionServiceException,
 )
-from ....services.users import CurrentSuperuserDep
+from .....services.users import CurrentSuperuserDep
 
 router = APIRouter()
 

@@ -20,9 +20,12 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from .api.v1.endpoints import (
+from .api.v1.endpoints.permissions import (
+    permissions,
+)
+from .api.v1.endpoints.roles import (
     roles,
-    permissions
+    user_roles,
 )
 from .api.v1.endpoints.users import (
     auth,
@@ -126,6 +129,11 @@ app.include_router(
 )
 app.include_router(
     roles.router,
+    prefix=f'{auth_api_prefix}/roles',
+    tags=['roles']
+)
+app.include_router(
+    user_roles.router,
     prefix=f'{auth_api_prefix}/roles',
     tags=['roles']
 )
