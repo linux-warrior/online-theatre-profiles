@@ -6,12 +6,12 @@ import uuid
 from pydantic import BaseModel
 
 
-class RolePermissionRead(BaseModel):
+class ReadRolePermissionResponse(BaseModel):
     id: uuid.UUID
     role_id: uuid.UUID
     permission_id: uuid.UUID
     created: datetime.datetime
 
 
-class RolePermissionDelete(BaseModel):
+class DeleteRolePermissionResponse(BaseModel):
     id: uuid.UUID

@@ -4,8 +4,8 @@ from .exceptions import (
     UserRoleAlreadyExists,
 )
 from .models import (
-    UserRoleRead,
-    UserRoleDelete,
+    ReadUserRoleResponse,
+    DeleteUserRoleResponse,
 )
 from .service import (
     AbstractUserRoleService,

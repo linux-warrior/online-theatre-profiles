@@ -4,10 +4,10 @@ from .exceptions import (
     RoleAlreadyExists,
 )
 from .models import (
-    RoleRead,
+    ReadRoleResponse,
     RoleCreate,
     RoleUpdate,
-    RoleDelete,
+    DeleteRoleResponse,
 )
 from .service import (
     AbstractRoleService,

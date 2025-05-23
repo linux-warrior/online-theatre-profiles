@@ -10,8 +10,8 @@ from fastapi import (
 
 from .....services.roles.user_roles import (
     UserRoleServiceDep,
-    UserRoleRead,
-    UserRoleDelete,
+    ReadUserRoleResponse,
+    DeleteUserRoleResponse,
     UserRoleServiceException,
     UserRoleNotFound,
 )
@@ -22,25 +22,25 @@ router = APIRouter()
 
 @router.get(
     '/user/{user_id}/list',
-    response_model=list[UserRoleRead],
+    response_model=list[ReadUserRoleResponse],
     summary='Get a list of user roles',
 )
 async def get_user_roles_list(user_id: uuid.UUID,
                               user_role_service: UserRoleServiceDep,
-                              _current_superuser: CurrentSuperuserDep) -> list[UserRoleRead]:
+                              _current_superuser: CurrentSuperuserDep) -> list[ReadUserRoleResponse]:
     return await user_role_service.get_list(user_id=user_id)
 
 
 @router.post(
     '/user/{user_id}/add/{role_id}',
-    response_model=UserRoleRead,
+    response_model=ReadUserRoleResponse,
     status_code=status.HTTP_201_CREATED,
     summary='Add a role to a user',
 )
 async def add_user_role(user_id: uuid.UUID,
                         role_id: uuid.UUID,
                         user_role_service: UserRoleServiceDep,
-                        _current_superuser: CurrentSuperuserDep) -> UserRoleRead:
+                        _current_superuser: CurrentSuperuserDep) -> ReadUserRoleResponse:
     try:
         return await user_role_service.create(
             user_id=user_id,
@@ -56,13 +56,13 @@ async def add_user_role(user_id: uuid.UUID,
 
 @router.delete(
     '/user/{user_id}/remove/{role_id}',
-    response_model=UserRoleDelete,
+    response_model=DeleteUserRoleResponse,
     summary='Remove a role from a user',
 )
 async def remove_user_role(user_id: uuid.UUID,
                            role_id: uuid.UUID,
                            user_role_service: UserRoleServiceDep,
-                           _current_superuser: CurrentSuperuserDep) -> UserRoleDelete:
+                           _current_superuser: CurrentSuperuserDep) -> DeleteUserRoleResponse:
     try:
         return await user_role_service.delete(
             user_id=user_id,

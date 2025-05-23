@@ -6,7 +6,7 @@ import uuid
 from pydantic import BaseModel
 
 
-class RoleRead(BaseModel):
+class ReadRoleResponse(BaseModel):
     id: uuid.UUID
     name: str
     created: datetime.datetime
@@ -21,5 +21,5 @@ class RoleUpdate(BaseModel):
     name: str | None = None
 
 
-class RoleDelete(BaseModel):
+class DeleteRoleResponse(BaseModel):
     id: uuid.UUID

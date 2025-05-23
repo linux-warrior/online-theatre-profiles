@@ -6,7 +6,7 @@ import uuid
 from pydantic import BaseModel
 
 
-class PermissionRead(BaseModel):
+class ReadPermissionResponse(BaseModel):
     id: uuid.UUID
     name: str
     code: str
@@ -24,5 +24,5 @@ class PermissionUpdate(BaseModel):
     code: str | None = None
 
 
-class PermissionDelete(BaseModel):
+class DeletePermissionResponse(BaseModel):
     id: uuid.UUID

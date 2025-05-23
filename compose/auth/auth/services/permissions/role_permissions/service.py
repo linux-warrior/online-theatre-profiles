@@ -12,8 +12,8 @@ from .exceptions import (
     RolePermissionAlreadyExists,
 )
 from .models import (
-    RolePermissionRead,
-    RolePermissionDelete,
+    ReadRolePermissionResponse,
+    DeleteRolePermissionResponse,
 )
 from .repository import (
     RolePermissionRepository,
@@ -23,13 +23,13 @@ from .repository import (
 
 class AbstractRolePermissionService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self, *, role_id: uuid.UUID) -> list[RolePermissionRead]: ...
+    async def get_list(self, *, role_id: uuid.UUID) -> list[ReadRolePermissionResponse]: ...
 
     @abc.abstractmethod
-    async def create(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> RolePermissionRead: ...
+    async def create(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> ReadRolePermissionResponse: ...
 
     @abc.abstractmethod
-    async def delete(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> RolePermissionDelete: ...
+    async def delete(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> DeleteRolePermissionResponse: ...
 
 
 class RolePermissionService(AbstractRolePermissionService):
@@ -38,29 +38,29 @@ class RolePermissionService(AbstractRolePermissionService):
     def __init__(self, *, repository: RolePermissionRepository) -> None:
         self.repository = repository
 
-    async def get_list(self, *, role_id: uuid.UUID) -> list[RolePermissionRead]:
+    async def get_list(self, *, role_id: uuid.UUID) -> list[ReadRolePermissionResponse]:
         role_permissions_list = await self.repository.get_list(role_id=role_id)
 
         return [
-            RolePermissionRead.model_validate(role_permission, from_attributes=True)
+            ReadRolePermissionResponse.model_validate(role_permission, from_attributes=True)
             for role_permission in role_permissions_list
         ]
 
-    async def create(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> RolePermissionRead:
+    async def create(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> ReadRolePermissionResponse:
         try:
             role_permission = await self.repository.create(role_id=role_id, permission_id=permission_id)
         except IntegrityError as e:
             raise RolePermissionAlreadyExists from e
 
-        return RolePermissionRead.model_validate(role_permission, from_attributes=True)
+        return ReadRolePermissionResponse.model_validate(role_permission, from_attributes=True)
 
-    async def delete(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> RolePermissionDelete:
+    async def delete(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> DeleteRolePermissionResponse:
         rows_count = await self.repository.delete(role_id=role_id, permission_id=permission_id)
 
         if not rows_count:
             raise RolePermissionNotFound
 
-        return RolePermissionDelete(id=role_id)
+        return DeleteRolePermissionResponse(id=role_id)
 
 
 async def get_role_permission_service(repository: RolePermissionRepositoryDep) -> AbstractRolePermissionService:

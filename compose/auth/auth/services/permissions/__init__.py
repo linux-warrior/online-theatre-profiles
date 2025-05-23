@@ -4,10 +4,10 @@ from .exceptions import (
     PermissionAlreadyExists,
 )
 from .models import (
-    PermissionRead,
+    ReadPermissionResponse,
     PermissionCreate,
     PermissionUpdate,
-    PermissionDelete,
+    DeletePermissionResponse,
 )
 from .service import (
     AbstractPermissionService,

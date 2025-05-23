@@ -10,10 +10,10 @@ from fastapi import (
 
 from .....services.permissions import (
     PermissionServiceDep,
-    PermissionRead,
+    ReadPermissionResponse,
     PermissionCreate,
     PermissionUpdate,
-    PermissionDelete,
+    DeletePermissionResponse,
     PermissionNotFound,
     PermissionServiceException,
 )
@@ -24,22 +24,22 @@ router = APIRouter()
 
 @router.get(
     '/list',
-    response_model=list[PermissionRead],
+    response_model=list[ReadPermissionResponse],
     summary='Get a list of permissions',
 )
 async def get_permissions_list(permission_service: PermissionServiceDep,
-                               _current_superuser: CurrentSuperuserDep) -> list[PermissionRead]:
+                               _current_superuser: CurrentSuperuserDep) -> list[ReadPermissionResponse]:
     return await permission_service.get_list()
 
 
 @router.get(
     '/get/{permission_id}',
-    response_model=PermissionRead,
+    response_model=ReadPermissionResponse,
     summary='Get permission details',
 )
 async def get_permission(permission_id: uuid.UUID,
                          permission_service: PermissionServiceDep,
-                         _current_superuser: CurrentSuperuserDep) -> PermissionRead:
+                         _current_superuser: CurrentSuperuserDep) -> ReadPermissionResponse:
     try:
         return await permission_service.get(permission_id=permission_id)
 
@@ -52,13 +52,13 @@ async def get_permission(permission_id: uuid.UUID,
 
 @router.post(
     '/create',
-    response_model=PermissionRead,
+    response_model=ReadPermissionResponse,
     status_code=status.HTTP_201_CREATED,
     summary='Create a new permission',
 )
 async def create_permission(permission_create: PermissionCreate,
                             permission_service: PermissionServiceDep,
-                            _current_superuser: CurrentSuperuserDep) -> PermissionRead:
+                            _current_superuser: CurrentSuperuserDep) -> ReadPermissionResponse:
     try:
         return await permission_service.create(permission_create=permission_create)
 
@@ -71,13 +71,13 @@ async def create_permission(permission_create: PermissionCreate,
 
 @router.patch(
     '/update/{permission_id}',
-    response_model=PermissionRead,
+    response_model=ReadPermissionResponse,
     summary='Update an existing permission',
 )
 async def update_permission(permission_id: uuid.UUID,
                             permission_update: PermissionUpdate,
                             permission_service: PermissionServiceDep,
-                            _current_superuser: CurrentSuperuserDep) -> PermissionRead:
+                            _current_superuser: CurrentSuperuserDep) -> ReadPermissionResponse:
     try:
         return await permission_service.update(
             permission_id=permission_id,
@@ -99,12 +99,12 @@ async def update_permission(permission_id: uuid.UUID,
 
 @router.delete(
     '/delete/{permission_id}',
-    response_model=PermissionDelete,
+    response_model=DeletePermissionResponse,
     summary='Delete a permission',
 )
 async def delete_permission(permission_id: uuid.UUID,
                             permission_service: PermissionServiceDep,
-                            _current_superuser: CurrentSuperuserDep) -> PermissionDelete:
+                            _current_superuser: CurrentSuperuserDep) -> DeletePermissionResponse:
     try:
         return await permission_service.delete(permission_id=permission_id)
 

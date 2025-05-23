@@ -4,8 +4,8 @@ from .exceptions import (
     RolePermissionAlreadyExists,
 )
 from .models import (
-    RolePermissionRead,
-    RolePermissionDelete,
+    ReadRolePermissionResponse,
+    DeleteRolePermissionResponse,
 )
 from .service import (
     AbstractRolePermissionService,
