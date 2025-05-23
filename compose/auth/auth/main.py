@@ -22,6 +22,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from .api.v1.endpoints.permissions import (
     permissions,
+    role_permissions,
 )
 from .api.v1.endpoints.roles import (
     roles,
@@ -127,6 +128,7 @@ app.include_router(
     prefix=f'{auth_api_prefix}/users',
     tags=['users'],
 )
+
 app.include_router(
     roles.router,
     prefix=f'{auth_api_prefix}/roles',
@@ -137,8 +139,14 @@ app.include_router(
     prefix=f'{auth_api_prefix}/roles',
     tags=['roles']
 )
+
 app.include_router(
     permissions.router,
+    prefix=f'{auth_api_prefix}/permissions',
+    tags=['permissions']
+)
+app.include_router(
+    role_permissions.router,
     prefix=f'{auth_api_prefix}/permissions',
     tags=['permissions']
 )
