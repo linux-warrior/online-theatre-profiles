@@ -42,6 +42,9 @@ class AbstractPermissionService(abc.ABC):
     @abc.abstractmethod
     async def delete(self, *, permission_id: uuid.UUID) -> DeletePermissionResponse: ...
 
+    @abc.abstractmethod
+    async def get_user_permissions(self, *, user_id: uuid.UUID) -> list[ReadPermissionResponse]: ...
+
 
 class PermissionService(AbstractPermissionService):
     repository: PermissionRepository
@@ -97,6 +100,14 @@ class PermissionService(AbstractPermissionService):
             raise PermissionNotFound
 
         return DeletePermissionResponse(id=permission_id)
+
+    async def get_user_permissions(self, *, user_id: uuid.UUID) -> list[ReadPermissionResponse]:
+        permissions_list = await self.repository.get_user_permissions(user_id=user_id)
+
+        return [
+            ReadPermissionResponse.model_validate(permission, from_attributes=True)
+            for permission in permissions_list
+        ]
 
 
 async def get_permission_service(repository: PermissionRepositoryDep) -> AbstractPermissionService:

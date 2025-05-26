@@ -113,3 +113,15 @@ async def delete_permission(permission_id: uuid.UUID,
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+
+@router.get(
+    '/user/{user_id}/list',
+    response_model=list[ReadPermissionResponse],
+    summary='Get a list of user permissions',
+)
+async def get_user_permissions(
+        user_id: uuid.UUID,
+        permission_service: PermissionServiceDep,
+        _current_superuser: CurrentSuperuserDep) -> list[ReadPermissionResponse]:
+    return await permission_service.get_user_permissions(user_id=user_id)

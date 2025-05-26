@@ -20,7 +20,10 @@ from ...db.sqlalchemy import (
     AsyncSession
 )
 from ...models.sqlalchemy import (
+    Role,
+    UserRole,
     Permission,
+    RolePermission,
 )
 
 
@@ -66,6 +69,23 @@ class PermissionRepository:
         await self.session.commit()
 
         return cast(int, result.rowcount)
+
+    async def get_user_permissions(self, *, user_id: uuid.UUID) -> Sequence[Permission]:
+        statement = select(
+            Permission,
+        ).join(
+            Permission.role_permissions,
+        ).join(
+            RolePermission.role,
+        ).join(
+            Role.user_roles,
+        ).where(
+            UserRole.user_id == user_id,
+        ).distinct()
+
+        result = await self.session.execute(statement)
+
+        return result.scalars().all()
 
 
 async def get_permission_repository(session: AsyncSessionDep) -> PermissionRepository:
