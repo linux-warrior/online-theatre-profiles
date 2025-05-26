@@ -86,6 +86,7 @@ class User(AuthBase):
         'OAuthAccount',
         back_populates='user',
         cascade='all, delete-orphan',
+        lazy='selectin',
     )
 
 
