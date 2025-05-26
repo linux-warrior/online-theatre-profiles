@@ -5,7 +5,6 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
-import sentry_sdk
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi_limiter import FastAPILimiter
@@ -21,9 +20,13 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from .api.v1.endpoints import (
+from .api.v1.endpoints.permissions import (
+    permissions,
+    role_permissions,
+)
+from .api.v1.endpoints.roles import (
     roles,
-    permissions
+    user_roles,
 )
 from .api.v1.endpoints.users import (
     auth,
@@ -34,15 +37,6 @@ from .api.v1.endpoints.users import (
 from .core import settings, LOGGING
 
 logging.config.dictConfig(LOGGING)
-
-if settings.sentry.enable_sdk:
-    sentry_sdk.init(
-        dsn=settings.sentry.dsn,
-        traces_sample_rate=settings.sentry.traces_sample_rate,
-        profiles_sample_rate=settings.sentry.profiles_sample_rate,
-        enable_tracing=settings.sentry.enable_tracing,
-    )
-    sentry_sdk.set_tag("service_name", "auth-service")
 
 
 def configure_otel() -> None:
@@ -134,13 +128,25 @@ app.include_router(
     prefix=f'{auth_api_prefix}/users',
     tags=['users'],
 )
+
 app.include_router(
     roles.router,
     prefix=f'{auth_api_prefix}/roles',
     tags=['roles']
 )
 app.include_router(
+    user_roles.router,
+    prefix=f'{auth_api_prefix}/roles',
+    tags=['roles']
+)
+
+app.include_router(
     permissions.router,
+    prefix=f'{auth_api_prefix}/permissions',
+    tags=['permissions']
+)
+app.include_router(
+    role_permissions.router,
     prefix=f'{auth_api_prefix}/permissions',
     tags=['permissions']
 )

@@ -1,54 +1,117 @@
 from __future__ import annotations
 
+import abc
 import uuid
-from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 
-from .exceptions import DuplicateUserPermissionError
-from .models import (
-    CreatePermissionDto
+from .exceptions import (
+    PermissionNotFound,
+    PermissionAlreadyExists,
 )
-from .repository import PermissionRepository, PermissionRepositoryDep
-from ...models.sqlalchemy import UserRole
+from .models import (
+    ReadPermissionResponse,
+    PermissionCreate,
+    PermissionUpdate,
+    DeletePermissionResponse,
+)
+from .repository import (
+    PermissionRepository,
+    PermissionRepositoryDep,
+)
 
 
-class PermissionService:
-    _repository: PermissionRepository
+class AbstractPermissionService(abc.ABC):
+    @abc.abstractmethod
+    async def get_list(self) -> list[ReadPermissionResponse]: ...
 
-    def __init__(self, repository: PermissionRepository):
-        self._repository = repository
+    @abc.abstractmethod
+    async def get(self, *, permission_id: uuid.UUID) -> ReadPermissionResponse: ...
 
-    async def assign(self, permission: CreatePermissionDto) -> UserRole:
-        user_permission = await self._repository.get_by_user_role(
-            user_id=permission.user_id,
-            role_id=permission.role_id
-        )
-        if user_permission is not None:
-            raise DuplicateUserPermissionError
+    @abc.abstractmethod
+    async def create(self, *, permission_create: PermissionCreate) -> ReadPermissionResponse: ...
 
-        return await self._repository.add(permission)
+    @abc.abstractmethod
+    async def update(self,
+                     *,
+                     permission_id: uuid.UUID,
+                     permission_update: PermissionUpdate) -> ReadPermissionResponse: ...
 
-    async def get_by_user(self, user_id: uuid.UUID) -> Sequence[UserRole]:
-        return await self._repository.get_by_user(user_id)
+    @abc.abstractmethod
+    async def delete(self, *, permission_id: uuid.UUID) -> DeletePermissionResponse: ...
 
-    async def revoke(self, id: uuid.UUID) -> UserRole | None:
-        user_permission = await self._repository.get(id)
-        if user_permission is None:
-            return None
-
-        await self._repository.delete(id)
-        return user_permission
+    @abc.abstractmethod
+    async def get_user_permissions(self, *, user_id: uuid.UUID) -> list[ReadPermissionResponse]: ...
 
 
-async def get_permission_service(
-        repository: PermissionRepositoryDep
-) -> PermissionService:
-    return PermissionService(repository)
+class PermissionService(AbstractPermissionService):
+    repository: PermissionRepository
+
+    def __init__(self, *, repository: PermissionRepository) -> None:
+        self.repository = repository
+
+    async def get_list(self) -> list[ReadPermissionResponse]:
+        permissions_list = await self.repository.get_list()
+
+        return [
+            ReadPermissionResponse.model_validate(permission, from_attributes=True)
+            for permission in permissions_list
+        ]
+
+    async def get(self, *, permission_id: uuid.UUID) -> ReadPermissionResponse:
+        permission = await self.repository.get(permission_id=permission_id)
+
+        if permission is None:
+            raise PermissionNotFound
+
+        return ReadPermissionResponse.model_validate(permission, from_attributes=True)
+
+    async def create(self, *, permission_create: PermissionCreate) -> ReadPermissionResponse:
+        try:
+            permission = await self.repository.create(permission_create=permission_create)
+        except IntegrityError as e:
+            raise PermissionAlreadyExists from e
+
+        return ReadPermissionResponse.model_validate(permission, from_attributes=True)
+
+    async def update(self,
+                     *,
+                     permission_id: uuid.UUID,
+                     permission_update: PermissionUpdate) -> ReadPermissionResponse:
+        try:
+            rows_count = await self.repository.update(
+                permission_id=permission_id,
+                permission_update=permission_update,
+            )
+        except IntegrityError as e:
+            raise PermissionAlreadyExists from e
+
+        if not rows_count:
+            raise PermissionNotFound
+
+        return await self.get(permission_id=permission_id)
+
+    async def delete(self, *, permission_id: uuid.UUID) -> DeletePermissionResponse:
+        rows_count = await self.repository.delete(permission_id=permission_id)
+
+        if not rows_count:
+            raise PermissionNotFound
+
+        return DeletePermissionResponse(id=permission_id)
+
+    async def get_user_permissions(self, *, user_id: uuid.UUID) -> list[ReadPermissionResponse]:
+        permissions_list = await self.repository.get_user_permissions(user_id=user_id)
+
+        return [
+            ReadPermissionResponse.model_validate(permission, from_attributes=True)
+            for permission in permissions_list
+        ]
 
 
-PermissionServiceDep = Annotated[
-    PermissionService,
-    Depends(get_permission_service)
-]
+async def get_permission_service(repository: PermissionRepositoryDep) -> AbstractPermissionService:
+    return PermissionService(repository=repository)
+
+
+PermissionServiceDep = Annotated[AbstractPermissionService, Depends(get_permission_service)]

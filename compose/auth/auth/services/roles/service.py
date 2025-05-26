@@ -1,56 +1,97 @@
 from __future__ import annotations
 
+import abc
 import uuid
-from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 
-from .exceptions import DuplicateRoleTypeError
-from .models import RoleCreateDto, RoleUpdateDto
-from .repository import RoleRepository, RoleRepositoryDep
-from ...models.sqlalchemy import Role
+from .exceptions import (
+    RoleNotFound,
+    RoleAlreadyExists,
+)
+from .models import (
+    ReadRoleResponse,
+    RoleCreate,
+    RoleUpdate,
+    DeleteRoleResponse,
+)
+from .repository import (
+    RoleRepository,
+    RoleRepositoryDep,
+)
 
 
-class RoleService:
-    _repository: RoleRepository
+class AbstractRoleService(abc.ABC):
+    @abc.abstractmethod
+    async def get_list(self) -> list[ReadRoleResponse]: ...
 
-    def __init__(self, repository: RoleRepository):
-        self._repository = repository
+    @abc.abstractmethod
+    async def get(self, *, role_id: uuid.UUID) -> ReadRoleResponse: ...
 
-    async def create(self, role_create: RoleCreateDto) -> Role:
-        role_existed = await self._repository.get_by_code(role_create.code)
-        if role_existed is not None:
-            raise DuplicateRoleTypeError
+    @abc.abstractmethod
+    async def create(self, *, role_create: RoleCreate) -> ReadRoleResponse: ...
 
-        return await self._repository.create(role_create)
+    @abc.abstractmethod
+    async def update(self, *, role_id: uuid.UUID, role_update: RoleUpdate) -> ReadRoleResponse: ...
 
-    async def update(self, id: uuid.UUID, role_update: RoleUpdateDto) -> Role | None:
-        if role_update.code is not None:
-            role = await self._repository.get_by_code(role_update.code)
-            if role is not None and role.id != id:
-                raise DuplicateRoleTypeError
+    @abc.abstractmethod
+    async def delete(self, *, role_id: uuid.UUID) -> DeleteRoleResponse: ...
 
-        await self._repository.update(id, role_update)
-        return await self._repository.get(id)
 
-    async def delete(self, id: uuid.UUID) -> Role | None:
-        role = await self._repository.get(id)
+class RoleService(AbstractRoleService):
+    repository: RoleRepository
+
+    def __init__(self, *, repository: RoleRepository) -> None:
+        self.repository = repository
+
+    async def get_list(self) -> list[ReadRoleResponse]:
+        roles_list = await self.repository.get_list()
+
+        return [
+            ReadRoleResponse.model_validate(role, from_attributes=True)
+            for role in roles_list
+        ]
+
+    async def get(self, *, role_id: uuid.UUID) -> ReadRoleResponse:
+        role = await self.repository.get(role_id=role_id)
+
         if role is None:
-            return None
+            raise RoleNotFound
 
-        await self._repository.delete(id)
-        return role
+        return ReadRoleResponse.model_validate(role, from_attributes=True)
 
-    async def get(self, id: uuid.UUID) -> Role | None:
-        return await self._repository.get(id)
+    async def create(self, *, role_create: RoleCreate) -> ReadRoleResponse:
+        try:
+            role = await self.repository.create(role_create=role_create)
+        except IntegrityError as e:
+            raise RoleAlreadyExists from e
 
-    async def get_list(self) -> Sequence[Role]:
-        return await self._repository.get_list()
+        return ReadRoleResponse.model_validate(role, from_attributes=True)
+
+    async def update(self, *, role_id: uuid.UUID, role_update: RoleUpdate) -> ReadRoleResponse:
+        try:
+            rows_count = await self.repository.update(role_id=role_id, role_update=role_update)
+        except IntegrityError as e:
+            raise RoleAlreadyExists from e
+
+        if not rows_count:
+            raise RoleNotFound
+
+        return await self.get(role_id=role_id)
+
+    async def delete(self, *, role_id: uuid.UUID) -> DeleteRoleResponse:
+        rows_count = await self.repository.delete(role_id=role_id)
+
+        if not rows_count:
+            raise RoleNotFound
+
+        return DeleteRoleResponse(id=role_id)
 
 
-async def get_role_service(repository: RoleRepositoryDep) -> RoleService:
-    return RoleService(repository)
+async def get_role_service(repository: RoleRepositoryDep) -> AbstractRoleService:
+    return RoleService(repository=repository)
 
 
-RoleServiceDep = Annotated[RoleService, Depends(get_role_service)]
+RoleServiceDep = Annotated[AbstractRoleService, Depends(get_role_service)]

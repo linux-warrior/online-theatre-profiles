@@ -24,7 +24,6 @@ redis = { version = "5.2.1", extras = ["hiredis"] }
 SQLAlchemy = { version = "2.0.37", extras = ["asyncio"] }
 typer = "0.15.1"
 uvicorn-worker = "0.2.0"
-sentry-sdk = {extras = ["fastapi"], version = "^2.22.0"}
 
 [tool.poetry.group.dev]
 optional = true

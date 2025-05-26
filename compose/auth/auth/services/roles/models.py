@@ -1,36 +1,25 @@
 from __future__ import annotations
 
+import datetime
 import uuid
-from datetime import datetime
-from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel
 
 
-class CodeRole(str, Enum):
-    ADMINISTRATOR = 'admin'
-    SUBSCRIBERS = 'subscribers'
-    USERS = 'users'
-
-
-class RoleCreateDto(BaseModel):
-    name: str
-    code: CodeRole
-
-
-class RoleUpdateDto(BaseModel):
-    name: Optional[str] = None
-    code: Optional[CodeRole] = None
-
-
-class RoleInDB(BaseModel):
+class ReadRoleResponse(BaseModel):
     id: uuid.UUID
     name: str
-    code: CodeRole
-    created: datetime
-    modified: datetime
+    created: datetime.datetime
+    modified: datetime.datetime
 
 
-class RoleDelete(BaseModel):
+class RoleCreate(BaseModel):
+    name: str
+
+
+class RoleUpdate(BaseModel):
+    name: str | None = None
+
+
+class DeleteRoleResponse(BaseModel):
     id: uuid.UUID
