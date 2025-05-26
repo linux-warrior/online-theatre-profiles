@@ -28,6 +28,9 @@ class UserRoleRepository:
     async def get_list(self, *, user_id: uuid.UUID) -> Sequence[UserRole]:
         statement = select(UserRole).where(
             UserRole.user_id == user_id,
+        ).order_by(
+            UserRole.created,
+            UserRole.id,
         )
         result = await self.session.execute(statement)
         return result.scalars().all()

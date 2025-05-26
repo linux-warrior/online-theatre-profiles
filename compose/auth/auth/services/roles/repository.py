@@ -31,7 +31,7 @@ class RoleRepository:
         self.session = session
 
     async def get_list(self) -> Sequence[Role]:
-        statement = select(Role)
+        statement = select(Role).order_by(Role.created, Role.id)
         result = await self.session.execute(statement)
         return result.scalars().all()
 

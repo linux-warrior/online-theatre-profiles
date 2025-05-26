@@ -28,6 +28,9 @@ class RolePermissionRepository:
     async def get_list(self, *, role_id: uuid.UUID) -> Sequence[RolePermission]:
         statement = select(RolePermission).where(
             RolePermission.role_id == role_id,
+        ).order_by(
+            RolePermission.created,
+            RolePermission.id,
         )
         result = await self.session.execute(statement)
         return result.scalars().all()

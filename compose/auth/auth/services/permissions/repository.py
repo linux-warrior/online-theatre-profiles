@@ -34,7 +34,7 @@ class PermissionRepository:
         self.session = session
 
     async def get_list(self) -> Sequence[Permission]:
-        statement = select(Permission)
+        statement = select(Permission).order_by(Permission.created, Permission.id)
         result = await self.session.execute(statement)
         return result.scalars().all()
 
@@ -81,6 +81,9 @@ class PermissionRepository:
             Role.user_roles,
         ).where(
             UserRole.user_id == user_id,
+        ).order_by(
+            Permission.created,
+            Permission.id,
         ).distinct()
 
         result = await self.session.execute(statement)
