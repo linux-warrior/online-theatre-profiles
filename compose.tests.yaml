@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_healthy
+      profiles-service:
+        condition: service_healthy
     networks:
       - movies-network
     environment:
@@ -234,6 +236,33 @@ services:
       timeout: 10s
       retries: 5
       start_period: 10s
+
+  profiles-service:
+    build:
+      context: ./compose/profiles
+      args:
+        - PYTHON_VERSION
+    networks:
+      - movies-network
+    environment:
+      - FASTAPI_WORKERS=${PROFILES_FASTAPI_WORKERS:-}
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s http://localhost:8000/profiles/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./compose/profiles/profiles
+          target: /opt/app/profiles
+        - action: rebuild
+          path: ./compose/profiles/commands
+        - action: rebuild
+          path: ./compose/profiles/pyproject.toml
+        - action: rebuild
+          path: ./compose/profiles/poetry.lock
 
 networks:
   movies-network:

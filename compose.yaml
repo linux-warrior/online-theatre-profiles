@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_healthy
+      profiles-service:
+        condition: service_healthy
     ports:
       - '8000:8080'
     networks:
@@ -234,6 +236,20 @@ services:
     restart: unless-stopped
     healthcheck:
       test: [ 'CMD', '/bin/bash', '-c', '[[ $(redis-cli ping) == "PONG" ]]' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  profiles-service:
+    build:
+      context: ./compose/profiles
+    networks:
+      - movies-network
+    command: [ '/opt/app/commands/gunicorn.sh' ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/profiles/api/_health' ]
       interval: 10s
       timeout: 10s
       retries: 5
