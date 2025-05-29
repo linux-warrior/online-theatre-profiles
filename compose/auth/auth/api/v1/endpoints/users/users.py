@@ -30,7 +30,7 @@ router = APIRouter()
 
 
 @router.get(
-    '/me',
+    '/profile',
     name='users:current_user',
     response_model=UserRead,
     responses={
@@ -44,7 +44,7 @@ async def get_current_user(user: CurrentUserDep) -> UserRead:
 
 
 @router.patch(
-    '/me',
+    '/profile',
     name='users:patch_current_user',
     response_model=UserRead,
     responses={

@@ -132,7 +132,7 @@ async def test_get_current_user(aiohttp_session) -> None:
         'accept': 'application/json',
         'Authorization': f'{token_type.title()} {token_jwt}'
     }
-    url = urljoin(settings.auth_api_v1_url, 'users/me/')
+    url = urljoin(settings.auth_api_v1_url, 'users/profile/')
 
     async with aiohttp_session.get(url, headers=headers) as response:
         status = response.status
@@ -162,7 +162,7 @@ async def test_patch_current_user(aiohttp_session, clean_all_tables_after) -> No
         'Authorization': f'{token_type.title()} {token_jwt}',
         'Content-Type': 'application/json',
     }
-    url = urljoin(settings.auth_api_v1_url, 'users/me/')
+    url = urljoin(settings.auth_api_v1_url, 'users/profile/')
 
     async with aiohttp_session.get(url, headers=headers) as response:
         status = response.status
