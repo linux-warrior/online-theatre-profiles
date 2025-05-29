@@ -15,16 +15,16 @@ from .manager import (
     UserManager,
     UserManagerDep,
 )
+from .models import (
+    UserRead,
+    UserCreate,
+    UserUpdate,
+    ExtendedUserRead,
+)
 from .oauth import (
     OAuthService,
     OAuthServiceDep,
     OAuthAuthorizeResult,
     InvalidOAuthProvider,
     InvalidStateToken,
-)
-from .schemas import (
-    UserRead,
-    UserCreate,
-    UserUpdate,
-    ExtendedUserRead,
 )
