@@ -6,7 +6,7 @@ import uuid
 from pydantic import BaseModel
 
 
-class UserRead(BaseModel):
+class ReadUserResponse(BaseModel):
     id: uuid.UUID
     login: str | None = None
     email: str | None = None
@@ -23,6 +23,6 @@ class UserUpdate(BaseModel):
     password: str | None = None
 
 
-class ExtendedUserRead(UserRead):
+class ExtendedReadUserResponse(ReadUserResponse):
     created: datetime.datetime
     modified: datetime.datetime

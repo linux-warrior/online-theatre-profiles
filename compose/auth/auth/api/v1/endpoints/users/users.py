@@ -18,9 +18,9 @@ from .....services.users import (
     UserManagerDep,
     UserDoesNotExist,
     UserAlreadyExists,
-    UserRead,
+    ReadUserResponse,
     UserUpdate,
-    ExtendedUserRead,
+    ExtendedReadUserResponse,
 )
 from .....services.users.authentication.login_history.dependencies import PageDep
 from .....services.users.authentication.login_history.models import LoginHistoryInDb
@@ -32,21 +32,21 @@ router = APIRouter()
 @router.get(
     '/profile',
     name='users:current_user',
-    response_model=UserRead,
+    response_model=ReadUserResponse,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             'description': 'Token is invalid or missing.',
         },
     },
 )
-async def get_current_user(user: CurrentUserDep) -> UserRead:
-    return UserRead.model_validate(user, from_attributes=True)
+async def get_current_user(user: CurrentUserDep) -> ReadUserResponse:
+    return ReadUserResponse.model_validate(user, from_attributes=True)
 
 
 @router.patch(
     '/profile',
     name='users:patch_current_user',
-    response_model=UserRead,
+    response_model=ReadUserResponse,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             'description': 'Token is invalid or missing.',
@@ -70,7 +70,7 @@ async def get_current_user(user: CurrentUserDep) -> UserRead:
 )
 async def patch_current_user(user: CurrentUserDep,
                              user_update: UserUpdate,
-                             user_manager: UserManagerDep) -> UserRead:
+                             user_manager: UserManagerDep) -> ReadUserResponse:
     try:
         user = await user_manager.update(user_update, user)
     except UserAlreadyExists:
@@ -79,13 +79,13 @@ async def patch_current_user(user: CurrentUserDep,
             detail=ErrorCode.UPDATE_USER_LOGIN_ALREADY_EXISTS,
         )
 
-    return UserRead.model_validate(user, from_attributes=True)
+    return ReadUserResponse.model_validate(user, from_attributes=True)
 
 
 @router.get(
     '/{user_id}/profile',
     name='users:user',
-    response_model=ExtendedUserRead,
+    response_model=ExtendedReadUserResponse,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             'description': 'Missing token or inactive user.',
@@ -100,7 +100,7 @@ async def patch_current_user(user: CurrentUserDep,
 )
 async def get_user(user_id: uuid.UUID,
                    user_manager: UserManagerDep,
-                   _current_superuser: CurrentSuperuserDep) -> ExtendedUserRead:
+                   _current_superuser: CurrentSuperuserDep) -> ExtendedReadUserResponse:
     try:
         user = await user_manager.get(user_id)
     except UserDoesNotExist:
@@ -109,20 +109,20 @@ async def get_user(user_id: uuid.UUID,
             detail=ErrorCode.USER_DOES_NOT_EXIST,
         )
 
-    return ExtendedUserRead.model_validate(user, from_attributes=True)
+    return ExtendedReadUserResponse.model_validate(user, from_attributes=True)
 
 
 @router.get(
     '/list',
     name='users:users-list',
-    response_model=list[ExtendedUserRead],
+    response_model=list[ExtendedReadUserResponse],
 )
 async def get_users_list(*,
                          user_id: uuid.UUID | None = None,
                          user_created: datetime.datetime | None = None,
                          page_size: Annotated[int, Query(ge=1, le=100)] = 100,
                          user_manager: UserManagerDep,
-                         _current_superuser: CurrentSuperuserDep) -> list[ExtendedUserRead]:
+                         _current_superuser: CurrentSuperuserDep) -> list[ExtendedReadUserResponse]:
     users_list = await user_manager.get_list(
         id=user_id,
         created=user_created,
@@ -130,7 +130,7 @@ async def get_users_list(*,
     )
 
     return [
-        ExtendedUserRead.model_validate(user, from_attributes=True)
+        ExtendedReadUserResponse.model_validate(user, from_attributes=True)
         for user in users_list
     ]
 

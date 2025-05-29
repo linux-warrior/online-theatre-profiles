@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from .common import ErrorCode, ErrorModel
 from .....services.users import (
     UserManagerDep,
-    UserRead,
+    ReadUserResponse,
     UserCreate,
     UserAlreadyExists,
 )
@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.post(
     "/register",
-    response_model=UserRead,
+    response_model=ReadUserResponse,
     status_code=status.HTTP_201_CREATED,
     name="register:register",
     responses={
@@ -45,4 +45,4 @@ async def register(user_create: UserCreate, user_manager: UserManagerDep):
             detail=ErrorCode.REGISTER_USER_ALREADY_EXISTS,
         )
 
-    return UserRead.model_validate(created_user, from_attributes=True)
+    return ReadUserResponse.model_validate(created_user, from_attributes=True)
