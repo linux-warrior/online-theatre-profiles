@@ -14,6 +14,9 @@ docker_compose() {
     AUTH_POSTGRESQL_PASSWORD=secret \
     RATELIMITER_TIMES=1000 \
     RATELIMITER_SECONDS=1 \
+    PROFILES_POSTGRESQL_DATABASE=profiles \
+    PROFILES_POSTGRESQL_USERNAME=profiles \
+    PROFILES_POSTGRESQL_PASSWORD=secret \
     docker compose -f compose.tests.yaml "$@"
 }
 
