@@ -152,6 +152,10 @@ services:
       - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-False}
       - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
       - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${AUTH_OTEL_SERVICE_NAME:-auth}
       - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
       - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
       - RATELIMITER_TIMES=$RATELIMITER_TIMES
@@ -191,6 +195,10 @@ services:
       - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-False}
       - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
       - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${AUTH_OTEL_SERVICE_NAME:-auth}
       - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
       - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
       - RATELIMITER_TIMES=$RATELIMITER_TIMES
@@ -249,11 +257,17 @@ services:
         condition: service_healthy
       profiles-service-init:
         condition: service_completed_successfully
+      jaeger:
+        condition: service_healthy
     networks:
       - movies-network
     environment:
       - GUNICORN_WORKERS=${PROFILES_GUNICORN_WORKERS:-}
       - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${PROFILES_OTEL_SERVICE_NAME:-profiles}
       - POSTGRESQL_HOST=profiles-postgresql
       - POSTGRESQL_PORT=5432
       - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
@@ -273,10 +287,16 @@ services:
     depends_on:
       profiles-postgresql:
         condition: service_healthy
+      jaeger:
+        condition: service_healthy
     networks:
       - movies-network
     environment:
       - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${PROFILES_OTEL_SERVICE_NAME:-profiles}
       - POSTGRESQL_HOST=profiles-postgresql
       - POSTGRESQL_PORT=5432
       - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE

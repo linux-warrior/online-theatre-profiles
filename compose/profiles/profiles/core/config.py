@@ -12,6 +12,15 @@ class ProfilesConfig(BaseSettings):
     sql_echo: bool = False
 
 
+class OpenTelemetryConfig(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='otel_')
+
+    enabled: bool = False
+    request_id_required: bool = False
+    exporter_otlp_http_endpoint: str | None = None
+    service_name: str = 'profiles'
+
+
 class PostgreSQLConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='postgresql_')
 
@@ -29,6 +38,7 @@ class PostgreSQLConfig(BaseSettings):
 # noinspection PyArgumentList
 class Settings(BaseSettings):
     profiles: ProfilesConfig = ProfilesConfig()
+    otel: OpenTelemetryConfig = OpenTelemetryConfig()
     postgresql: PostgreSQLConfig = PostgreSQLConfig()  # type: ignore[call-arg]
 
 
