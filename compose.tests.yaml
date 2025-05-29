@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_healthy
+      profiles-service:
+        condition: service_healthy
     networks:
       - movies-network
     environment:
@@ -235,6 +237,81 @@ services:
       retries: 5
       start_period: 10s
 
+  profiles-service:
+    build:
+      context: ./compose/profiles
+      args:
+        - PYTHON_VERSION
+    depends_on:
+      profiles-postgresql:
+        condition: service_healthy
+      profiles-service-init:
+        condition: service_completed_successfully
+    networks:
+      - movies-network
+    environment:
+      - FASTAPI_WORKERS=${PROFILES_FASTAPI_WORKERS:-}
+      - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
+      - POSTGRESQL_HOST=profiles-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s http://localhost:8000/profiles/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./compose/profiles/profiles
+          target: /opt/app/profiles
+        - action: rebuild
+          path: ./compose/profiles/commands
+        - action: rebuild
+          path: ./compose/profiles/pyproject.toml
+        - action: rebuild
+          path: ./compose/profiles/poetry.lock
+
+  profiles-service-init:
+    build:
+      context: ./compose/profiles
+      args:
+        - PYTHON_VERSION
+    depends_on:
+      profiles-postgresql:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
+      - POSTGRESQL_HOST=profiles-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    command: [ '/opt/app/commands/init.sh' ]
+
+  profiles-postgresql:
+    build:
+      context: ./compose/postgresql
+    networks:
+      - movies-network
+    volumes:
+      - 'profiles-postgresql-data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready --username=$PROFILES_POSTGRESQL_USERNAME --dbname=$PROFILES_POSTGRESQL_DATABASE' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
 networks:
   movies-network:
 
@@ -243,3 +320,4 @@ volumes:
   elasticsearch-data:
   auth-postgresql-data:
   auth-redis-data:
+  profiles-postgresql-data:

@@ -9,6 +9,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_healthy
+      profiles-service:
+        condition: service_healthy
     ports:
       - '8000:8080'
     networks:
@@ -150,6 +152,10 @@ services:
       - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-False}
       - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
       - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${AUTH_OTEL_SERVICE_NAME:-auth}
       - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
       - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
       - RATELIMITER_TIMES=$RATELIMITER_TIMES
@@ -189,6 +195,10 @@ services:
       - AUTH_SQL_ECHO=${AUTH_SQL_ECHO:-False}
       - OAUTH_GOOGLE_CLIENT_ID=${AUTH_OAUTH_GOOGLE_CLIENT_ID:-}
       - OAUTH_GOOGLE_CLIENT_SECRET=${AUTH_OAUTH_GOOGLE_CLIENT_SECRET:-}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${AUTH_OTEL_SERVICE_NAME:-auth}
       - SUPERUSER_LOGIN=$AUTH_SUPERUSER_LOGIN
       - SUPERUSER_PASSWORD=$AUTH_SUPERUSER_PASSWORD
       - RATELIMITER_TIMES=$RATELIMITER_TIMES
@@ -239,6 +249,79 @@ services:
       retries: 5
       start_period: 10s
 
+  profiles-service:
+    build:
+      context: ./compose/profiles
+    depends_on:
+      profiles-postgresql:
+        condition: service_healthy
+      profiles-service-init:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - GUNICORN_WORKERS=${PROFILES_GUNICORN_WORKERS:-}
+      - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${PROFILES_OTEL_SERVICE_NAME:-profiles}
+      - POSTGRESQL_HOST=profiles-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    command: [ '/opt/app/commands/gunicorn.sh' ]
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/profiles/api/_health' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  profiles-service-init:
+    build:
+      context: ./compose/profiles
+    depends_on:
+      profiles-postgresql:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
+      - OTEL_ENABLED=${OTEL_ENABLED:-True}
+      - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
+      - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
+      - OTEL_SERVICE_NAME=${PROFILES_OTEL_SERVICE_NAME:-profiles}
+      - POSTGRESQL_HOST=profiles-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    command: [ '/opt/app/commands/init.sh' ]
+
+  profiles-postgresql:
+    build:
+      context: ./compose/postgresql
+    networks:
+      - movies-network
+    volumes:
+      - 'profiles-postgresql-data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready --username=$PROFILES_POSTGRESQL_USERNAME --dbname=$PROFILES_POSTGRESQL_DATABASE' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   jaeger:
     build:
       context: ./compose/jaeger
@@ -265,3 +348,4 @@ volumes:
   postgresql-data:
   auth-postgresql-data:
   auth-redis-data:
+  profiles-postgresql-data:

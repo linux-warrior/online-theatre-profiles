@@ -39,6 +39,7 @@ jobs:
             ./tests/.lint/
             ./compose/auth/.lint/
             ./compose/etl/.lint/
+            ./compose/profiles/.lint/
           include-hidden-files: true
 
   tests:

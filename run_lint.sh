@@ -40,6 +40,7 @@ run_command() {
         tests
         auth
         etl
+        profiles
     )
 
     declare -A services_set

@@ -95,6 +95,28 @@ services:
         - action: rebuild
           path: ./compose/etl/poetry.lock
 
+  profiles:
+    build:
+      context: ./compose/profiles
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'profiles-mypy-cache:/opt/app/.mypy_cache'
+      - './compose/profiles/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./compose/profiles/profiles
+          target: /opt/app/profiles
+        - action: rebuild
+          path: ./compose/profiles/commands
+        - action: rebuild
+          path: ./compose/profiles/pyproject.toml
+        - action: rebuild
+          path: ./compose/profiles/poetry.lock
+
 networks:
   movies-network:
 
@@ -103,3 +125,4 @@ volumes:
   tests-mypy-cache:
   auth-mypy-cache:
   etl-mypy-cache:
+  profiles-mypy-cache:
