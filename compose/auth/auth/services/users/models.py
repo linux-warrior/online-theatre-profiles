@@ -6,11 +6,20 @@ import uuid
 from pydantic import BaseModel
 
 
+class CurrentUserResponse(BaseModel):
+    id: uuid.UUID
+    login: str | None
+    email: str | None
+    is_superuser: bool
+
+
 class ReadUserResponse(BaseModel):
     id: uuid.UUID
-    login: str | None = None
-    email: str | None = None
-    is_superuser: bool = False
+    login: str | None
+    email: str | None
+    is_superuser: bool
+    created: datetime.datetime
+    modified: datetime.datetime
 
 
 class UserCreate(BaseModel):
@@ -21,8 +30,3 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     login: str | None = None
     password: str | None = None
-
-
-class ExtendedReadUserResponse(ReadUserResponse):
-    created: datetime.datetime
-    modified: datetime.datetime

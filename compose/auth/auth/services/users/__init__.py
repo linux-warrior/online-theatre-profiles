@@ -16,10 +16,10 @@ from .manager import (
     UserManagerDep,
 )
 from .models import (
+    CurrentUserResponse,
     ReadUserResponse,
     UserCreate,
     UserUpdate,
-    ExtendedReadUserResponse,
 )
 from .oauth import (
     OAuthService,
