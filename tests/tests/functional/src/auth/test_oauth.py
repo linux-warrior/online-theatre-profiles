@@ -59,7 +59,7 @@ async def test_oauth_success(aiohttp_session, clean_all_tables_before) -> None:
     assert response_data['token_type'] == 'bearer'
 
     access_token = response_data['access_token']
-    profile_url = urljoin(settings.auth_api_v1_url, 'users/me/')
+    profile_url = urljoin(settings.auth_api_v1_url, 'users/profile/')
 
     async with aiohttp_session.get(profile_url, headers={
         'Authorization': f'Bearer {access_token}',

@@ -55,7 +55,7 @@ class AuthConfig(BaseSettings):
 
     @property
     def user_profile_url(self) -> str:
-        return f'{self.scheme}://{self.host}:{self.port}/auth/api/v1/users/me'
+        return f'{self.scheme}://{self.host}:{self.port}/auth/api/v1/users/profile'
 
 
 class SentryConfig(BaseSettings):
