@@ -32,7 +32,7 @@ async def get_user_roles_list(user_id: uuid.UUID,
 
 
 @router.post(
-    '/user/{user_id}/add/{role_id}',
+    '/user/{user_id}/role/{role_id}',
     response_model=ReadUserRoleResponse,
     status_code=status.HTTP_201_CREATED,
     summary='Add a role to a user',
@@ -55,7 +55,7 @@ async def add_user_role(user_id: uuid.UUID,
 
 
 @router.delete(
-    '/user/{user_id}/remove/{role_id}',
+    '/user/{user_id}/role/{role_id}',
     response_model=DeleteUserRoleResponse,
     summary='Remove a role from a user',
 )

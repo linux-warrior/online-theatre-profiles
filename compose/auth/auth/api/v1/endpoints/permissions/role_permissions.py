@@ -32,7 +32,7 @@ async def get_role_permissions_list(role_id: uuid.UUID,
 
 
 @router.post(
-    '/role/{role_id}/add/{permission_id}',
+    '/role/{role_id}/permission/{permission_id}',
     response_model=ReadRolePermissionResponse,
     status_code=status.HTTP_201_CREATED,
     summary='Add a permission to a role',
@@ -55,7 +55,7 @@ async def add_role_permission(role_id: uuid.UUID,
 
 
 @router.delete(
-    '/role/{role_id}/remove/{permission_id}',
+    '/role/{role_id}/permission/{permission_id}',
     response_model=DeleteRolePermissionResponse,
     summary='Remove a permission from a role',
 )
