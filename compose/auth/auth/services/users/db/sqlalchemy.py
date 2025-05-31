@@ -82,12 +82,15 @@ class SQLAlchemyUserDatabase(BaseUserDatabase):
         return await self._get_user(statement)
 
     async def get_by_oauth_account(self, *, oauth_name: str, account_id: str) -> User | None:
-        statement = (
-            select(self.user_table)
-            .join(self.oauth_account_table)
-            .where(self.oauth_account_table.oauth_name == oauth_name)
-            .where(self.oauth_account_table.account_id == account_id)
+        statement = select(
+            self.user_table,
+        ).join(
+            self.oauth_account_table,
+        ).where(
+            self.oauth_account_table.oauth_name == oauth_name,
+            self.oauth_account_table.account_id == account_id,
         )
+
         return await self._get_user(statement)
 
     async def create(self, create_dict: dict[str, Any]) -> User:
@@ -110,12 +113,12 @@ class SQLAlchemyUserDatabase(BaseUserDatabase):
         await self.session.commit()
 
     async def add_oauth_account(self, user: User, create_dict: dict[str, Any]) -> User:
-        await self.session.refresh(user)
-
-        oauth_account = self.oauth_account_table(**create_dict)
+        oauth_account_data = {
+            **create_dict,
+            'user_id': user.id,
+        }
+        oauth_account = self.oauth_account_table(**oauth_account_data)
         self.session.add(oauth_account)
-        user.oauth_accounts.append(oauth_account)
-        self.session.add(user)
 
         await self.session.commit()
 
@@ -129,6 +132,7 @@ class SQLAlchemyUserDatabase(BaseUserDatabase):
             setattr(oauth_account, key, value)
 
         self.session.add(oauth_account)
+
         await self.session.commit()
 
         return user

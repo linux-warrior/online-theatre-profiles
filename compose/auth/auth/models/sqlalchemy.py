@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
 )
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -32,7 +33,7 @@ auth_metadata_obj = MetaData(
 )
 
 
-class AuthBase(DeclarativeBase):
+class AuthBase(AsyncAttrs, DeclarativeBase):
     metadata = auth_metadata_obj
 
 
@@ -88,7 +89,6 @@ class User(AuthBase):
         'OAuthAccount',
         back_populates='user',
         cascade='all, delete-orphan',
-        lazy='selectin',
     )
 
 

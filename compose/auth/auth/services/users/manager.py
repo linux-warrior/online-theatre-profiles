@@ -230,9 +230,11 @@ class UserManager:
 
         try:
             user = await self.get_by_oauth_account(oauth_name=oauth_name, account_id=account_id)
+
         except exceptions.UserDoesNotExist:
             try:
                 user = await self.get_by_email(account_email)
+
             except exceptions.UserDoesNotExist:
                 password = self.password_helper.generate()
                 user_dict = {
@@ -245,7 +247,7 @@ class UserManager:
 
             return user
 
-        for oauth_account in user.oauth_accounts:
+        for oauth_account in await user.awaitable_attrs.oauth_accounts:
             if all([
                 oauth_account.oauth_name == oauth_name,
                 oauth_account.account_id == account_id,
