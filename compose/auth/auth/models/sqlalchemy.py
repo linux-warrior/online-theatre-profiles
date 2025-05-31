@@ -64,10 +64,12 @@ class User(AuthBase):
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
     )
     modified: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
@@ -104,10 +106,12 @@ class Role(AuthBase):
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
     )
     modified: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
@@ -142,6 +146,7 @@ class UserRole(AuthBase):
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
     )
 
@@ -180,10 +185,12 @@ class Permission(AuthBase):
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
     )
     modified: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
@@ -213,6 +220,7 @@ class RolePermission(AuthBase):
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
     )
 
@@ -250,6 +258,7 @@ class LoginHistory(AuthBase):
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
+        index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
     )
 
@@ -292,6 +301,17 @@ class OAuthAccount(AuthBase):
     )
     account_email: Mapped[str] = mapped_column(
         TEXT,
+    )
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+    modified: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+        onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
 
     __table_args__ = (

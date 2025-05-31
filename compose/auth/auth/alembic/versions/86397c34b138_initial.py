@@ -2,7 +2,7 @@
 
 Revision ID: 86397c34b138
 Revises:
-Create Date: 2025-05-11 18:17:28.462601
+Create Date: 2025-05-31 10:39:32.174356
 
 """
 from typing import Sequence, Union
@@ -32,6 +32,20 @@ def upgrade() -> None:
         sa.UniqueConstraint('code', name=op.f('uq_permission_code')),
         schema='auth',
     )
+    op.create_index(
+        op.f('ix_auth_permission_created'),
+        'permission',
+        ['created'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_permission_modified'),
+        'permission',
+        ['modified'],
+        unique=False,
+        schema='auth',
+    )
 
     op.create_table(
         'role',
@@ -41,6 +55,20 @@ def upgrade() -> None:
         sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_role')),
         sa.UniqueConstraint('name', name=op.f('uq_role_name')),
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_role_created'),
+        'role',
+        ['created'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_role_modified'),
+        'role',
+        ['modified'],
+        unique=False,
         schema='auth',
     )
 
@@ -58,6 +86,20 @@ def upgrade() -> None:
         sa.UniqueConstraint('email', name=op.f('uq_user_email')),
         schema='auth',
     )
+    op.create_index(
+        op.f('ix_auth_user_created'),
+        'user',
+        ['created'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_user_modified'),
+        'user',
+        ['modified'],
+        unique=False,
+        schema='auth',
+    )
 
     op.create_table(
         'login_history',
@@ -72,6 +114,13 @@ def upgrade() -> None:
             ondelete='CASCADE',
         ),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_login_history')),
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_login_history_created'),
+        'login_history',
+        ['created'],
+        unique=False,
         schema='auth',
     )
     op.create_index(
@@ -92,6 +141,8 @@ def upgrade() -> None:
         sa.Column('refresh_token', sa.TEXT(), nullable=True),
         sa.Column('account_id', sa.TEXT(), nullable=False),
         sa.Column('account_email', sa.TEXT(), nullable=False),
+        sa.Column('created', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ['user_id'],
             ['auth.user.id'],
@@ -106,6 +157,20 @@ def upgrade() -> None:
         op.f('ix_auth_oauth_account_account_id'),
         'oauth_account',
         ['account_id'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_oauth_account_created'),
+        'oauth_account',
+        ['created'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
+        op.f('ix_auth_oauth_account_modified'),
+        'oauth_account',
+        ['modified'],
         unique=False,
         schema='auth',
     )
@@ -147,6 +212,13 @@ def upgrade() -> None:
         schema='auth',
     )
     op.create_index(
+        op.f('ix_auth_role_permission_created'),
+        'role_permission',
+        ['created'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
         op.f('ix_auth_role_permission_permission_id'),
         'role_permission',
         ['permission_id'],
@@ -184,6 +256,13 @@ def upgrade() -> None:
         schema='auth',
     )
     op.create_index(
+        op.f('ix_auth_user_role_created'),
+        'user_role',
+        ['created'],
+        unique=False,
+        schema='auth',
+    )
+    op.create_index(
         op.f('ix_auth_user_role_role_id'),
         'user_role',
         ['role_id'],
@@ -202,24 +281,35 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index(op.f('ix_auth_user_role_user_id'), table_name='user_role', schema='auth')
     op.drop_index(op.f('ix_auth_user_role_role_id'), table_name='user_role', schema='auth')
+    op.drop_index(op.f('ix_auth_user_role_created'), table_name='user_role', schema='auth')
     op.drop_table('user_role', schema='auth')
 
     op.drop_index(op.f('ix_auth_role_permission_role_id'), table_name='role_permission', schema='auth')
     op.drop_index(op.f('ix_auth_role_permission_permission_id'), table_name='role_permission', schema='auth')
+    op.drop_index(op.f('ix_auth_role_permission_created'), table_name='role_permission', schema='auth')
     op.drop_table('role_permission', schema='auth')
 
     op.drop_index(op.f('ix_auth_oauth_account_user_id'), table_name='oauth_account', schema='auth')
     op.drop_index(op.f('ix_auth_oauth_account_oauth_name'), table_name='oauth_account', schema='auth')
+    op.drop_index(op.f('ix_auth_oauth_account_modified'), table_name='oauth_account', schema='auth')
+    op.drop_index(op.f('ix_auth_oauth_account_created'), table_name='oauth_account', schema='auth')
     op.drop_index(op.f('ix_auth_oauth_account_account_id'), table_name='oauth_account', schema='auth')
     op.drop_table('oauth_account', schema='auth')
 
     op.drop_index(op.f('ix_auth_login_history_user_id'), table_name='login_history', schema='auth')
+    op.drop_index(op.f('ix_auth_login_history_created'), table_name='login_history', schema='auth')
     op.drop_table('login_history', schema='auth')
 
+    op.drop_index(op.f('ix_auth_user_modified'), table_name='user', schema='auth')
+    op.drop_index(op.f('ix_auth_user_created'), table_name='user', schema='auth')
     op.drop_table('user', schema='auth')
 
+    op.drop_index(op.f('ix_auth_role_modified'), table_name='role', schema='auth')
+    op.drop_index(op.f('ix_auth_role_created'), table_name='role', schema='auth')
     op.drop_table('role', schema='auth')
 
+    op.drop_index(op.f('ix_auth_permission_modified'), table_name='permission', schema='auth')
+    op.drop_index(op.f('ix_auth_permission_created'), table_name='permission', schema='auth')
     op.drop_table('permission', schema='auth')
 
     op.execute('DROP SCHEMA auth')
