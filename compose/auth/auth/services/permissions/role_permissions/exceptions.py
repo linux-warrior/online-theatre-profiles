@@ -13,6 +13,6 @@ class RolePermissionNotFound(RolePermissionServiceException):
         return 'Role permission not found'
 
 
-class RolePermissionAlreadyExists(RolePermissionServiceException):
+class RolePermissionCreateError(RolePermissionServiceException):
     def get_default_message(self) -> str:
-        return 'Role permission already exists'
+        return 'Role permission create error'

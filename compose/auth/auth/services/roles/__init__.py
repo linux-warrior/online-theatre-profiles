@@ -1,7 +1,8 @@
 from .exceptions import (
     RoleServiceException,
     RoleNotFound,
-    RoleAlreadyExists,
+    RoleCreateError,
+    RoleUpdateError,
 )
 from .models import (
     ReadRoleResponse,

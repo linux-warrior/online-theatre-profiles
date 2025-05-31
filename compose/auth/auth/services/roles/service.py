@@ -9,7 +9,8 @@ from sqlalchemy.exc import IntegrityError
 
 from .exceptions import (
     RoleNotFound,
-    RoleAlreadyExists,
+    RoleCreateError,
+    RoleUpdateError,
 )
 from .models import (
     ReadRoleResponse,
@@ -66,7 +67,7 @@ class RoleService(AbstractRoleService):
         try:
             role = await self.repository.create(role_create=role_create)
         except IntegrityError as e:
-            raise RoleAlreadyExists from e
+            raise RoleCreateError from e
 
         return ReadRoleResponse.model_validate(role, from_attributes=True)
 
@@ -74,7 +75,7 @@ class RoleService(AbstractRoleService):
         try:
             rows_count = await self.repository.update(role_id=role_id, role_update=role_update)
         except IntegrityError as e:
-            raise RoleAlreadyExists from e
+            raise RoleUpdateError from e
 
         if not rows_count:
             raise RoleNotFound

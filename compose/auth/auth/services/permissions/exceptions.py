@@ -15,6 +15,11 @@ class PermissionNotFound(PermissionServiceException):
         return 'Permission not found'
 
 
-class PermissionAlreadyExists(PermissionServiceException):
+class PermissionCreateError(PermissionServiceException):
     def get_default_message(self) -> str:
-        return 'Permission already exists'
+        return 'Permission create error'
+
+
+class PermissionUpdateError(PermissionServiceException):
+    def get_default_message(self) -> str:
+        return 'Permission update error'
