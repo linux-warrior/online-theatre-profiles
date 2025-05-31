@@ -32,12 +32,16 @@ class PermissionRepository:
 
     async def get_list(self) -> Sequence[Permission]:
         statement = select(Permission).order_by(Permission.created, Permission.id)
+
         result = await self.session.execute(statement)
+
         return result.scalars().all()
 
     async def get(self, *, permission_id: uuid.UUID) -> Permission | None:
         statement = select(Permission).where(Permission.id == permission_id)
+
         result = await self.session.execute(statement)
+
         return result.scalar_one_or_none()
 
     async def create(self, *, permission_create: PermissionCreate) -> Permission:

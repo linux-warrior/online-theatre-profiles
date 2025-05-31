@@ -56,7 +56,7 @@ async def test_get_login_history(
         'Accept': 'application/json',
         'Authorization': f'{token_type.title()} {token_jwt}',
     }
-    login_history_url = urljoin(settings.auth_api_v1_url, 'users/get_login_history')
+    login_history_url = urljoin(settings.auth_api_v1_url, 'users/login-history')
 
     async with aiohttp_session.get(login_history_url, headers=headers) as login_history_response:
         assert login_history_response.status == http.HTTPStatus.OK

@@ -35,7 +35,7 @@ async def get_permissions_list(permission_service: PermissionServiceDep,
 
 
 @router.get(
-    '/get/{permission_id}',
+    '/{permission_id}',
     response_model=ReadPermissionResponse,
     summary='Get permission details',
 )
@@ -72,7 +72,7 @@ async def create_permission(permission_create: PermissionCreate,
 
 
 @router.patch(
-    '/update/{permission_id}',
+    '/{permission_id}',
     response_model=ReadPermissionResponse,
     summary='Update an existing permission',
 )
@@ -100,7 +100,7 @@ async def update_permission(permission_id: uuid.UUID,
 
 
 @router.delete(
-    '/delete/{permission_id}',
+    '/{permission_id}',
     response_model=DeletePermissionResponse,
     summary='Delete a permission',
 )

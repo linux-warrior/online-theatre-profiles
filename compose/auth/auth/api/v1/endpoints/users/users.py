@@ -145,7 +145,7 @@ async def get_users_list(*,
 
 
 @router.get(
-    '/get_login_history',
+    '/login-history',
     name='users:history_login_current_user',
     response_model=list[LoginHistoryInDb],
     status_code=status.HTTP_200_OK,

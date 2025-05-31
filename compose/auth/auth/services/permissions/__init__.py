@@ -1,7 +1,8 @@
 from .exceptions import (
     PermissionServiceException,
     PermissionNotFound,
-    PermissionAlreadyExists,
+    PermissionCreateError,
+    PermissionUpdateError
 )
 from .models import (
     ReadPermissionResponse,

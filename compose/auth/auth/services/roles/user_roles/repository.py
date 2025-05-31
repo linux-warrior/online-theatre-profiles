@@ -32,7 +32,9 @@ class UserRoleRepository:
             UserRole.created,
             UserRole.id,
         )
+
         result = await self.session.execute(statement)
+
         return result.scalars().all()
 
     async def create(self, *, user_id: uuid.UUID, role_id: uuid.UUID) -> UserRole:

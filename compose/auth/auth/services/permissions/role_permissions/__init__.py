@@ -1,7 +1,7 @@
 from .exceptions import (
     RolePermissionServiceException,
     RolePermissionNotFound,
-    RolePermissionAlreadyExists,
+    RolePermissionCreateError,
 )
 from .models import (
     ReadRolePermissionResponse,

@@ -13,6 +13,11 @@ class RoleNotFound(RoleServiceException):
         return 'Role not found'
 
 
-class RoleAlreadyExists(RoleServiceException):
+class RoleCreateError(RoleServiceException):
     def get_default_message(self) -> str:
-        return 'Role already exists'
+        return 'Role create error'
+
+
+class RoleUpdateError(RoleServiceException):
+    def get_default_message(self) -> str:
+        return 'Role update error'

@@ -32,12 +32,16 @@ class RoleRepository:
 
     async def get_list(self) -> Sequence[Role]:
         statement = select(Role).order_by(Role.created, Role.id)
+
         result = await self.session.execute(statement)
+
         return result.scalars().all()
 
     async def get(self, *, role_id: uuid.UUID) -> Role | None:
         statement = select(Role).where(Role.id == role_id)
+
         result = await self.session.execute(statement)
+
         return result.scalar_one_or_none()
 
     async def create(self, *, role_create: RoleCreate) -> Role:

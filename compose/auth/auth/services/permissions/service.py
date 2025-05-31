@@ -9,7 +9,8 @@ from sqlalchemy.exc import IntegrityError
 
 from .exceptions import (
     PermissionNotFound,
-    PermissionAlreadyExists,
+    PermissionCreateError,
+    PermissionUpdateError,
 )
 from .models import (
     ReadPermissionResponse,
@@ -69,7 +70,7 @@ class PermissionService(AbstractPermissionService):
         try:
             permission = await self.repository.create(permission_create=permission_create)
         except IntegrityError as e:
-            raise PermissionAlreadyExists from e
+            raise PermissionCreateError from e
 
         return ReadPermissionResponse.model_validate(permission, from_attributes=True)
 
@@ -83,7 +84,7 @@ class PermissionService(AbstractPermissionService):
                 permission_update=permission_update,
             )
         except IntegrityError as e:
-            raise PermissionAlreadyExists from e
+            raise PermissionUpdateError from e
 
         if not rows_count:
             raise PermissionNotFound

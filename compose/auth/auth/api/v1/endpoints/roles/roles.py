@@ -33,7 +33,7 @@ async def get_roles_list(role_service: RoleServiceDep,
 
 
 @router.get(
-    '/get/{role_id}',
+    '/{role_id}',
     response_model=ReadRoleResponse,
     summary='Get role details',
 )
@@ -70,7 +70,7 @@ async def create_role(role_create: RoleCreate,
 
 
 @router.patch(
-    '/update/{role_id}',
+    '/{role_id}',
     response_model=ReadRoleResponse,
     summary='Update an existing role',
 )
@@ -98,7 +98,7 @@ async def update_role(role_id: uuid.UUID,
 
 
 @router.delete(
-    '/delete/{role_id}',
+    '/{role_id}',
     response_model=DeleteRoleResponse,
     summary='Delete a role',
 )

@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .exceptions import (
     UserRoleNotFound,
-    UserRoleAlreadyExists,
+    UserRoleCreateError,
 )
 from .models import (
     ReadUserRoleResponse,
@@ -50,7 +50,7 @@ class UserRoleService(AbstractUserRoleService):
         try:
             user_role = await self.repository.create(user_id=user_id, role_id=role_id)
         except IntegrityError as e:
-            raise UserRoleAlreadyExists from e
+            raise UserRoleCreateError from e
 
         return ReadUserRoleResponse.model_validate(user_role, from_attributes=True)
 

@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from .exceptions import (
     RolePermissionNotFound,
-    RolePermissionAlreadyExists,
+    RolePermissionCreateError,
 )
 from .models import (
     ReadRolePermissionResponse,
@@ -50,7 +50,7 @@ class RolePermissionService(AbstractRolePermissionService):
         try:
             role_permission = await self.repository.create(role_id=role_id, permission_id=permission_id)
         except IntegrityError as e:
-            raise RolePermissionAlreadyExists from e
+            raise RolePermissionCreateError from e
 
         return ReadRolePermissionResponse.model_validate(role_permission, from_attributes=True)
 

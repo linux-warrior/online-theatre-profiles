@@ -13,6 +13,6 @@ class UserRoleNotFound(UserRoleServiceException):
         return 'User role not found'
 
 
-class UserRoleAlreadyExists(UserRoleServiceException):
+class UserRoleCreateError(UserRoleServiceException):
     def get_default_message(self) -> str:
-        return 'User role already exists'
+        return 'User role create error'

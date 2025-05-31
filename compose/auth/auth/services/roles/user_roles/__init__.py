@@ -1,7 +1,7 @@
 from .exceptions import (
     UserRoleServiceException,
     UserRoleNotFound,
-    UserRoleAlreadyExists,
+    UserRoleCreateError,
 )
 from .models import (
     ReadUserRoleResponse,
