@@ -58,23 +58,12 @@ class AuthConfig(BaseSettings):
         return f'{self.scheme}://{self.host}:{self.port}/auth/api/v1/users/profile'
 
 
-class SentryConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix='sentry_')
-
-    dsn: str = ''
-    enable_sdk: bool = False
-    enable_tracing: bool = False
-    traces_sample_rate: float = 1.0
-    profiles_sample_rate: float = 1.0
-
-
 class Settings(BaseSettings):
     project: ProjectConfig = ProjectConfig()
     redis: RedisConfig = RedisConfig()
     elasticsearch: ElasticConfig = ElasticConfig()
     auth: AuthConfig = AuthConfig()
     otel: OpenTelemetryConfig = OpenTelemetryConfig()
-    sentry: SentryConfig = SentryConfig()
 
 
 settings = Settings()

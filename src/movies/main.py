@@ -7,7 +7,6 @@ from contextlib import asynccontextmanager
 import elasticsearch
 import httpx
 import redis.asyncio as redis
-import sentry_sdk
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from opentelemetry import trace
@@ -26,15 +25,6 @@ from .api.v1.endpoints import films, genres, persons
 from .core import LOGGING, settings
 
 logging.config.dictConfig(LOGGING)
-
-if settings.sentry.enable_sdk:
-    sentry_sdk.init(
-        dsn=settings.sentry.dsn,
-        traces_sample_rate=settings.sentry.traces_sample_rate,
-        profiles_sample_rate=settings.sentry.profiles_sample_rate,
-        enable_tracing=settings.sentry.enable_tracing,
-    )
-    sentry_sdk.set_tag("service_name", "movies-service")
 
 
 def configure_otel() -> None:
