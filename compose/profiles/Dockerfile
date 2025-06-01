@@ -14,7 +14,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --user pipx==1.7.1
-RUN pipx install poetry==2.1.1
+RUN pipx install poetry==2.1.3
 
 ENV VIRTUAL_ENV=/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM bitnami/nginx:1.27.4-debian-12-r9 AS base
+FROM bitnami/nginx:1.28 AS base
 
 FROM base AS dev
 
