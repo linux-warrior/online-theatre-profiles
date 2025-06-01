@@ -1,4 +1,4 @@
-name: online-theatre-user-profiles-lint
+name: online-theatre-profiles-lint
 
 services:
   movies:

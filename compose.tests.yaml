@@ -1,4 +1,4 @@
-name: online-theatre-user-profiles-tests
+name: online-theatre-profiles-tests
 
 services:
   tests:

@@ -1,4 +1,4 @@
-name: online-theatre-user-profiles
+name: online-theatre-profiles
 
 services:
   nginx:
