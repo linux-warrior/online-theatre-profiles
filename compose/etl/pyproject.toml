@@ -4,19 +4,19 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 
-backoff = "2.2.1"
-elasticsearch = "8.16.0"
-psycopg = "3.2.3"
-pydantic = "2.10.3"
-pydantic-settings = "2.6.1"
+backoff = "^2.2.1"
+elasticsearch = "^9.0.1"
+psycopg = "^3.2.9"
+pydantic = "^2.11.5"
+pydantic-settings = "^2.9.1"
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-ciqar = "1.0.0"
-mypy = "1.15.0"
-ruff = "0.9.9"
+ciqar = "^1.1.0"
+mypy = "^1.16.0"
+ruff = "^0.11.12"
 
 [tool.ruff]
 target-version = "py312"
