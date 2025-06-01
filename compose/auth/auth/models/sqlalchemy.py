@@ -45,16 +45,16 @@ class User(AuthBase):
         primary_key=True,
         default=uuid.uuid4,
     )
-    login: Mapped[str] = mapped_column(
+    login: Mapped[str | None] = mapped_column(
         TEXT,
         unique=True,
         nullable=True,
     )
-    password: Mapped[str] = mapped_column(
+    password: Mapped[str | None] = mapped_column(
         TEXT,
         nullable=True,
     )
-    email: Mapped[str] = mapped_column(
+    email: Mapped[str | None] = mapped_column(
         TEXT,
         unique=True,
         nullable=True,
