@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import datetime
+import uuid
+
 from sqlalchemy import (
     MetaData,
+    UUID,
+    TEXT,
+    DateTime,
 )
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     DeclarativeBase,
+    Mapped,
+    mapped_column,
 )
 
 profiles_metadata_obj = MetaData(
@@ -19,5 +28,40 @@ profiles_metadata_obj = MetaData(
 )
 
 
-class ProfilesBase(DeclarativeBase):
+class ProfilesBase(AsyncAttrs, DeclarativeBase):
     metadata = profiles_metadata_obj
+
+
+class Profile(ProfilesBase):
+    __tablename__ = 'profile'
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    last_name: Mapped[str] = mapped_column(
+        TEXT,
+    )
+    first_name: Mapped[str] = mapped_column(
+        TEXT,
+    )
+    patronymic: Mapped[str] = mapped_column(
+        TEXT,
+    )
+    phone: Mapped[str | None] = mapped_column(
+        TEXT,
+        unique=True,
+        nullable=True,
+    )
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+    modified: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+        onupdate=lambda: datetime.datetime.now(datetime.UTC),
+    )
