@@ -2,7 +2,7 @@
 
 Revision ID: df903f750dd2
 Revises:
-Create Date: 2025-06-01 18:20:37.565141
+Create Date: 2025-06-02 13:32:11.614254
 
 """
 from typing import Sequence, Union
@@ -26,11 +26,11 @@ def upgrade() -> None:
         sa.Column('last_name', sa.TEXT(), nullable=False),
         sa.Column('first_name', sa.TEXT(), nullable=False),
         sa.Column('patronymic', sa.TEXT(), nullable=False),
-        sa.Column('phone', sa.TEXT(), nullable=True),
+        sa.Column('phone_number', sa.TEXT(), nullable=True),
         sa.Column('created', sa.DateTime(timezone=True), nullable=False),
         sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('user_id', name=op.f('pk_profile')),
-        sa.UniqueConstraint('phone', name=op.f('uq_profile_phone')),
+        sa.UniqueConstraint('phone_number', name=op.f('uq_profile_phone_number')),
         schema='profiles',
     )
     op.create_index(

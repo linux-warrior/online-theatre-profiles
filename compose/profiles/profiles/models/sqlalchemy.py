@@ -42,14 +42,17 @@ class Profile(ProfilesBase):
     )
     last_name: Mapped[str] = mapped_column(
         TEXT,
+        default='',
     )
     first_name: Mapped[str] = mapped_column(
         TEXT,
+        default='',
     )
     patronymic: Mapped[str] = mapped_column(
         TEXT,
+        default='',
     )
-    phone: Mapped[str | None] = mapped_column(
+    phone_number: Mapped[str | None] = mapped_column(
         TEXT,
         unique=True,
         nullable=True,
