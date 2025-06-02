@@ -8,8 +8,9 @@ from fastapi import (
     status,
 )
 
-router = APIRouter()
-
+from ....services.auth import (
+    CurrentUserDep,
+)
 from ....services.profiles import (
     ProfileServiceDep,
     ReadProfileResponse,
@@ -20,6 +21,8 @@ from ....services.profiles import (
     ProfileServiceException,
 )
 
+router = APIRouter()
+
 
 @router.get(
     '/{user_id}',
@@ -27,6 +30,7 @@ from ....services.profiles import (
     summary='Get profile details',
 )
 async def get_profile(user_id: uuid.UUID,
+                      _current_user: CurrentUserDep,
                       profile_service: ProfileServiceDep) -> ReadProfileResponse:
     try:
         return await profile_service.get(user_id=user_id)
@@ -45,6 +49,7 @@ async def get_profile(user_id: uuid.UUID,
     summary='Create a new profile',
 )
 async def create_profile(user_id: uuid.UUID,
+                         _current_user: CurrentUserDep,
                          profile_create: ProfileCreate,
                          profile_service: ProfileServiceDep) -> ReadProfileResponse:
     try:
@@ -66,6 +71,7 @@ async def create_profile(user_id: uuid.UUID,
     summary='Update an existing profile',
 )
 async def update_profile(user_id: uuid.UUID,
+                         _current_user: CurrentUserDep,
                          profile_update: ProfileUpdate,
                          profile_service: ProfileServiceDep) -> ReadProfileResponse:
     try:
@@ -93,6 +99,7 @@ async def update_profile(user_id: uuid.UUID,
     summary='Delete a profile',
 )
 async def delete_profile(user_id: uuid.UUID,
+                         _current_user: CurrentUserDep,
                          profile_service: ProfileServiceDep) -> DeleteProfileResponse:
     try:
         return await profile_service.delete(user_id=user_id)

@@ -60,10 +60,10 @@ class AuthConfig(BaseSettings):
 
 class Settings(BaseSettings):
     project: ProjectConfig = ProjectConfig()
+    otel: OpenTelemetryConfig = OpenTelemetryConfig()
     redis: RedisConfig = RedisConfig()
     elasticsearch: ElasticConfig = ElasticConfig()
     auth: AuthConfig = AuthConfig()
-    otel: OpenTelemetryConfig = OpenTelemetryConfig()
 
 
 settings = Settings()

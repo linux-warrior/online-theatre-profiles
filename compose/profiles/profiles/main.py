@@ -4,6 +4,7 @@ import logging.config
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from opentelemetry import trace
@@ -46,9 +47,15 @@ def configure_otel() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[dict]:
     configure_otel()
-    yield
+
+    async with (
+        httpx.AsyncClient() as httpx_client,
+    ):
+        yield {
+            'httpx_client': httpx_client,
+        }
 
 
 base_api_prefix = '/profiles/api'
