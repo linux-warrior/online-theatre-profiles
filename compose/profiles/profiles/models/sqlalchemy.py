@@ -38,9 +38,14 @@ class ProfilesBase(AsyncAttrs, DeclarativeBase):
 class Profile(ProfilesBase):
     __tablename__ = 'profile'
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         primary_key=True,
+        default=uuid.uuid4,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        unique=True,
         default=uuid.uuid4,
     )
     last_name: Mapped[str] = mapped_column(
@@ -72,6 +77,12 @@ class Profile(ProfilesBase):
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
     )
 
+    favorites: Mapped[list[Favorite]] = relationship(
+        'Favorite',
+        back_populates='profile',
+        cascade='all, delete-orphan',
+    )
+
 
 class Favorite(ProfilesBase):
     __tablename__ = 'favorite'
@@ -82,7 +93,7 @@ class Favorite(ProfilesBase):
         default=uuid.uuid4,
     )
     profile_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey('profiles.profile.user_id', ondelete='CASCADE'),
+        ForeignKey('profiles.profile.id', ondelete='CASCADE'),
         index=True,
     )
     film_id: Mapped[uuid.UUID] = mapped_column(
