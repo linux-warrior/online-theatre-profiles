@@ -35,11 +35,27 @@ class PostgreSQLConfig(BaseSettings):
         return f'postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
-# noinspection PyArgumentList
+class AuthConfig(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='auth_')
+
+    scheme: str = 'http'
+    host: str = 'localhost'
+    port: int = 8000
+
+    @property
+    def oauth2_token_url(self) -> str:
+        return '/auth/api/v1/jwt/login'
+
+    @property
+    def user_profile_url(self) -> str:
+        return f'{self.scheme}://{self.host}:{self.port}/auth/api/v1/users/profile'
+
+
 class Settings(BaseSettings):
     profiles: ProfilesConfig = ProfilesConfig()
     otel: OpenTelemetryConfig = OpenTelemetryConfig()
     postgresql: PostgreSQLConfig = PostgreSQLConfig()  # type: ignore[call-arg]
+    auth: AuthConfig = AuthConfig()
 
 
 settings = Settings()

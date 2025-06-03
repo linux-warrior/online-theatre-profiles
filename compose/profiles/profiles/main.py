@@ -4,6 +4,7 @@ import logging.config
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from opentelemetry import trace
@@ -18,6 +19,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
+from .api.v1.endpoints import profiles
 from .core import settings, LOGGING
 
 logging.config.dictConfig(LOGGING)
@@ -45,9 +47,15 @@ def configure_otel() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[dict]:
     configure_otel()
-    yield
+
+    async with (
+        httpx.AsyncClient() as httpx_client,
+    ):
+        yield {
+            'httpx_client': httpx_client,
+        }
 
 
 base_api_prefix = '/profiles/api'
@@ -81,3 +89,12 @@ async def check_request_id(request: Request, call_next: Callable[[Request], Awai
 @app.get(f'{base_api_prefix}/_health')
 async def healthcheck():
     return {}
+
+
+profiles_api_prefix = f'{base_api_prefix}/v1'
+
+app.include_router(
+    profiles.router,
+    prefix=f'{profiles_api_prefix}/profiles',
+    tags=['profiles']
+)

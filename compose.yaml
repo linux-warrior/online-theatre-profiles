@@ -35,8 +35,6 @@ services:
     environment:
       - PROJECT_NAME=$PROJECT_NAME
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-}
-      - AUTH_HOST=auth-service
-      - AUTH_PORT=8000
       - OTEL_ENABLED=${OTEL_ENABLED:-True}
       - OTEL_REQUEST_ID_REQUIRED=${OTEL_REQUEST_ID_REQUIRED:-True}
       - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=http://jaeger:4318/v1/traces
@@ -45,6 +43,8 @@ services:
       - REDIS_PORT=6379
       - ELASTIC_HOST=elasticsearch
       - ELASTIC_PORT=9200
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
     command: [ '/opt/app/commands/gunicorn.sh' ]
     healthcheck:
       test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/api/_health' ]
@@ -273,6 +273,8 @@ services:
       - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
       - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
       - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
     command: [ '/opt/app/commands/gunicorn.sh' ]
     healthcheck:
       test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/profiles/api/_health' ]
@@ -302,6 +304,8 @@ services:
       - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
       - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
       - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
     command: [ '/opt/app/commands/init.sh' ]
 
   profiles-postgresql:
