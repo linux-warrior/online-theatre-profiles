@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column('created', sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ['profile_id'],
-            ['profiles.profile.user_id'],
+            ['profiles.profile.id'],
             name=op.f('fk_favorite_profile_id_profile'),
             ondelete='CASCADE',
         ),

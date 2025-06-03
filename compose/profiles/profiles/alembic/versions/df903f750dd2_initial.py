@@ -22,6 +22,7 @@ def upgrade() -> None:
 
     op.create_table(
         'profile',
+        sa.Column('id', sa.UUID(), nullable=False),
         sa.Column('user_id', sa.UUID(), nullable=False),
         sa.Column('last_name', sa.TEXT(), nullable=False),
         sa.Column('first_name', sa.TEXT(), nullable=False),
@@ -29,7 +30,8 @@ def upgrade() -> None:
         sa.Column('phone_number', sa.TEXT(), nullable=True),
         sa.Column('created', sa.DateTime(timezone=True), nullable=False),
         sa.Column('modified', sa.DateTime(timezone=True), nullable=False),
-        sa.PrimaryKeyConstraint('user_id', name=op.f('pk_profile')),
+        sa.PrimaryKeyConstraint('id', name=op.f('pk_profile')),
+        sa.UniqueConstraint('user_id', name=op.f('uq_profile_user_id')),
         sa.UniqueConstraint('phone_number', name=op.f('uq_profile_phone_number')),
         schema='profiles',
     )
