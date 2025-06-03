@@ -30,8 +30,8 @@ router = APIRouter()
     summary='Get profile details',
 )
 async def get_profile(user_id: uuid.UUID,
-                      _current_user: CurrentUserDep,
-                      profile_service: ProfileServiceDep) -> ReadProfileResponse:
+                      profile_service: ProfileServiceDep,
+                      _current_user: CurrentUserDep) -> ReadProfileResponse:
     try:
         return await profile_service.get(user_id=user_id)
 
@@ -49,9 +49,9 @@ async def get_profile(user_id: uuid.UUID,
     summary='Create a new profile',
 )
 async def create_profile(user_id: uuid.UUID,
-                         _current_user: CurrentUserDep,
                          profile_create: ProfileCreate,
-                         profile_service: ProfileServiceDep) -> ReadProfileResponse:
+                         profile_service: ProfileServiceDep,
+                         _current_user: CurrentUserDep) -> ReadProfileResponse:
     try:
         return await profile_service.create(
             user_id=user_id,
@@ -71,9 +71,9 @@ async def create_profile(user_id: uuid.UUID,
     summary='Update an existing profile',
 )
 async def update_profile(user_id: uuid.UUID,
-                         _current_user: CurrentUserDep,
                          profile_update: ProfileUpdate,
-                         profile_service: ProfileServiceDep) -> ReadProfileResponse:
+                         profile_service: ProfileServiceDep,
+                         _current_user: CurrentUserDep) -> ReadProfileResponse:
     try:
         return await profile_service.update(
             user_id=user_id,
@@ -99,8 +99,8 @@ async def update_profile(user_id: uuid.UUID,
     summary='Delete a profile',
 )
 async def delete_profile(user_id: uuid.UUID,
-                         _current_user: CurrentUserDep,
-                         profile_service: ProfileServiceDep) -> DeleteProfileResponse:
+                         profile_service: ProfileServiceDep,
+                         _current_user: CurrentUserDep) -> DeleteProfileResponse:
     try:
         return await profile_service.delete(user_id=user_id)
 

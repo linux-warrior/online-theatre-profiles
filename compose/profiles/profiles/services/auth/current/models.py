@@ -10,3 +10,4 @@ class CurrentUser(BaseModel):
     login: str | None
     email: str | None
     is_superuser: bool
+    permissions: list[str]
