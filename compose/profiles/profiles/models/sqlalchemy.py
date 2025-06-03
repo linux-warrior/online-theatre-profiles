@@ -8,12 +8,15 @@ from sqlalchemy import (
     UUID,
     TEXT,
     DateTime,
+    ForeignKey,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
+    relationship,
 )
 
 profiles_metadata_obj = MetaData(
@@ -67,4 +70,40 @@ class Profile(ProfilesBase):
         index=True,
         default=lambda: datetime.datetime.now(datetime.UTC),
         onupdate=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+
+class Favorite(ProfilesBase):
+    __tablename__ = 'favorite'
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('profiles.profile.user_id', ondelete='CASCADE'),
+        index=True,
+    )
+    film_id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        index=True,
+        default=uuid.uuid4,
+    )
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            'profile_id',
+            'film_id',
+        ),
+    )
+
+    profile: Mapped[Profile] = relationship(
+        'Profile',
+        back_populates='favorites',
     )
