@@ -15,8 +15,8 @@ from .models import (
     ProfileUpdate,
 )
 from ...db.sqlalchemy import (
+    AsyncSession,
     AsyncSessionDep,
-    AsyncSession
 )
 from ...models.sqlalchemy import (
     Profile,
