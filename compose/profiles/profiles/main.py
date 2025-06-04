@@ -19,7 +19,10 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from .api.v1.endpoints import profiles
+from .api.v1.endpoints import (
+    profiles,
+    favorites,
+)
 from .core import settings, LOGGING
 
 logging.config.dictConfig(LOGGING)
@@ -97,4 +100,9 @@ app.include_router(
     profiles.router,
     prefix=f'{profiles_api_prefix}/profiles',
     tags=['profiles']
+)
+app.include_router(
+    favorites.router,
+    prefix=f'{profiles_api_prefix}/favorites',
+    tags=['favorites']
 )
