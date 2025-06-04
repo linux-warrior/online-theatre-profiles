@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import datetime
 import uuid
+from decimal import Decimal
 
 from sqlalchemy import (
     MetaData,
     UUID,
     TEXT,
     DateTime,
+    Numeric,
     ForeignKey,
     UniqueConstraint,
 )
@@ -82,6 +84,11 @@ class Profile(ProfilesBase):
         back_populates='profile',
         cascade='all, delete-orphan',
     )
+    ratings: Mapped[list[Rating]] = relationship(
+        'Rating',
+        back_populates='profile',
+        cascade='all, delete-orphan',
+    )
 
 
 class Favorite(ProfilesBase):
@@ -117,4 +124,49 @@ class Favorite(ProfilesBase):
     profile: Mapped[Profile] = relationship(
         'Profile',
         back_populates='favorites',
+    )
+
+
+class Rating(ProfilesBase):
+    __tablename__ = 'rating'
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('profiles.profile.id', ondelete='CASCADE'),
+        index=True,
+    )
+    film_id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        index=True,
+        default=uuid.uuid4,
+    )
+    rating: Mapped[Decimal] = mapped_column(
+        Numeric(precision=3, scale=1),
+    )
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+    modified: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+        onupdate=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            'profile_id',
+            'film_id',
+        ),
+    )
+
+    profile: Mapped[Profile] = relationship(
+        'Profile',
+        back_populates='ratings',
     )
