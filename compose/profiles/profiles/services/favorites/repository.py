@@ -43,10 +43,11 @@ class FavoriteRepository:
         return result.all()
 
     async def create(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> Favorite:
-        statement = insert(Favorite).values([{
+        favorite_create_dict = {
             'profile_id': select(Profile.id).where(Profile.user_id == user_id),
             'film_id': film_id,
-        }]).returning(Favorite)
+        }
+        statement = insert(Favorite).values([favorite_create_dict]).returning(Favorite)
 
         result = await self.session.execute(statement)
         await self.session.commit()

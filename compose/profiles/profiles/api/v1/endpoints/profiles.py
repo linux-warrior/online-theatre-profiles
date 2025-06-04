@@ -27,7 +27,7 @@ router = APIRouter()
 @router.get(
     '/user/{user_id}',
     response_model=ReadProfileResponse,
-    summary='Get profile details',
+    summary='Get user profile details',
 )
 async def get_profile(user_id: uuid.UUID,
                       profile_service: ProfileServiceDep,
@@ -46,7 +46,7 @@ async def get_profile(user_id: uuid.UUID,
     '/user/{user_id}',
     response_model=ReadProfileResponse,
     status_code=status.HTTP_201_CREATED,
-    summary='Create a new profile',
+    summary='Create a new user profile',
 )
 async def create_profile(user_id: uuid.UUID,
                          profile_create: ProfileCreate,
@@ -68,7 +68,7 @@ async def create_profile(user_id: uuid.UUID,
 @router.patch(
     '/user/{user_id}',
     response_model=ReadProfileResponse,
-    summary='Update an existing profile',
+    summary='Update an existing user profile',
 )
 async def update_profile(user_id: uuid.UUID,
                          profile_update: ProfileUpdate,
@@ -96,7 +96,7 @@ async def update_profile(user_id: uuid.UUID,
 @router.delete(
     '/user/{user_id}',
     response_model=DeleteProfileResponse,
-    summary='Delete a profile',
+    summary='Delete a user profile',
 )
 async def delete_profile(user_id: uuid.UUID,
                          profile_service: ProfileServiceDep,

@@ -57,12 +57,12 @@ class FavoriteService(AbstractFavoriteService):
     async def get_list(self, *, user_id: uuid.UUID) -> list[ReadFavoriteResponse]:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        result_rows_list = await self.repository.get_list(user_id=user_id)
+        favorites_rows_list = await self.repository.get_list(user_id=user_id)
 
         return [self._get_read_favorite_response(
-            favorite=result_row.Favorite,
-            user_id=result_row.user_id,
-        ) for result_row in result_rows_list]
+            favorite=favorite_row.Favorite,
+            user_id=favorite_row.user_id,
+        ) for favorite_row in favorites_rows_list]
 
     async def create(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadFavoriteResponse:
         await self.permission_checker.check_create_permission(user_id=user_id)

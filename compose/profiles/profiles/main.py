@@ -22,6 +22,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from .api.v1.endpoints import (
     profiles,
     favorites,
+    ratings,
 )
 from .core import settings, LOGGING
 
@@ -105,4 +106,9 @@ app.include_router(
     favorites.router,
     prefix=f'{profiles_api_prefix}/favorites',
     tags=['favorites']
+)
+app.include_router(
+    ratings.router,
+    prefix=f'{profiles_api_prefix}/ratings',
+    tags=['ratings']
 )
