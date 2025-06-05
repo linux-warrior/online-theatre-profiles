@@ -17,6 +17,7 @@ from .models import (
     RatingCreate,
     RatingUpdate,
     DeleteRatingResponse,
+    FilmRatingResponse,
 )
 from .repository import (
     RatingRepository,
@@ -58,6 +59,9 @@ class AbstractRatingService(abc.ABC):
 
     @abc.abstractmethod
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteRatingResponse: ...
+
+    @abc.abstractmethod
+    async def get_for_film(self, *, film_id: uuid.UUID) -> FilmRatingResponse: ...
 
 
 class RatingService(AbstractRatingService):
@@ -145,6 +149,13 @@ class RatingService(AbstractRatingService):
             user_id=delete_rating_result.user_id,
             film_id=delete_rating_result.film_id,
         )
+
+    async def get_for_film(self, *, film_id: uuid.UUID) -> FilmRatingResponse:
+        await self.permission_checker.check_read_permission()
+
+        film_rating_result = await self.repository.get_for_film(film_id=film_id)
+
+        return FilmRatingResponse.model_validate(film_rating_result, from_attributes=True)
 
     def _get_read_rating_response(self, *, rating: Rating) -> ReadRatingResponse:
         rating_schema = RatingSchema.model_validate(rating, from_attributes=True)

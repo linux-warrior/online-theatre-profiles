@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import datetime
+import decimal
 import uuid
-from decimal import Decimal
 
 from pydantic import BaseModel
 
@@ -29,6 +29,6 @@ class RatingSchema(BaseModel):
     id: uuid.UUID
     profile_id: uuid.UUID
     film_id: uuid.UUID
-    rating: Decimal
+    rating: decimal.Decimal
     created: datetime.datetime
     modified: datetime.datetime

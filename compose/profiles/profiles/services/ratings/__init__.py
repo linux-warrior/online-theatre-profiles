@@ -9,6 +9,7 @@ from .models import (
     RatingCreate,
     RatingUpdate,
     DeleteRatingResponse,
+    FilmRatingResponse,
 )
 from .service import (
     AbstractRatingService,
