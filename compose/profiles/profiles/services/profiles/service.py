@@ -27,6 +27,12 @@ from ..auth import (
     PermissionServiceDep,
     AbstractPermissionChecker,
 )
+from ...models.schemas import (
+    ProfileSchema,
+)
+from ...models.sqlalchemy import (
+    Profile,
+)
 
 
 class AbstractProfileService(abc.ABC):
@@ -68,7 +74,7 @@ class ProfileService(AbstractProfileService):
         if profile is None:
             raise ProfileNotFound
 
-        return ReadProfileResponse.model_validate(profile, from_attributes=True)
+        return self._get_read_profile_response(profile=profile)
 
     async def create(self,
                      *,
@@ -85,7 +91,7 @@ class ProfileService(AbstractProfileService):
         except IntegrityError as e:
             raise ProfileCreateError from e
 
-        return ReadProfileResponse.model_validate(profile, from_attributes=True)
+        return self._get_read_profile_response(profile=profile)
 
     async def update(self,
                      *,
@@ -94,7 +100,7 @@ class ProfileService(AbstractProfileService):
         await self.permission_checker.check_update_permission(user_id=user_id)
 
         try:
-            rows_count = await self.repository.update(
+            update_profile_result = await self.repository.update(
                 user_id=user_id,
                 profile_update=profile_update,
             )
@@ -102,20 +108,29 @@ class ProfileService(AbstractProfileService):
         except IntegrityError as e:
             raise ProfileUpdateError from e
 
-        if not rows_count:
+        if update_profile_result is None:
             raise ProfileNotFound
 
-        return await self.get(user_id=user_id)
+        return await self.get(user_id=update_profile_result.user_id)
 
     async def delete(self, *, user_id: uuid.UUID) -> DeleteProfileResponse:
         await self.permission_checker.check_delete_permission(user_id=user_id)
 
-        rows_count = await self.repository.delete(user_id=user_id)
+        delete_profile_result = await self.repository.delete(user_id=user_id)
 
-        if not rows_count:
+        if delete_profile_result is None:
             raise ProfileNotFound
 
-        return DeleteProfileResponse(user_id=user_id)
+        return DeleteProfileResponse(
+            id=delete_profile_result.id,
+            user_id=delete_profile_result.user_id,
+        )
+
+    def _get_read_profile_response(self, *, profile: Profile) -> ReadProfileResponse:
+        profile_schema = ProfileSchema.model_validate(profile, from_attributes=True)
+        read_profile_response_dict = profile_schema.model_dump()
+
+        return ReadProfileResponse.model_validate(read_profile_response_dict)
 
 
 async def get_profile_service(repository: ProfileRepositoryDep,

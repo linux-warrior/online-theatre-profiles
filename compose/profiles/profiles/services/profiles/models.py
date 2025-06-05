@@ -9,6 +9,7 @@ from ..common import PhoneNumberField
 
 
 class ReadProfileResponse(BaseModel):
+    id: uuid.UUID
     user_id: uuid.UUID
     last_name: str
     first_name: str
@@ -33,4 +34,5 @@ class ProfileUpdate(BaseModel):
 
 
 class DeleteProfileResponse(BaseModel):
+    id: uuid.UUID
     user_id: uuid.UUID
