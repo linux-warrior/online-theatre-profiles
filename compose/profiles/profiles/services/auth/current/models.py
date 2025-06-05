@@ -11,3 +11,7 @@ class CurrentUser(BaseModel):
     email: str | None
     is_superuser: bool
     permissions: list[str]
+
+    @property
+    def is_admin(self) -> bool:
+        return self.is_superuser or 'profiles.admin' in self.permissions
