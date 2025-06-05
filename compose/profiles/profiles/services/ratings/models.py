@@ -9,7 +9,8 @@ from ..common import RatingField
 
 
 class ReadRatingResponse(BaseModel):
-    user_id: uuid.UUID
+    id: uuid.UUID
+    profile_id: uuid.UUID
     film_id: uuid.UUID
     rating: RatingField
     created: datetime.datetime
@@ -25,5 +26,6 @@ class RatingUpdate(BaseModel):
 
 
 class DeleteRatingResponse(BaseModel):
+    id: uuid.UUID
     user_id: uuid.UUID
     film_id: uuid.UUID

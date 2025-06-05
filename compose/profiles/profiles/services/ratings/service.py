@@ -74,25 +74,19 @@ class RatingService(AbstractRatingService):
     async def get_list(self, *, user_id: uuid.UUID) -> list[ReadRatingResponse]:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        ratings_rows_list = await self.repository.get_list(user_id=user_id)
+        ratings_list = await self.repository.get_list(user_id=user_id)
 
-        return [self._get_read_rating_response(
-            rating=rating_row.Rating,
-            user_id=rating_row.user_id,
-        ) for rating_row in ratings_rows_list]
+        return [self._get_read_rating_response(rating=rating) for rating in ratings_list]
 
     async def get(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadRatingResponse:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        rating_row = await self.repository.get(user_id=user_id, film_id=film_id)
+        rating = await self.repository.get(user_id=user_id, film_id=film_id)
 
-        if rating_row is None:
+        if rating is None:
             raise RatingNotFound
 
-        return self._get_read_rating_response(
-            rating=rating_row.Rating,
-            user_id=rating_row.user_id,
-        )
+        return self._get_read_rating_response(rating=rating)
 
     async def create(self,
                      *,
@@ -111,7 +105,7 @@ class RatingService(AbstractRatingService):
         except IntegrityError as e:
             raise RatingCreateError from e
 
-        return self._get_read_rating_response(rating=rating, user_id=user_id)
+        return self._get_read_rating_response(rating=rating)
 
     async def update(self,
                      *,
@@ -121,7 +115,7 @@ class RatingService(AbstractRatingService):
         await self.permission_checker.check_update_permission(user_id=user_id)
 
         try:
-            rows_count = await self.repository.update(
+            update_rating_result = await self.repository.update(
                 user_id=user_id,
                 film_id=film_id,
                 rating_update=rating_update,
@@ -130,30 +124,31 @@ class RatingService(AbstractRatingService):
         except IntegrityError as e:
             raise RatingUpdateError from e
 
-        if not rows_count:
+        if update_rating_result is None:
             raise RatingNotFound
 
-        return await self.get(user_id=user_id, film_id=film_id)
+        return await self.get(
+            user_id=update_rating_result.user_id,
+            film_id=update_rating_result.film_id,
+        )
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteRatingResponse:
         await self.permission_checker.check_delete_permission(user_id=user_id)
 
-        rows_count = await self.repository.delete(user_id=user_id, film_id=film_id)
+        delete_rating_result = await self.repository.delete(user_id=user_id, film_id=film_id)
 
-        if not rows_count:
+        if delete_rating_result is None:
             raise RatingNotFound
 
-        return DeleteRatingResponse(user_id=user_id, film_id=film_id)
+        return DeleteRatingResponse(
+            id=delete_rating_result.id,
+            user_id=delete_rating_result.user_id,
+            film_id=delete_rating_result.film_id,
+        )
 
-    def _get_read_rating_response(self,
-                                  *,
-                                  rating: Rating,
-                                  user_id: uuid.UUID) -> ReadRatingResponse:
+    def _get_read_rating_response(self, *, rating: Rating) -> ReadRatingResponse:
         rating_schema = RatingSchema.model_validate(rating, from_attributes=True)
-        read_rating_response_dict = {
-            **rating_schema.model_dump(),
-            'user_id': user_id,
-        }
+        read_rating_response_dict = rating_schema.model_dump()
 
         return ReadRatingResponse.model_validate(read_rating_response_dict)
 
