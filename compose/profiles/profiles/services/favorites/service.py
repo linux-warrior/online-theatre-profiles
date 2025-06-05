@@ -57,12 +57,9 @@ class FavoriteService(AbstractFavoriteService):
     async def get_list(self, *, user_id: uuid.UUID) -> list[ReadFavoriteResponse]:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        favorites_rows_list = await self.repository.get_list(user_id=user_id)
+        favorites_list = await self.repository.get_list(user_id=user_id)
 
-        return [self._get_read_favorite_response(
-            favorite=favorite_row.Favorite,
-            user_id=favorite_row.user_id,
-        ) for favorite_row in favorites_rows_list]
+        return [self._get_read_favorite_response(favorite=favorite) for favorite in favorites_list]
 
     async def create(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadFavoriteResponse:
         await self.permission_checker.check_create_permission(user_id=user_id)
@@ -72,27 +69,25 @@ class FavoriteService(AbstractFavoriteService):
         except IntegrityError as e:
             raise FavoriteCreateError from e
 
-        return self._get_read_favorite_response(favorite=favorite, user_id=user_id)
+        return self._get_read_favorite_response(favorite=favorite)
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteFavoriteResponse:
         await self.permission_checker.check_delete_permission(user_id=user_id)
 
-        rows_count = await self.repository.delete(user_id=user_id, film_id=film_id)
+        delete_favorite_result = await self.repository.delete(user_id=user_id, film_id=film_id)
 
-        if not rows_count:
+        if delete_favorite_result is None:
             raise FavoriteNotFound
 
-        return DeleteFavoriteResponse(user_id=user_id, film_id=film_id)
+        return DeleteFavoriteResponse(
+            id=delete_favorite_result.id,
+            user_id=delete_favorite_result.user_id,
+            film_id=delete_favorite_result.film_id,
+        )
 
-    def _get_read_favorite_response(self,
-                                    *,
-                                    favorite: Favorite,
-                                    user_id: uuid.UUID) -> ReadFavoriteResponse:
+    def _get_read_favorite_response(self, *, favorite: Favorite) -> ReadFavoriteResponse:
         favorite_schema = FavoriteSchema.model_validate(favorite, from_attributes=True)
-        read_favorite_response_dict = {
-            **favorite_schema.model_dump(),
-            'user_id': user_id,
-        }
+        read_favorite_response_dict = favorite_schema.model_dump()
 
         return ReadFavoriteResponse.model_validate(read_favorite_response_dict)
 
