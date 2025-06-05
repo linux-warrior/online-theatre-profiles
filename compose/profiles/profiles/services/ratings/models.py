@@ -2,15 +2,10 @@ from __future__ import annotations
 
 import datetime
 import uuid
-from decimal import Decimal
-from typing import Annotated
 
-from pydantic import (
-    BaseModel,
-    Field,
-)
+from pydantic import BaseModel
 
-RatingField = Annotated[Decimal, Field(max_digits=3, decimal_places=1, ge=0, le=10)]
+from ..common import RatingField
 
 
 class ReadRatingResponse(BaseModel):
