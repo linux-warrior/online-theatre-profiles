@@ -29,3 +29,7 @@ class DeleteRatingResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     film_id: uuid.UUID
+
+
+class FilmRatingResponse(BaseModel):
+    rating: RatingField | None

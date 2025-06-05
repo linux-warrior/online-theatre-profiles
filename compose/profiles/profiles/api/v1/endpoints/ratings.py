@@ -17,6 +17,7 @@ from ....services.ratings import (
     RatingCreate,
     RatingUpdate,
     DeleteRatingResponse,
+    FilmRatingResponse,
     RatingServiceException,
     RatingNotFound,
 )
@@ -133,3 +134,14 @@ async def delete_rating(user_id: uuid.UUID,
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
+@router.get(
+    '/film/{film_id}',
+    response_model=FilmRatingResponse,
+    summary='Get an aggregate user rating for a film',
+)
+async def get_film_rating(film_id: uuid.UUID,
+                          rating_service: RatingServiceDep,
+                          _current_user: CurrentUserDep) -> FilmRatingResponse:
+    return await rating_service.get_for_film(film_id=film_id)

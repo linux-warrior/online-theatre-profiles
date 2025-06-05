@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import datetime
+import decimal
 import uuid
-from decimal import Decimal
 
 from sqlalchemy import (
     MetaData,
@@ -144,7 +144,7 @@ class Rating(ProfilesBase):
         index=True,
         default=uuid.uuid4,
     )
-    rating: Mapped[Decimal] = mapped_column(
+    rating: Mapped[decimal.Decimal] = mapped_column(
         Numeric(precision=3, scale=1),
     )
     created: Mapped[datetime.datetime] = mapped_column(
