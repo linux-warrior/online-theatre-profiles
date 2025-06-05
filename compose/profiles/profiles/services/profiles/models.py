@@ -2,17 +2,14 @@ from __future__ import annotations
 
 import datetime
 import uuid
-from typing import Annotated
 
-from pydantic import (
-    BaseModel,
-    Field,
-)
+from pydantic import BaseModel
 
-PhoneNumberField = Annotated[str, Field(pattern=r'^\+79\d{9}$')]
+from ..common import PhoneNumberField
 
 
 class ReadProfileResponse(BaseModel):
+    id: uuid.UUID
     user_id: uuid.UUID
     last_name: str
     first_name: str
@@ -37,4 +34,5 @@ class ProfileUpdate(BaseModel):
 
 
 class DeleteProfileResponse(BaseModel):
+    id: uuid.UUID
     user_id: uuid.UUID

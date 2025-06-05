@@ -25,7 +25,7 @@ router = APIRouter()
 @router.get(
     '/user/{user_id}/list',
     response_model=list[ReadFavoriteResponse],
-    summary="Get a list of user's favorite films",
+    summary='Get a list of user favorite films',
 )
 async def get_favorites_list(user_id: uuid.UUID,
                              favorite_service: FavoriteServiceDep,
@@ -37,12 +37,12 @@ async def get_favorites_list(user_id: uuid.UUID,
     '/user/{user_id}/film/{film_id}',
     response_model=ReadFavoriteResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Add a film to a user's favorites",
+    summary='Add a film to user favorites',
 )
-async def add_user_role(user_id: uuid.UUID,
-                        film_id: uuid.UUID,
-                        favorite_service: FavoriteServiceDep,
-                        _current_user: CurrentUserDep) -> ReadFavoriteResponse:
+async def create_favorite(user_id: uuid.UUID,
+                          film_id: uuid.UUID,
+                          favorite_service: FavoriteServiceDep,
+                          _current_user: CurrentUserDep) -> ReadFavoriteResponse:
     try:
         return await favorite_service.create(
             user_id=user_id,
@@ -59,12 +59,12 @@ async def add_user_role(user_id: uuid.UUID,
 @router.delete(
     '/user/{user_id}/film/{film_id}',
     response_model=DeleteFavoriteResponse,
-    summary="Remove a film from a user's favorites",
+    summary='Remove a film from user favorites',
 )
-async def remove_user_role(user_id: uuid.UUID,
-                           film_id: uuid.UUID,
-                           favorite_service: FavoriteServiceDep,
-                           _current_user: CurrentUserDep) -> DeleteFavoriteResponse:
+async def delete_favorite(user_id: uuid.UUID,
+                          film_id: uuid.UUID,
+                          favorite_service: FavoriteServiceDep,
+                          _current_user: CurrentUserDep) -> DeleteFavoriteResponse:
     try:
         return await favorite_service.delete(
             user_id=user_id,
