@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+import dataclasses
+import uuid
+from collections.abc import Sequence
+from typing import Annotated
+
+from fastapi import Depends
+from sqlalchemy import (
+    select,
+    insert,
+    update,
+    delete,
+)
+
+from .models import (
+    ReviewCreate,
+    ReviewUpdate,
+)
+from ...db.sqlalchemy import (
+    AsyncSession,
+    AsyncSessionDep,
+)
+from ...models.sqlalchemy import (
+    Review,
+    Profile,
+)
+
+
+@dataclasses.dataclass(kw_only=True)
+class UpdateReviewResult:
+    id: uuid.UUID
+    user_id: uuid.UUID
+    film_id: uuid.UUID
+
+
+@dataclasses.dataclass(kw_only=True)
+class DeleteReviewResult:
+    id: uuid.UUID
+    user_id: uuid.UUID
+    film_id: uuid.UUID
+
+
+class ReviewRepository:
+    session: AsyncSession
+
+    def __init__(self, *, session: AsyncSession) -> None:
+        self.session = session
+
+    async def get_list(self, *, user_id: uuid.UUID) -> Sequence[Review]:
+        statement = select(Review).join(
+            Review.profile,
+        ).where(
+            Profile.user_id == user_id,
+        ).order_by(
+            Review.modified.desc(),
+            Review.id.desc(),
+        )
+
+        result = await self.session.execute(statement)
+
+        return result.scalars().all()
+
+    async def get(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> Review | None:
+        statement = select(Review).join(
+            Review.profile,
+        ).where(
+            Profile.user_id == user_id,
+            Review.film_id == film_id,
+        )
+
+        result = await self.session.execute(statement)
+
+        return result.scalar_one_or_none()
+
+    async def create(self,
+                     *,
+                     user_id: uuid.UUID,
+                     film_id: uuid.UUID,
+                     review_create: ReviewCreate) -> Review:
+        review_create_dict = {
+            **review_create.model_dump(),
+            'profile_id': select(Profile.id).where(Profile.user_id == user_id),
+            'film_id': film_id,
+        }
+        statement = insert(Review).values([review_create_dict]).returning(Review)
+
+        result = await self.session.execute(statement)
+        await self.session.commit()
+
+        return result.scalar_one()
+
+    async def update(self,
+                     *,
+                     user_id: uuid.UUID,
+                     film_id: uuid.UUID,
+                     review_update: ReviewUpdate) -> UpdateReviewResult | None:
+        review_update_dict = review_update.model_dump(exclude_unset=True)
+        statement = update(Review).where(
+            Profile.user_id == user_id,
+            Review.film_id == film_id,
+        ).values(review_update_dict).returning(Review.id, Profile.user_id, Review.film_id)
+
+        result = await self.session.execute(statement)
+        await self.session.commit()
+
+        update_review_row = result.one_or_none()
+
+        if update_review_row is None:
+            return None
+
+        return UpdateReviewResult(
+            id=update_review_row.id,
+            user_id=update_review_row.user_id,
+            film_id=update_review_row.film_id,
+        )
+
+    async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteReviewResult | None:
+        statement = delete(Review).where(
+            Profile.user_id == user_id,
+            Review.film_id == film_id,
+        ).returning(Review.id, Profile.user_id, Review.film_id)
+
+        result = await self.session.execute(statement)
+        await self.session.commit()
+
+        delete_review_row = result.one_or_none()
+
+        if delete_review_row is None:
+            return None
+
+        return DeleteReviewResult(
+            id=delete_review_row.id,
+            user_id=delete_review_row.user_id,
+            film_id=delete_review_row.film_id,
+        )
+
+
+async def get_review_repository(session: AsyncSessionDep) -> ReviewRepository:
+    return ReviewRepository(session=session)
+
+
+ReviewRepositoryDep = Annotated[ReviewRepository, Depends(get_review_repository)]

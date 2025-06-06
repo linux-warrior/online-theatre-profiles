@@ -86,7 +86,6 @@ async def create_rating(user_id: uuid.UUID,
 @router.patch(
     '/user/{user_id}/film/{film_id}',
     response_model=ReadRatingResponse,
-    status_code=status.HTTP_201_CREATED,
     summary='Update a user rating',
 )
 async def update_rating(user_id: uuid.UUID,

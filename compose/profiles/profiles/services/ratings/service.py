@@ -164,9 +164,9 @@ class RatingService(AbstractRatingService):
         return ReadRatingResponse.model_validate(read_rating_response_dict)
 
 
-async def get_ratings_service(repository: RatingRepositoryDep,
-                              permission_service: PermissionServiceDep) -> AbstractRatingService:
+async def get_rating_service(repository: RatingRepositoryDep,
+                             permission_service: PermissionServiceDep) -> AbstractRatingService:
     return RatingService(repository=repository, permission_service=permission_service)
 
 
-RatingServiceDep = Annotated[AbstractRatingService, Depends(get_ratings_service)]
+RatingServiceDep = Annotated[AbstractRatingService, Depends(get_rating_service)]

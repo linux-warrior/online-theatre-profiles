@@ -50,7 +50,10 @@ class ProfileRepository:
 
         return result.scalar_one_or_none()
 
-    async def create(self, *, user_id: uuid.UUID, profile_create: ProfileCreate) -> Profile:
+    async def create(self,
+                     *,
+                     user_id: uuid.UUID,
+                     profile_create: ProfileCreate) -> Profile:
         profile_create_dict = {
             **profile_create.model_dump(),
             'user_id': user_id,
@@ -62,7 +65,11 @@ class ProfileRepository:
 
         return result.scalar_one()
 
-    async def update(self, *, user_id: uuid.UUID, profile_update: ProfileUpdate) -> UpdateProfileResult | None:
+    async def update(self,
+                     *,
+                     user_id:
+                     uuid.UUID,
+                     profile_update: ProfileUpdate) -> UpdateProfileResult | None:
         profile_update_dict = profile_update.model_dump(exclude_unset=True)
         statement = update(Profile).where(
             Profile.user_id == user_id,

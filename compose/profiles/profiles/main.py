@@ -23,6 +23,7 @@ from .api.v1.endpoints import (
     profiles,
     favorites,
     ratings,
+    reviews,
 )
 from .core import settings, LOGGING
 
@@ -111,4 +112,9 @@ app.include_router(
     ratings.router,
     prefix=f'{profiles_api_prefix}/ratings',
     tags=['ratings']
+)
+app.include_router(
+    reviews.router,
+    prefix=f'{profiles_api_prefix}/reviews',
+    tags=['reviews']
 )

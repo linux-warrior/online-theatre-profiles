@@ -32,3 +32,14 @@ class RatingSchema(BaseModel):
     rating: decimal.Decimal
     created: datetime.datetime
     modified: datetime.datetime
+
+
+class ReviewSchema(BaseModel):
+    id: uuid.UUID
+    profile_id: uuid.UUID
+    film_id: uuid.UUID
+    summary: str
+    content: str
+    rating: decimal.Decimal | None
+    created: datetime.datetime
+    modified: datetime.datetime
