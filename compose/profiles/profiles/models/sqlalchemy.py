@@ -89,6 +89,11 @@ class Profile(ProfilesBase):
         back_populates='profile',
         cascade='all, delete-orphan',
     )
+    reviews: Mapped[list[Review]] = relationship(
+        'Review',
+        back_populates='profile',
+        cascade='all, delete-orphan',
+    )
 
 
 class Favorite(ProfilesBase):
@@ -169,4 +174,58 @@ class Rating(ProfilesBase):
     profile: Mapped[Profile] = relationship(
         'Profile',
         back_populates='ratings',
+    )
+
+
+class Review(ProfilesBase):
+    __tablename__ = 'review'
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('profiles.profile.id', ondelete='CASCADE'),
+        index=True,
+    )
+    film_id: Mapped[uuid.UUID] = mapped_column(
+        UUID,
+        index=True,
+        default=uuid.uuid4,
+    )
+    summary: Mapped[str] = mapped_column(
+        TEXT,
+        default='',
+    )
+    content: Mapped[str] = mapped_column(
+        TEXT,
+        default='',
+    )
+    rating: Mapped[decimal.Decimal | None] = mapped_column(
+        Numeric(precision=3, scale=1),
+        nullable=True,
+    )
+    created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+    )
+    modified: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+        default=lambda: datetime.datetime.now(datetime.UTC),
+        onupdate=lambda: datetime.datetime.now(datetime.UTC),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            'profile_id',
+            'film_id',
+        ),
+    )
+
+    profile: Mapped[Profile] = relationship(
+        'Profile',
+        back_populates='reviews',
     )
