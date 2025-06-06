@@ -42,3 +42,8 @@ class DeleteReviewResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     film_id: uuid.UUID
+
+
+class FilmReviewsResponse(BaseModel):
+    reviews: list[ReadReviewResponse]
+    rating: RatingField | None

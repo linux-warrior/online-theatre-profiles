@@ -17,6 +17,7 @@ from ....services.reviews import (
     ReviewCreate,
     ReviewUpdate,
     DeleteReviewResponse,
+    FilmReviewsResponse,
     ReviewServiceException,
     ReviewNotFound,
 )
@@ -132,3 +133,14 @@ async def delete_review(user_id: uuid.UUID,
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
+@router.get(
+    '/film/{film_id}',
+    response_model=FilmReviewsResponse,
+    summary='Get user reviews for a film',
+)
+async def get_film_reviews(film_id: uuid.UUID,
+                           review_service: ReviewServiceDep,
+                           _current_user: CurrentUserDep) -> FilmReviewsResponse:
+    return await review_service.get_film_reviews(film_id=film_id)

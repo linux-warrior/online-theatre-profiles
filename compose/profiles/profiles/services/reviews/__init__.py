@@ -9,6 +9,7 @@ from .models import (
     ReviewCreate,
     ReviewUpdate,
     DeleteReviewResponse,
+    FilmReviewsResponse,
 )
 from .service import (
     AbstractReviewService,
