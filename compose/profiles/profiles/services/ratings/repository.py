@@ -45,7 +45,7 @@ class DeleteRatingResult:
 
 @dataclasses.dataclass(kw_only=True)
 class FilmRatingResult:
-    rating: decimal.Decimal | None = None
+    rating: decimal.Decimal | None
 
     def __post_init__(self) -> None:
         if self.rating is not None:
@@ -146,7 +146,7 @@ class RatingRepository:
             film_id=delete_rating_row.film_id,
         )
 
-    async def get_for_film(self, *, film_id: uuid.UUID) -> FilmRatingResult:
+    async def get_film_rating(self, *, film_id: uuid.UUID) -> FilmRatingResult:
         statement = select(
             func.avg(Rating.rating).label('rating_avg'),
         ).where(

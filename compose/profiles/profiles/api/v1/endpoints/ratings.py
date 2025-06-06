@@ -143,4 +143,4 @@ async def delete_rating(user_id: uuid.UUID,
 async def get_film_rating(film_id: uuid.UUID,
                           rating_service: RatingServiceDep,
                           _current_user: CurrentUserDep) -> FilmRatingResponse:
-    return await rating_service.get_for_film(film_id=film_id)
+    return await rating_service.get_film_rating(film_id=film_id)

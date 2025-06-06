@@ -30,7 +30,7 @@ class ReadProfileResponse(BaseModel):
 class ProfileCreate(BaseModel):
     last_name: LastNameField
     first_name: FirstNameField
-    patronymic: PatronymicField
+    patronymic: PatronymicField = ''
     phone_number: PhoneNumberField | None = None
 
 

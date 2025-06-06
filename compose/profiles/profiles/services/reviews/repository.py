@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import decimal
 import uuid
 from collections.abc import Sequence
 from typing import Annotated
@@ -11,6 +12,7 @@ from sqlalchemy import (
     insert,
     update,
     delete,
+    func,
 )
 
 from .models import (
@@ -39,6 +41,15 @@ class DeleteReviewResult:
     id: uuid.UUID
     user_id: uuid.UUID
     film_id: uuid.UUID
+
+
+@dataclasses.dataclass(kw_only=True)
+class FilmRatingResult:
+    rating: decimal.Decimal | None
+
+    def __post_init__(self) -> None:
+        if self.rating is not None:
+            self.rating = self.rating.quantize(decimal.Decimal('0.1'), rounding=decimal.ROUND_DOWN)
 
 
 class ReviewRepository:
@@ -134,6 +145,33 @@ class ReviewRepository:
             user_id=delete_review_row.user_id,
             film_id=delete_review_row.film_id,
         )
+
+    async def get_film_reviews(self, *, film_id: uuid.UUID) -> Sequence[Review]:
+        statement = select(Review).where(
+            Review.film_id == film_id,
+        ).order_by(
+            Review.modified.desc(),
+            Review.id.desc(),
+        )
+
+        result = await self.session.execute(statement)
+
+        return result.scalars().all()
+
+    async def get_film_rating(self, *, film_id: uuid.UUID) -> FilmRatingResult:
+        statement = select(
+            func.avg(Review.rating).label('rating_avg'),
+        ).where(
+            Review.film_id == film_id,
+        ).group_by(
+            Review.film_id,
+        )
+
+        result = await self.session.execute(statement)
+
+        rating_avg = result.scalar_one_or_none()
+
+        return FilmRatingResult(rating=rating_avg)
 
 
 async def get_review_repository(session: AsyncSessionDep) -> ReviewRepository:
