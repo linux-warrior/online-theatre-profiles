@@ -84,7 +84,11 @@ class RatingRepository:
 
         return result.scalar_one_or_none()
 
-    async def create(self, *, user_id: uuid.UUID, film_id: uuid.UUID, rating_create: RatingCreate) -> Rating:
+    async def create(self,
+                     *,
+                     user_id: uuid.UUID,
+                     film_id: uuid.UUID,
+                     rating_create: RatingCreate) -> Rating:
         rating_create_dict = {
             **rating_create.model_dump(),
             'profile_id': select(Profile.id).where(Profile.user_id == user_id),
