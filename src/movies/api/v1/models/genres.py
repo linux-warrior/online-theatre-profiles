@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import uuid
-
-from pydantic import BaseModel
+from .base import DocumentResponse
 
 
-class Genre(BaseModel):
-    uuid: uuid.UUID
+class GenreResponse(DocumentResponse):
     name: str

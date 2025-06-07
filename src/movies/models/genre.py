@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import uuid
-
-from pydantic import BaseModel, Field
+from .base import Document
 
 
-class Genre(BaseModel):
-    id: uuid.UUID = Field(serialization_alias='uuid')
+class Genre(Document):
     name: str

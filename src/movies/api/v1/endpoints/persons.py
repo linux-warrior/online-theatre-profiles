@@ -11,7 +11,10 @@ from fastapi import (
 )
 
 from ..dependencies import PageDep
-from ..models.persons import Person, PersonFilm
+from ..models import (
+    PersonResponse,
+    FilmResponse,
+)
 from ....services import (
     PersonServiceDep,
     FilmServiceDep,
@@ -23,49 +26,54 @@ router = APIRouter()
 
 @router.get(
     '/{uuid}',
-    response_model=Person,
-    summary='Get person by uuid',
-    description='Get concrete person by uuid with list of films and roles.',
+    response_model=PersonResponse,
+    summary='Get a person by UUID',
+    description='Get a concrete person by UUID with their films and roles.',
 )
-async def get_by_id(
+async def get_person_by_id(
         *,
-        person_uuid: Annotated[uuid.UUID, Path(alias='uuid')],
+        person_id: Annotated[uuid.UUID, Path(alias='uuid')],
         person_service: PersonServiceDep,
         _user: AuthUserDep,
-) -> Person:
-    person = await person_service.get_by_id(person_uuid)
-    if not person:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Person not found')
+) -> PersonResponse:
+    person = await person_service.get_by_id(person_id)
 
-    return Person(**person.model_dump(by_alias=True))
+    if person is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Person not found',
+        )
+
+    return PersonResponse.model_validate(person, from_attributes=True)
 
 
 @router.get(
     '/{uuid}/film/',
-    response_model=list[PersonFilm],
-    summary='Get list of films by person uuid',
-    description='Get list of films with imdb rating by person uuid.'
+    response_model=list[FilmResponse],
+    summary='Get a list of films by person UUID',
+    description='Get a list of person films with their IMDB rating.',
 )
-async def get_by_id_with_films(
+async def get_person_films(
         *,
-        person_uuid: Annotated[uuid.UUID, Path(alias='uuid')],
+        person_id: Annotated[uuid.UUID, Path(alias='uuid')],
         film_service: FilmServiceDep,
         _user: AuthUserDep,
-) -> list[PersonFilm]:
-    films_person = await film_service.get_list_by_person(person_uuid)
-    if not films_person:
-        return []
+) -> list[FilmResponse]:
+    films_list = await film_service.get_list_by_person(person_id)
 
-    return [PersonFilm(**item.model_dump(by_alias=True)) for item in films_person]
+    return [
+        FilmResponse.model_validate(film, from_attributes=True)
+        for film in films_list
+    ]
 
 
 @router.get(
     '/search/',
-    response_model=list[Person],
-    summary='Search persons',
+    response_model=list[PersonResponse],
+    summary='Search a person',
     description=(
-            'Search persons with list of films and roles by their full name with pagination. '
-            'The maximum count of items on one page are 150.'
+            'Search a person with their films and roles by full name with pagination. '
+            'The maximum number of persons returned on one page is 150.'
     ),
 )
 async def search(
@@ -74,9 +82,17 @@ async def search(
         page: PageDep,
         person_service: PersonServiceDep,
         _user: AuthUserDep,
-) -> list[Person]:
-    person_list = await person_service.search(query=query, page_number=page.number, page_size=page.size)
-    if not person_list:
+) -> list[PersonResponse]:
+    if not query:
         return []
 
-    return [Person(**item.model_dump(by_alias=True)) for item in person_list]
+    persons_list = await person_service.search(
+        query=query,
+        page_number=page.number,
+        page_size=page.size,
+    )
+
+    return [
+        PersonResponse.model_validate(person, from_attributes=True)
+        for person in persons_list
+    ]

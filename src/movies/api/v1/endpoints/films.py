@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import enum
 import uuid
-from enum import Enum
 from http import HTTPStatus
 from typing import Annotated
 
@@ -12,36 +12,40 @@ from fastapi import (
 )
 
 from ..dependencies import PageDep
-from ..models.films import FilmInfo, Film
+from ..models import (
+    FilmResponse,
+    ExtendedFilmResponse,
+)
 from ....services import FilmServiceDep
 from ....services.auth import AuthUserDep
 
 router = APIRouter()
 
 
-class SortOrderEnum(str, Enum):
-    asc = "asc"
-    desc = "desc"
+class SortOrderEnum(enum.StrEnum):
+    asc = 'asc'
+    desc = 'desc'
 
 
 @router.get(
     '/',
-    response_model=list[Film],
-    summary='Get list of films',
+    response_model=list[FilmResponse],
+    summary='Get a list of films',
     description=(
-            'Get list of films with sorting, pagination and filter by concrete genre. '
-            'The maximum count of films on one page are 150.'
-    )
+            'Get a list of films with sorting, pagination and filtering by concrete genre. '
+            'The maximum number of films returned on one page is 150.'
+    ),
 )
-async def get_list(
+async def get_films_list(
         *,
         sort: str = '',
         genre: uuid.UUID | None = None,
         page: PageDep,
         film_service: FilmServiceDep,
         _user: AuthUserDep,
-) -> list[Film]:
+) -> list[FilmResponse]:
     sort_by = {}
+
     if sort:
         is_first_dash = sort[0] == '-'
 
@@ -54,55 +58,68 @@ async def get_list(
     if not sort_by:
         sort_by = {'field': 'id', 'order': SortOrderEnum.asc}
 
-    film_list = await film_service.get_list(
+    films_list = await film_service.get_list(
         sort=sort_by,
         genre_uuid=genre,
         page_number=page.number,
-        page_size=page.size
+        page_size=page.size,
     )
-    if not film_list:
-        return []
 
-    return [Film(**item.model_dump(by_alias=True)) for item in film_list]
+    return [
+        FilmResponse.model_validate(film, from_attributes=True)
+        for film in films_list
+    ]
 
 
 @router.get(
     '/{uuid}',
-    response_model=FilmInfo,
-    summary='Get film by uuid',
-    description='Get concrete film by uuid.'
+    response_model=ExtendedFilmResponse,
+    summary='Get a film by UUID',
+    description='Get a concrete film by UUID.',
 )
-async def get_by_id(
+async def get_film_by_id(
         *,
-        film_uuid: Annotated[uuid.UUID, Path(alias='uuid')],
+        film_id: Annotated[uuid.UUID, Path(alias='uuid')],
         film_service: FilmServiceDep,
         _user: AuthUserDep,
-) -> FilmInfo:
-    film = await film_service.get_by_id(film_uuid)
-    if not film:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='Film not found')
+) -> ExtendedFilmResponse:
+    film = await film_service.get_by_id(film_id)
 
-    return FilmInfo(**film.model_dump(by_alias=True))
+    if film is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Film not found',
+        )
+
+    return ExtendedFilmResponse.model_validate(film, from_attributes=True)
 
 
 @router.get(
     '/search/',
-    response_model=list[Film],
-    summary='Search film by query',
-    description='Search film by title with pagination. The maximum count of films on one page are 150.'
+    response_model=list[FilmResponse],
+    summary='Search a film by query',
+    description=(
+            'Search a film by title with pagination. '
+            'The maximum number of films returned on one page is 150.'
+    ),
 )
-async def search(
+async def search_films(
         *,
         query: str = '',
         page: PageDep,
         film_service: FilmServiceDep,
         _user: AuthUserDep,
-) -> list[Film]:
+) -> list[FilmResponse]:
     if not query:
         return []
 
-    film_list = await film_service.search(query=query, page_number=page.number, page_size=page.size)
-    if not film_list:
-        return []
+    films_list = await film_service.search(
+        query=query,
+        page_number=page.number,
+        page_size=page.size,
+    )
 
-    return [Film(**item.model_dump(by_alias=True)) for item in film_list]
+    return [
+        FilmResponse.model_validate(film, from_attributes=True)
+        for film in films_list
+    ]

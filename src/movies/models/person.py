@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import uuid
+from .base import (
+    Document,
+    DocumentRelation,
+)
 
-from pydantic import BaseModel, Field
 
-
-class Person(BaseModel):
-    id: uuid.UUID = Field(serialization_alias='uuid')
+class Person(Document):
     full_name: str
-    films: list[PersonFilmRoles]
+    films: list[PersonFilm]
 
-class PersonFilmRoles(BaseModel):
-    id: uuid.UUID = Field(serialization_alias='uuid')
+
+class PersonFilm(DocumentRelation):
     roles: list[str]

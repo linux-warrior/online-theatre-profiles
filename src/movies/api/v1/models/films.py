@@ -1,44 +1,41 @@
 from __future__ import annotations
 
-import uuid
+from pydantic import Field
 
-from pydantic import BaseModel
-
-
-class PersonMixin:
-    uuid: uuid.UUID
-    full_name: str
+from .base import (
+    DocumentResponse,
+    DocumentRelationResponse,
+)
 
 
-class Director(BaseModel, PersonMixin):
-    pass
+class FilmResponse(DocumentResponse):
+    title: str
+    rating: float | None = Field(serialization_alias='imdb_rating')
 
 
-class Actor(BaseModel, PersonMixin):
-    pass
+class ExtendedFilmResponse(FilmResponse):
+    description: str | None
+    genres: list[FilmGenreResponse] = Field(serialization_alias='genre')
+    directors: list[FilmDirectorResponse]
+    actors: list[FilmActorResponse]
+    writers: list[FilmWriterResponse]
 
 
-class Writer(BaseModel, PersonMixin):
-    pass
-
-
-class Genre(BaseModel):
-    uuid: uuid.UUID
+class FilmGenreResponse(DocumentRelationResponse):
     name: str
 
 
-class FilmInfo(BaseModel):
-    uuid: uuid.UUID
-    title: str
-    imdb_rating: float | None
-    description: str | None
-    genre: list[Genre]
-    directors: list[Director] | None
-    actors: list[Actor] | None
-    writers: list[Writer] | None
+class FilmPersonResponse(DocumentRelationResponse):
+    full_name: str
 
 
-class Film(BaseModel):
-    uuid: uuid.UUID
-    title: str
-    imdb_rating: float | None
+class FilmDirectorResponse(FilmPersonResponse):
+    pass
+
+
+class FilmActorResponse(FilmPersonResponse):
+    pass
+
+
+class FilmWriterResponse(FilmPersonResponse):
+    pass
