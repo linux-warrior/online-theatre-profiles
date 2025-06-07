@@ -6,11 +6,11 @@ import httpx
 from fastapi.params import Depends
 
 from .token import TokenDep
-from ...core import settings
-from ...dependencies import HTTPXClientDep
+from ....core import settings
+from ....dependencies import HTTPXClientDep
 
 
-class AuthClient:
+class CurrentUserClient:
     httpx_client: httpx.AsyncClient
     token: str
 
@@ -33,8 +33,8 @@ class AuthClient:
         }
 
 
-def get_auth_client(httpx_client: HTTPXClientDep, token: TokenDep) -> AuthClient:
-    return AuthClient(httpx_client=httpx_client, token=token)
+def get_current_user_client(httpx_client: HTTPXClientDep, token: TokenDep) -> CurrentUserClient:
+    return CurrentUserClient(httpx_client=httpx_client, token=token)
 
 
-AuthClientDep = Annotated[AuthClient, Depends(get_auth_client)]
+CurrentUserClientDep = Annotated[CurrentUserClient, Depends(get_current_user_client)]

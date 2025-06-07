@@ -13,7 +13,7 @@ from fastapi import (
 from ..dependencies import PageDep
 from ..models import GenreResponse
 from ....services import GenreServiceDep
-from ....services.auth import AuthUserDep
+from ....services.auth import CurrentUserDep
 
 router = APIRouter()
 
@@ -27,12 +27,10 @@ router = APIRouter()
             'The maximum number of genres returned on one page is 150.'
     ),
 )
-async def get_genres_list(
-        *,
-        page: PageDep,
-        genre_service: GenreServiceDep,
-        _user: AuthUserDep,
-) -> list[GenreResponse]:
+async def get_genres_list(*,
+                          page: PageDep,
+                          genre_service: GenreServiceDep,
+                          _current_user: CurrentUserDep) -> list[GenreResponse]:
     genres_list = await genre_service.get_list(
         page_number=page.number,
         page_size=page.size,
@@ -50,12 +48,10 @@ async def get_genres_list(
     summary='Get a genre by UUID',
     description='Get a concrete genre by UUID.',
 )
-async def get_genre_by_id(
-        *,
-        genre_id: Annotated[uuid.UUID, Path(alias='uuid')],
-        genre_service: GenreServiceDep,
-        _user: AuthUserDep,
-) -> GenreResponse:
+async def get_genre_by_id(*,
+                          genre_id: Annotated[uuid.UUID, Path(alias='uuid')],
+                          genre_service: GenreServiceDep,
+                          _current_user: CurrentUserDep) -> GenreResponse:
     genre = await genre_service.get_by_id(genre_id)
 
     if genre is None:

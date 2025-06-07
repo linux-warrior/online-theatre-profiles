@@ -28,7 +28,7 @@ class CurrentUserClient:
 
     def get_headers(self) -> dict:
         return {
-            'X-Request-Id': 'movies',
+            'X-Request-Id': 'profiles',
             'Authorization': f'Bearer {self.token}',
         }
 

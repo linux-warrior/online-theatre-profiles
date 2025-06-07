@@ -17,7 +17,7 @@ from ..models import (
     ExtendedFilmResponse,
 )
 from ....services import FilmServiceDep
-from ....services.auth import AuthUserDep
+from ....services.auth import CurrentUserDep
 
 router = APIRouter()
 
@@ -36,14 +36,12 @@ class SortOrderEnum(enum.StrEnum):
             'The maximum number of films returned on one page is 150.'
     ),
 )
-async def get_films_list(
-        *,
-        sort: str = '',
-        genre: uuid.UUID | None = None,
-        page: PageDep,
-        film_service: FilmServiceDep,
-        _user: AuthUserDep,
-) -> list[FilmResponse]:
+async def get_films_list(*,
+                         sort: str = '',
+                         genre: uuid.UUID | None = None,
+                         page: PageDep,
+                         film_service: FilmServiceDep,
+                         _current_user: CurrentUserDep) -> list[FilmResponse]:
     sort_by = {}
 
     if sort:
@@ -77,12 +75,10 @@ async def get_films_list(
     summary='Get a film by UUID',
     description='Get a concrete film by UUID.',
 )
-async def get_film_by_id(
-        *,
-        film_id: Annotated[uuid.UUID, Path(alias='uuid')],
-        film_service: FilmServiceDep,
-        _user: AuthUserDep,
-) -> ExtendedFilmResponse:
+async def get_film_by_id(*,
+                         film_id: Annotated[uuid.UUID, Path(alias='uuid')],
+                         film_service: FilmServiceDep,
+                         _current_user: CurrentUserDep) -> ExtendedFilmResponse:
     film = await film_service.get_by_id(film_id)
 
     if film is None:
@@ -103,13 +99,11 @@ async def get_film_by_id(
             'The maximum number of films returned on one page is 150.'
     ),
 )
-async def search_films(
-        *,
-        query: str = '',
-        page: PageDep,
-        film_service: FilmServiceDep,
-        _user: AuthUserDep,
-) -> list[FilmResponse]:
+async def search_films(*,
+                       query: str = '',
+                       page: PageDep,
+                       film_service: FilmServiceDep,
+                       _current_user: CurrentUserDep) -> list[FilmResponse]:
     if not query:
         return []
 

@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from ...core import settings
+from ....core import settings
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=settings.auth.oauth2_token_url,
