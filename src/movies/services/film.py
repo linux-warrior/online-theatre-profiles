@@ -52,7 +52,7 @@ class FilmService:
             query: str,
             page_number: int,
             page_size: int,
-    ) -> list[Film] | None:
+    ) -> list[Film]:
         search_query = self.search_service.create_query().search_films(
             query=query,
             page_number=page_number,

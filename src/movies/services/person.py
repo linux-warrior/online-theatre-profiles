@@ -23,7 +23,7 @@ class PersonService:
             query: str,
             page_number: int,
             page_size: int,
-    ) -> list[Person] | None:
+    ) -> list[Person]:
         search_query = self.search_service.create_query().search_persons(
             query=query,
             page_number=page_number,

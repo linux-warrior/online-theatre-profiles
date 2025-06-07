@@ -5,13 +5,13 @@ from typing import Annotated
 import httpx
 from fastapi import HTTPException, Depends, status
 
-from .client import AuthClientDep
-from ...models import User
+from .client import CurrentUserClientDep
+from .models import CurrentUser
 
 
-async def get_auth_user(auth_client: AuthClientDep) -> User:
+async def get_current_user(current_user_client: CurrentUserClientDep) -> CurrentUser:
     try:
-        user_data = await auth_client.get_user_profile()
+        user_data = await current_user_client.get_user_profile()
 
     except httpx.HTTPStatusError as e:
         if e.response.status_code == status.HTTP_403_FORBIDDEN:
@@ -22,7 +22,7 @@ async def get_auth_user(auth_client: AuthClientDep) -> User:
     except httpx.HTTPError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-    return User(**user_data)
+    return CurrentUser(**user_data)
 
 
-AuthUserDep = Annotated[User, Depends(get_auth_user)]
+CurrentUserDep = Annotated[CurrentUser, Depends(get_current_user)]

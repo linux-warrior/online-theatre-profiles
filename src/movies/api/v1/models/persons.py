@@ -1,22 +1,15 @@
 from __future__ import annotations
 
-import uuid
-
-from pydantic import BaseModel
-
-
-class PersonFilmRoles(BaseModel):
-    uuid: uuid.UUID
-    roles: list[str]
+from .base import (
+    DocumentResponse,
+    DocumentRelationResponse,
+)
 
 
-class Person(BaseModel):
-    uuid: uuid.UUID
+class PersonResponse(DocumentResponse):
     full_name: str
-    films: list[PersonFilmRoles]
+    films: list[PersonFilmResponse]
 
 
-class PersonFilm(BaseModel):
-    uuid: uuid.UUID
-    title: str
-    imdb_rating: float
+class PersonFilmResponse(DocumentRelationResponse):
+    roles: list[str]

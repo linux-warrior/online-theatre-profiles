@@ -1,4 +1,4 @@
-from .current import (
+from .user import (
     CurrentUser,
     CurrentUserDep,
 )
