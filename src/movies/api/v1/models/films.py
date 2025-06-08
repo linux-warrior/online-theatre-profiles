@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from pydantic import Field
+import decimal
+import uuid
+
+from pydantic import (
+    BaseModel,
+    Field,
+)
 
 from .base import (
     DocumentResponse,
@@ -19,6 +25,7 @@ class ExtendedFilmResponse(FilmResponse):
     directors: list[FilmDirectorResponse]
     actors: list[FilmActorResponse]
     writers: list[FilmWriterResponse]
+    users: FilmUsersResponse = Field(default_factory=lambda: FilmUsersResponse())
 
 
 class FilmGenreResponse(DocumentRelationResponse):
@@ -39,3 +46,24 @@ class FilmActorResponse(FilmPersonResponse):
 
 class FilmWriterResponse(FilmPersonResponse):
     pass
+
+
+class FilmUsersResponse(BaseModel):
+    rating: FilmRatingResponse | None = None
+    reviews: FilmReviewsResponse | None = None
+
+
+class FilmRatingResponse(BaseModel):
+    rating: decimal.Decimal | None
+
+
+class FilmReviewsResponse(BaseModel):
+    reviews: list[ReviewResponse]
+    rating: decimal.Decimal | None
+
+
+class ReviewResponse(BaseModel):
+    id: uuid.UUID
+    summary: str
+    content: str
+    rating: decimal.Decimal | None

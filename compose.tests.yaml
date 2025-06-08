@@ -67,6 +67,8 @@ services:
       - ELASTIC_PORT=9200
       - AUTH_HOST=auth-service
       - AUTH_PORT=8000
+      - PROFILES_HOST=profiles-service
+      - PROFILES_PORT=8000
     healthcheck:
       test: [ 'CMD-SHELL', 'curl -s http://localhost:8000/api/_health' ]
       interval: 10s
