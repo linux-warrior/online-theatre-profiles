@@ -45,6 +45,8 @@ services:
       - ELASTIC_PORT=9200
       - AUTH_HOST=auth-service
       - AUTH_PORT=8000
+      - PROFILES_HOST=profiles-service
+      - PROFILES_PORT=8000
     command: [ '/opt/app/commands/gunicorn.sh' ]
     healthcheck:
       test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/api/_health' ]

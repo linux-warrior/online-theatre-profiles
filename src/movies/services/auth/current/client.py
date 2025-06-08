@@ -3,37 +3,37 @@ from __future__ import annotations
 from typing import Annotated
 
 import httpx
-from fastapi.params import Depends
+from fastapi import Depends
 
-from .token import TokenDep
+from .models import CurrentUser
+from .token import (
+    TokenDep,
+    TokenHttpClient,
+)
+from ...http import HttpClient
 from ....core import settings
 from ....dependencies import HTTPXClientDep
 
 
 class CurrentUserClient:
-    httpx_client: httpx.AsyncClient
-    token: str
+    http_client: HttpClient
 
     def __init__(self, *, httpx_client: httpx.AsyncClient, token: str) -> None:
-        self.httpx_client = httpx_client
-        self.token = token
-
-    async def get_user_profile(self) -> dict:
-        response = await self.httpx_client.get(
-            url=settings.auth.user_profile_url,
-            headers=self.get_headers(),
+        self.http_client = TokenHttpClient(
+            httpx_client=httpx_client,
+            base_url=settings.auth.api_v1_url,
+            token=token,
         )
-        response.raise_for_status()
-        return response.json()
 
-    def get_headers(self) -> dict:
-        return {
-            'X-Request-Id': 'movies',
-            'Authorization': f'Bearer {self.token}',
-        }
+    async def get_user_profile(self) -> CurrentUser:
+        response = await self.http_client.get(
+            url=settings.auth.get_user_profile_url(),
+        )
+
+        return CurrentUser.model_validate(response.json())
 
 
-def get_current_user_client(httpx_client: HTTPXClientDep, token: TokenDep) -> CurrentUserClient:
+async def get_current_user_client(httpx_client: HTTPXClientDep, token: TokenDep) -> CurrentUserClient:
     return CurrentUserClient(httpx_client=httpx_client, token=token)
 
 

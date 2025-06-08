@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import uuid
+from urllib.parse import urljoin
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,8 +57,45 @@ class AuthConfig(BaseSettings):
         return '/auth/api/v1/jwt/login'
 
     @property
-    def user_profile_url(self) -> str:
-        return f'{self.scheme}://{self.host}:{self.port}/auth/api/v1/users/profile'
+    def service_url(self) -> str:
+        return f'{self.scheme}://{self.host}:{self.port}'
+
+    @property
+    def api_url(self) -> str:
+        return urljoin(self.service_url, '/auth/api/')
+
+    @property
+    def api_v1_url(self) -> str:
+        return urljoin(self.api_url, 'v1/')
+
+    def get_user_profile_url(self) -> str:
+        return f'users/profile'
+
+
+class ProfilesConfig(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix='profiles_')
+
+    scheme: str = 'http'
+    host: str = 'localhost'
+    port: int = 8000
+
+    @property
+    def service_url(self) -> str:
+        return f'{self.scheme}://{self.host}:{self.port}'
+
+    @property
+    def api_url(self) -> str:
+        return urljoin(self.service_url, '/profiles/api/')
+
+    @property
+    def api_v1_url(self) -> str:
+        return urljoin(self.api_url, 'v1/')
+
+    def get_film_rating_url(self, *, film_id: uuid.UUID) -> str:
+        return f'ratings/film/{film_id}'
+
+    def get_film_reviews_url(self, *, film_id: uuid.UUID) -> str:
+        return f'reviews/film/{film_id}'
 
 
 class Settings(BaseSettings):
@@ -64,6 +104,7 @@ class Settings(BaseSettings):
     redis: RedisConfig = RedisConfig()
     elasticsearch: ElasticConfig = ElasticConfig()
     auth: AuthConfig = AuthConfig()
+    profiles: ProfilesConfig = ProfilesConfig()
 
 
 settings = Settings()

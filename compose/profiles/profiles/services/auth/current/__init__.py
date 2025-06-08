@@ -1,4 +1,6 @@
-from .user import (
+from .models import (
     CurrentUser,
+)
+from .user import (
     CurrentUserDep,
 )

@@ -15,9 +15,12 @@ from ..dependencies import PageDep
 from ..models import (
     FilmResponse,
     ExtendedFilmResponse,
+    FilmRatingResponse,
+    FilmReviewsResponse,
 )
 from ....services import FilmServiceDep
 from ....services.auth import CurrentUserDep
+from ....services.profiles import ProfilesServiceDep
 
 router = APIRouter()
 
@@ -78,6 +81,7 @@ async def get_films_list(*,
 async def get_film_by_id(*,
                          film_id: Annotated[uuid.UUID, Path(alias='uuid')],
                          film_service: FilmServiceDep,
+                         profiles_service: ProfilesServiceDep,
                          _current_user: CurrentUserDep) -> ExtendedFilmResponse:
     film = await film_service.get_by_id(film_id)
 
@@ -87,7 +91,26 @@ async def get_film_by_id(*,
             detail='Film not found',
         )
 
-    return ExtendedFilmResponse.model_validate(film, from_attributes=True)
+    extended_film_response = ExtendedFilmResponse.model_validate(film, from_attributes=True)
+    film_users_response = extended_film_response.users
+
+    film_rating = await profiles_service.get_film_rating(film_id=film_id)
+
+    if film_rating is not None:
+        film_users_response.rating = FilmRatingResponse.model_validate(
+            film_rating,
+            from_attributes=True,
+        )
+
+    film_reviews = await profiles_service.get_film_reviews(film_id=film_id)
+
+    if film_reviews is not None:
+        film_users_response.reviews = FilmReviewsResponse.model_validate(
+            film_reviews,
+            from_attributes=True,
+        )
+
+    return extended_film_response
 
 
 @router.get(

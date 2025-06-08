@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 
 import httpx
-from fastapi.params import Depends
+from fastapi import Depends
 
 from .token import TokenDep
 from ....core import settings
@@ -33,7 +33,7 @@ class CurrentUserClient:
         }
 
 
-def get_current_user_client(httpx_client: HTTPXClientDep, token: TokenDep) -> CurrentUserClient:
+async def get_current_user_client(httpx_client: HTTPXClientDep, token: TokenDep) -> CurrentUserClient:
     return CurrentUserClient(httpx_client=httpx_client, token=token)
 
 
