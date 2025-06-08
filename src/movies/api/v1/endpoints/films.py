@@ -26,8 +26,8 @@ router = APIRouter()
 
 
 class SortOrderEnum(enum.StrEnum):
-    asc = 'asc'
-    desc = 'desc'
+    ASC = 'asc'
+    DESC = 'desc'
 
 
 @router.get(
@@ -48,16 +48,16 @@ async def get_films_list(*,
     sort_by = {}
 
     if sort:
-        is_first_dash = sort[0] == '-'
+        is_first_dash = (sort[0] == '-')
 
         field = sort[1:] if is_first_dash else sort
-        sort = SortOrderEnum.desc if is_first_dash else SortOrderEnum.asc
+        sort = SortOrderEnum.DESC if is_first_dash else SortOrderEnum.ASC
 
         if field == 'imdb_rating':
             sort_by = {'field': 'rating', 'order': sort}
 
     if not sort_by:
-        sort_by = {'field': 'id', 'order': SortOrderEnum.asc}
+        sort_by = {'field': 'id', 'order': SortOrderEnum.ASC}
 
     films_list = await film_service.get_list(
         sort=sort_by,
