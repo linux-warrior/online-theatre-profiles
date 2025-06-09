@@ -11,6 +11,9 @@ from fastapi import (
 from ....services.auth import (
     CurrentUserDep,
 )
+from ....services.pagination import (
+    PageParamsDep,
+)
 from ....services.ratings import (
     RatingServiceDep,
     ReadRatingResponse,
@@ -31,9 +34,10 @@ router = APIRouter()
     summary='Get a list of user ratings',
 )
 async def get_ratings_list(user_id: uuid.UUID,
+                           page_params: PageParamsDep,
                            rating_service: RatingServiceDep,
                            _current_user: CurrentUserDep) -> list[ReadRatingResponse]:
-    return await rating_service.get_list(user_id=user_id)
+    return await rating_service.get_list(user_id=user_id, page_params=page_params)
 
 
 @router.get(

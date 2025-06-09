@@ -12,6 +12,12 @@ from sqlalchemy import (
     delete,
 )
 
+from ..pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ...db.sqlalchemy import (
     AsyncSession,
     AsyncSessionDep,
@@ -31,21 +37,33 @@ class DeleteFavoriteResult:
 
 class FavoriteRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self, *, user_id: uuid.UUID) -> Sequence[Favorite]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> Sequence[Favorite]:
         statement = select(Favorite).join(
             Favorite.profile,
         ).where(
             Profile.user_id == user_id,
-        ).order_by(
-            Favorite.created.desc(),
-            Favorite.id.desc(),
         )
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[Favorite]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=Favorite.id,
+            timestamp_column=Favorite.created,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -82,8 +100,9 @@ class FavoriteRepository:
         )
 
 
-async def get_favorite_repository(session: AsyncSessionDep) -> FavoriteRepository:
-    return FavoriteRepository(session=session)
+async def get_favorite_repository(session: AsyncSessionDep,
+                                  pagination_service: PaginationServiceDep) -> FavoriteRepository:
+    return FavoriteRepository(session=session, pagination_service=pagination_service)
 
 
 FavoriteRepositoryDep = Annotated[FavoriteRepository, Depends(get_favorite_repository)]

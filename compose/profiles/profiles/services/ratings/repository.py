@@ -19,6 +19,12 @@ from .models import (
     RatingCreate,
     RatingUpdate,
 )
+from ..pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ...db.sqlalchemy import (
     AsyncSession,
     AsyncSessionDep,
@@ -54,21 +60,33 @@ class FilmRatingResult:
 
 class RatingRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self, *, user_id: uuid.UUID) -> Sequence[Rating]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> Sequence[Rating]:
         statement = select(Rating).join(
             Rating.profile,
         ).where(
             Profile.user_id == user_id,
-        ).order_by(
-            Rating.modified.desc(),
-            Rating.id.desc(),
         )
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[Rating]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=Rating.id,
+            timestamp_column=Rating.modified,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -162,8 +180,9 @@ class RatingRepository:
         return FilmRatingResult(rating=rating_avg)
 
 
-async def get_rating_repository(session: AsyncSessionDep) -> RatingRepository:
-    return RatingRepository(session=session)
+async def get_rating_repository(session: AsyncSessionDep,
+                                pagination_service: PaginationServiceDep) -> RatingRepository:
+    return RatingRepository(session=session, pagination_service=pagination_service)
 
 
 RatingRepositoryDep = Annotated[RatingRepository, Depends(get_rating_repository)]

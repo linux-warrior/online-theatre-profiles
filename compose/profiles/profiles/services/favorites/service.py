@@ -24,6 +24,9 @@ from ..auth import (
     PermissionServiceDep,
     AbstractPermissionChecker,
 )
+from ..pagination import (
+    PageParams,
+)
 from ...models.schemas import (
     FavoriteSchema,
 )
@@ -34,7 +37,10 @@ from ...models.sqlalchemy import (
 
 class AbstractFavoriteService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadFavoriteResponse]: ...
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadFavoriteResponse]: ...
 
     @abc.abstractmethod
     async def create(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadFavoriteResponse: ...
@@ -54,10 +60,16 @@ class FavoriteService(AbstractFavoriteService):
         self.repository = repository
         self.permission_checker = permission_service.get_permission_checker()
 
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadFavoriteResponse]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadFavoriteResponse]:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        favorites_list = await self.repository.get_list(user_id=user_id)
+        favorites_list = await self.repository.get_list(
+            user_id=user_id,
+            page_params=page_params,
+        )
 
         return [self._get_read_favorite_response(favorite=favorite) for favorite in favorites_list]
 

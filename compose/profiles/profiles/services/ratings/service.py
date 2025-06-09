@@ -28,6 +28,9 @@ from ..auth import (
     PermissionServiceDep,
     AbstractPermissionChecker,
 )
+from ..pagination import (
+    PageParams,
+)
 from ...models.schemas import (
     RatingSchema,
 )
@@ -38,7 +41,10 @@ from ...models.sqlalchemy import (
 
 class AbstractRatingService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadRatingResponse]: ...
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadRatingResponse]: ...
 
     @abc.abstractmethod
     async def get(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadRatingResponse: ...
@@ -75,10 +81,16 @@ class RatingService(AbstractRatingService):
         self.repository = repository
         self.permission_checker = permission_service.get_permission_checker()
 
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadRatingResponse]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadRatingResponse]:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        ratings_list = await self.repository.get_list(user_id=user_id)
+        ratings_list = await self.repository.get_list(
+            user_id=user_id,
+            page_params=page_params,
+        )
 
         return [self._get_read_rating_response(rating=rating) for rating in ratings_list]
 

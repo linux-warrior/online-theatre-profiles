@@ -19,6 +19,12 @@ from .models import (
     ReviewCreate,
     ReviewUpdate,
 )
+from ..pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ...db.sqlalchemy import (
     AsyncSession,
     AsyncSessionDep,
@@ -54,21 +60,33 @@ class FilmRatingResult:
 
 class ReviewRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self, *, user_id: uuid.UUID) -> Sequence[Review]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> Sequence[Review]:
         statement = select(Review).join(
             Review.profile,
         ).where(
             Profile.user_id == user_id,
-        ).order_by(
-            Review.modified.desc(),
-            Review.id.desc(),
         )
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[Review]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=Review.id,
+            timestamp_column=Review.modified,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -146,15 +164,22 @@ class ReviewRepository:
             film_id=delete_review_row.film_id,
         )
 
-    async def get_film_reviews(self, *, film_id: uuid.UUID) -> Sequence[Review]:
+    async def get_film_reviews(self,
+                               *,
+                               film_id: uuid.UUID,
+                               page_params: PageParams) -> Sequence[Review]:
         statement = select(Review).where(
             Review.film_id == film_id,
-        ).order_by(
-            Review.modified.desc(),
-            Review.id.desc(),
         )
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[Review]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=Review.id,
+            timestamp_column=Review.modified,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -174,8 +199,9 @@ class ReviewRepository:
         return FilmRatingResult(rating=rating_avg)
 
 
-async def get_review_repository(session: AsyncSessionDep) -> ReviewRepository:
-    return ReviewRepository(session=session)
+async def get_review_repository(session: AsyncSessionDep,
+                                pagination_service: PaginationServiceDep) -> ReviewRepository:
+    return ReviewRepository(session=session, pagination_service=pagination_service)
 
 
 ReviewRepositoryDep = Annotated[ReviewRepository, Depends(get_review_repository)]
