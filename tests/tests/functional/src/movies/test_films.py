@@ -1,7 +1,9 @@
+from __future__ import annotations
+
+import http
 import random
 import uuid
 from urllib.parse import urljoin
-import http
 
 import pytest
 
@@ -18,36 +20,36 @@ INDEX_NAME_FILM = 'films'
     "count, input, expected",
     [
         (
-            10,
-            {},
-            {'status': http.HTTPStatus.OK, 'length': 10}
+                10,
+                {},
+                {'status': http.HTTPStatus.OK, 'length': 10},
         ),
         (
-            100,
-            {'page_size': 100},
-            {'status': http.HTTPStatus.OK, 'length': 50}
+                100,
+                {'page_size': 100},
+                {'status': http.HTTPStatus.UNPROCESSABLE_ENTITY, 'length': None},
         ),
         (
-            10,
-            {'page_number': -1},
-            {'status': http.HTTPStatus.OK, 'length': 10}
+                10,
+                {'page_number': -1},
+                {'status': http.HTTPStatus.UNPROCESSABLE_ENTITY, 'length': None},
         ),
         (
-            10,
-            {'page_number': 5},
-            {'status': http.HTTPStatus.OK, 'length': 0}
+                10,
+                {'page_number': 5},
+                {'status': http.HTTPStatus.OK, 'length': 0},
         ),
         (
-            10,
-            {'page_number': 'string'},
-            {'status': http.HTTPStatus.UNPROCESSABLE_ENTITY, 'length': None}
+                10,
+                {'page_number': 'string'},
+                {'status': http.HTTPStatus.UNPROCESSABLE_ENTITY, 'length': None},
         ),
         (
-            10,
-            {'page_size': 'string'},
-            {'status': http.HTTPStatus.UNPROCESSABLE_ENTITY, 'length': None}
-        )
-    ]
+                10,
+                {'page_size': 'string'},
+                {'status': http.HTTPStatus.UNPROCESSABLE_ENTITY, 'length': None},
+        ),
+    ],
 )
 @pytest.mark.asyncio(loop_scope='session')
 async def test_get_list_pagination(
@@ -56,9 +58,8 @@ async def test_get_list_pagination(
         auth_headers,
         count: int,
         input,
-        expected
+        expected,
 ):
-
     def films_generator():
         for i in range(count):
             yield Film(
@@ -85,12 +86,12 @@ async def test_get_list_pagination(
     "input, expected",
     [
         (
-            {'sort': '-imdb_rating'},
-            {'status': http.HTTPStatus.OK, 'rating': 10}
+                {'sort': '-imdb_rating'},
+                {'status': http.HTTPStatus.OK, 'rating': 10}
         ),
         (
-            {'sort': 'imdb_rating'},
-            {'status': http.HTTPStatus.OK, 'rating': 2}
+                {'sort': 'imdb_rating'},
+                {'status': http.HTTPStatus.OK, 'rating': 2}
         )
     ]
 )
@@ -131,20 +132,20 @@ async def test_get_list_sort(
     'input, expected',
     [
         (
-            {
-                'genre_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8429',
-                'film_uuid': '721c9206-2e99-4247-aab2-d19463e4561c',
-                'genre_search_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8429'
-            },
-            {'status': http.HTTPStatus.OK, 'length': 1, 'film_uuid': '721c9206-2e99-4247-aab2-d19463e4561c'}
+                {
+                    'genre_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8429',
+                    'film_uuid': '721c9206-2e99-4247-aab2-d19463e4561c',
+                    'genre_search_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8429'
+                },
+                {'status': http.HTTPStatus.OK, 'length': 1, 'film_uuid': '721c9206-2e99-4247-aab2-d19463e4561c'}
         ),
         (
-            {
-                'genre_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8429',
-                'film_uuid': '721c9206-2e99-4247-aab2-d19463e4561c',
-                'genre_search_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8544'
-            },
-            {'status': http.HTTPStatus.OK, 'length': 0}
+                {
+                    'genre_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8429',
+                    'film_uuid': '721c9206-2e99-4247-aab2-d19463e4561c',
+                    'genre_search_uuid': 'e9c1dfa4-cfbf-40b8-b636-9075c2fd8544'
+                },
+                {'status': http.HTTPStatus.OK, 'length': 0}
         )
     ]
 )
@@ -200,7 +201,7 @@ async def test_get_list_genre(
     "expected",
     [
         (
-            {'uuid': str(uuid.uuid4())}
+                {'uuid': str(uuid.uuid4())}
         )
     ]
 )
@@ -233,7 +234,7 @@ async def test_get_by_id(
     "expected",
     [
         (
-            {'uuid': str(uuid.uuid4())}
+                {'uuid': str(uuid.uuid4())}
         )
     ]
 )
