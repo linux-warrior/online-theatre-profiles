@@ -11,6 +11,9 @@ from fastapi import (
 from ....services.auth import (
     CurrentUserDep,
 )
+from ....services.pagination import (
+    PageParamsDep,
+)
 from ....services.reviews import (
     ReviewServiceDep,
     ReadReviewResponse,
@@ -31,9 +34,10 @@ router = APIRouter()
     summary='Get a list of user reviews',
 )
 async def get_reviews_list(user_id: uuid.UUID,
+                           page_params: PageParamsDep,
                            review_service: ReviewServiceDep,
                            _current_user: CurrentUserDep) -> list[ReadReviewResponse]:
-    return await review_service.get_list(user_id=user_id)
+    return await review_service.get_list(user_id=user_id, page_params=page_params)
 
 
 @router.get(
@@ -141,6 +145,7 @@ async def delete_review(user_id: uuid.UUID,
     summary='Get user reviews for a film',
 )
 async def get_film_reviews(film_id: uuid.UUID,
+                           page_params: PageParamsDep,
                            review_service: ReviewServiceDep,
                            _current_user: CurrentUserDep) -> FilmReviewsResponse:
-    return await review_service.get_film_reviews(film_id=film_id)
+    return await review_service.get_film_reviews(film_id=film_id, page_params=page_params)

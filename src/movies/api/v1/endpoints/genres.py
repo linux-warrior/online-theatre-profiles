@@ -10,7 +10,7 @@ from fastapi import (
     HTTPException,
 )
 
-from ..dependencies import PageDep
+from ..dependencies import PageParamsDep
 from ..models import GenreResponse
 from ....services import GenreServiceDep
 from ....services.auth import CurrentUserDep
@@ -22,18 +22,15 @@ router = APIRouter()
     '/',
     response_model=list[GenreResponse],
     summary='Get a list of genres',
-    description=(
-            'Get list a of genres with pagination. '
-            'The maximum number of genres returned on one page is 150.'
-    ),
+    description='Get list a of genres with pagination.',
 )
 async def get_genres_list(*,
-                          page: PageDep,
+                          page_params: PageParamsDep,
                           genre_service: GenreServiceDep,
                           _current_user: CurrentUserDep) -> list[GenreResponse]:
     genres_list = await genre_service.get_list(
-        page_number=page.number,
-        page_size=page.size,
+        page_number=page_params.number,
+        page_size=page_params.size,
     )
 
     return [

@@ -28,6 +28,9 @@ from ..auth import (
     PermissionServiceDep,
     AbstractPermissionChecker,
 )
+from ..pagination import (
+    PageParams,
+)
 from ...models.schemas import (
     ReviewSchema,
 )
@@ -38,7 +41,10 @@ from ...models.sqlalchemy import (
 
 class AbstractReviewService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadReviewResponse]: ...
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadReviewResponse]: ...
 
     @abc.abstractmethod
     async def get(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadReviewResponse: ...
@@ -61,7 +67,10 @@ class AbstractReviewService(abc.ABC):
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteReviewResponse: ...
 
     @abc.abstractmethod
-    async def get_film_reviews(self, *, film_id: uuid.UUID) -> FilmReviewsResponse: ...
+    async def get_film_reviews(self,
+                               *,
+                               film_id: uuid.UUID,
+                               page_params: PageParams) -> FilmReviewsResponse: ...
 
 
 class ReviewService(AbstractReviewService):
@@ -75,10 +84,16 @@ class ReviewService(AbstractReviewService):
         self.repository = repository
         self.permission_checker = permission_service.get_permission_checker()
 
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadReviewResponse]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadReviewResponse]:
         await self.permission_checker.check_read_permission(user_id=user_id)
 
-        reviews_list = await self.repository.get_list(user_id=user_id)
+        reviews_list = await self.repository.get_list(
+            user_id=user_id,
+            page_params=page_params,
+        )
 
         return [self._get_read_review_response(review=review) for review in reviews_list]
 
@@ -150,10 +165,16 @@ class ReviewService(AbstractReviewService):
             film_id=delete_review_result.film_id,
         )
 
-    async def get_film_reviews(self, *, film_id: uuid.UUID) -> FilmReviewsResponse:
+    async def get_film_reviews(self,
+                               *,
+                               film_id: uuid.UUID,
+                               page_params: PageParams) -> FilmReviewsResponse:
         await self.permission_checker.check_read_permission()
 
-        reviews_list = await self.repository.get_film_reviews(film_id=film_id)
+        reviews_list = await self.repository.get_film_reviews(
+            film_id=film_id,
+            page_params=page_params,
+        )
         film_rating_result = await self.repository.get_film_rating(film_id=film_id)
 
         return FilmReviewsResponse(
