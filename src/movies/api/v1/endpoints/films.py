@@ -11,7 +11,7 @@ from fastapi import (
     HTTPException,
 )
 
-from ..dependencies import PageDep
+from ..dependencies import PageParamsDep
 from ..models import (
     FilmResponse,
     ExtendedFilmResponse,
@@ -34,15 +34,12 @@ class SortOrderEnum(enum.StrEnum):
     '/',
     response_model=list[FilmResponse],
     summary='Get a list of films',
-    description=(
-            'Get a list of films with sorting, pagination and filtering by concrete genre. '
-            'The maximum number of films returned on one page is 150.'
-    ),
+    description='Get a list of films with sorting, pagination and filtering by concrete genre.',
 )
 async def get_films_list(*,
                          sort: str = '',
                          genre: uuid.UUID | None = None,
-                         page: PageDep,
+                         page_params: PageParamsDep,
                          film_service: FilmServiceDep,
                          _current_user: CurrentUserDep) -> list[FilmResponse]:
     sort_by = {}
@@ -62,8 +59,8 @@ async def get_films_list(*,
     films_list = await film_service.get_list(
         sort=sort_by,
         genre_uuid=genre,
-        page_number=page.number,
-        page_size=page.size,
+        page_number=page_params.number,
+        page_size=page_params.size,
     )
 
     return [
@@ -117,14 +114,11 @@ async def get_film_by_id(*,
     '/search/',
     response_model=list[FilmResponse],
     summary='Search a film by query',
-    description=(
-            'Search a film by title with pagination. '
-            'The maximum number of films returned on one page is 150.'
-    ),
+    description='Search a film by title with pagination.',
 )
 async def search_films(*,
                        query: str = '',
-                       page: PageDep,
+                       page_params: PageParamsDep,
                        film_service: FilmServiceDep,
                        _current_user: CurrentUserDep) -> list[FilmResponse]:
     if not query:
@@ -132,8 +126,8 @@ async def search_films(*,
 
     films_list = await film_service.search(
         query=query,
-        page_number=page.number,
-        page_size=page.size,
+        page_number=page_params.number,
+        page_size=page_params.size,
     )
 
     return [

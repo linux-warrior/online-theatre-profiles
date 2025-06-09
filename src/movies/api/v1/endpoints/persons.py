@@ -10,7 +10,7 @@ from fastapi import (
     HTTPException,
 )
 
-from ..dependencies import PageDep
+from ..dependencies import PageParamsDep
 from ..models import (
     PersonResponse,
     FilmResponse,
@@ -67,14 +67,11 @@ async def get_person_films(*,
     '/search/',
     response_model=list[PersonResponse],
     summary='Search a person',
-    description=(
-            'Search a person with their films and roles by full name with pagination. '
-            'The maximum number of persons returned on one page is 150.'
-    ),
+    description='Search a person with their films and roles by full name with pagination.',
 )
 async def search(*,
                  query: str = '',
-                 page: PageDep,
+                 page_params: PageParamsDep,
                  person_service: PersonServiceDep,
                  _current_user: CurrentUserDep) -> list[PersonResponse]:
     if not query:
@@ -82,8 +79,8 @@ async def search(*,
 
     persons_list = await person_service.search(
         query=query,
-        page_number=page.number,
-        page_size=page.size,
+        page_number=page_params.number,
+        page_size=page_params.size,
     )
 
     return [

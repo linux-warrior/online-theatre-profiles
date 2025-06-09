@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import Depends
+from pydantic import (
+    BaseModel,
+    Field,
+)
 
 
-class Page:
-    size: int
-    number: int
-
-    def __init__(self, *, page_size: int = 50, page_number: int = 1) -> None:
-        self.size = page_size if page_size <= 50 else 50
-        self.number = page_number if page_number >= 1 else 1
+class PageParams(BaseModel):
+    size: int = Field(default=50, ge=1, le=50, alias='page_size')
+    number: int = Field(default=1, ge=1, alias='page_number')
 
 
-PageDep = Annotated[Page, Depends()]
+PageParamsDep = Annotated[PageParams, Depends()]

@@ -1,4 +1,4 @@
 from .page import (
-    Page,
-    PageDep,
+    PageParams,
+    PageParamsDep,
 )
