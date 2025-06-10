@@ -117,6 +117,31 @@ services:
         - action: rebuild
           path: ./compose/profiles/poetry.lock
 
+  profiles-admin:
+    build:
+      context: ./compose/profiles-admin
+      target: lint
+    networks:
+      - movies-network
+    volumes:
+      - 'profiles-admin-mypy-cache:/opt/app/.mypy_cache'
+      - './compose/profiles-admin/.lint:/opt/app/.lint'
+    command: [ 'sleep', 'infinity' ]
+    develop:
+      watch:
+        - action: sync
+          path: ./compose/profiles-admin/config
+          target: /opt/app/config
+        - action: sync
+          path: ./compose/profiles-admin/manage.py
+          target: /opt/app/manage.py
+        - action: rebuild
+          path: ./compose/profiles-admin/commands
+        - action: rebuild
+          path: ./compose/profiles-admin/pyproject.toml
+        - action: rebuild
+          path: ./compose/profiles-admin/poetry.lock
+
 networks:
   movies-network:
 
@@ -126,3 +151,4 @@ volumes:
   auth-mypy-cache:
   etl-mypy-cache:
   profiles-mypy-cache:
+  profiles-admin-mypy-cache:

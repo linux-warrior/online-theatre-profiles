@@ -1,0 +1,36 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+Django = "^5.2.2"
+gunicorn = "^23.0.0"
+psycopg = { version = "^3.2.9", extras = ["binary"] }
+python-dotenv = "^1.1.0"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+ciqar = "^1.1.0"
+mypy = "^1.16.0"
+ruff = "^0.11.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",
+]
+
+[tool.mypy]
+disable_error_code = [
+    "import-untyped",
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

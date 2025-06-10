@@ -41,6 +41,7 @@ run_command() {
         auth
         etl
         profiles
+        profiles-admin
     )
 
     declare -A services_set
