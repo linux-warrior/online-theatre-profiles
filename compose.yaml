@@ -11,12 +11,14 @@ services:
         condition: service_healthy
       profiles-service:
         condition: service_healthy
+      profiles-admin-service:
+        condition: service_healthy
     ports:
       - '8000:8080'
     networks:
       - movies-network
     volumes:
-      - nginx-logs-data:/opt/bitnami/nginx/logs/
+      - 'profiles-admin-static:/opt/bitnami/nginx/html/profiles-admin/static:ro'
 
   movies:
     build:
@@ -328,6 +330,52 @@ services:
       retries: 5
       start_period: 30s
 
+  profiles-admin-service:
+    build:
+      context: ./compose/profiles-admin
+    depends_on:
+      profiles-postgresql:
+        condition: service_healthy
+      profiles-admin-service-init:
+        condition: service_completed_successfully
+    networks:
+      - movies-network
+    volumes:
+      - 'profiles-admin-static:/opt/app/static:ro'
+    environment:
+      - GUNICORN_WORKERS=${PROFILES_ADMIN_GUNICORN_WORKERS:-}
+      - SECRET_KEY=$PROFILES_ADMIN_SECRET_KEY
+      - ALLOWED_HOSTS=${PROFILES_ADMIN_ALLOWED_HOSTS:-}
+      - POSTGRESQL_HOST=profiles-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    healthcheck:
+      test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/profiles-admin/admin/login/' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  profiles-admin-service-init:
+    build:
+      context: ./compose/profiles-admin
+    depends_on:
+      profiles-postgresql:
+        condition: service_healthy
+    networks:
+      - movies-network
+    environment:
+      - SECRET_KEY=$PROFILES_ADMIN_SECRET_KEY
+      - ALLOWED_HOSTS=${PROFILES_ADMIN_ALLOWED_HOSTS:-}
+      - POSTGRESQL_HOST=profiles-postgresql
+      - POSTGRESQL_PORT=5432
+      - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
+      - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
+      - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+    command: [ '/opt/app/commands/init.sh' ]
+
   jaeger:
     build:
       context: ./compose/jaeger
@@ -346,7 +394,6 @@ networks:
   movies-network:
 
 volumes:
-  nginx-logs-data:
   redis-data:
   elasticsearch-data:
   etl-data:
@@ -355,3 +402,4 @@ volumes:
   auth-postgresql-data:
   auth-redis-data:
   profiles-postgresql-data:
+  profiles-admin-static:
