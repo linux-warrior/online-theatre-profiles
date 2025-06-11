@@ -20,7 +20,7 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 ciqar = "^1.1.0"
 mypy = "^1.16.0"
-ruff = "^0.11.12"
+ruff = "^0.11.13"
 
 [tool.ruff]
 target-version = "py312"
