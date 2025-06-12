@@ -47,6 +47,7 @@ COPY --from=venv-dev "$VIRTUAL_ENV" "$VIRTUAL_ENV"
 COPY ./pyproject.toml .
 COPY ./manage.py .
 COPY ./config/ ./config/
+COPY ./profiles_admin/ ./profiles_admin/
 
 COPY ./commands/ ./commands/
 RUN chmod +x ./commands/*.sh
@@ -60,6 +61,7 @@ COPY --from=venv "$VIRTUAL_ENV" "$VIRTUAL_ENV"
 COPY ./pyproject.toml .
 COPY ./manage.py .
 COPY ./config/ ./config/
+COPY ./profiles_admin/ ./profiles_admin/
 
 RUN python manage.py collectstatic --noinput
 

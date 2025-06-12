@@ -11,9 +11,9 @@ from pydantic import (
 
 from ..common import PhoneNumberField
 
-LastNameField = Annotated[str, Field(min_length=1, max_length=256)]
-FirstNameField = Annotated[str, Field(min_length=1, max_length=256)]
-PatronymicField = Annotated[str, Field(max_length=256)]
+LastNameField = Annotated[str, Field(min_length=1, max_length=255)]
+FirstNameField = Annotated[str, Field(min_length=1, max_length=255)]
+PatronymicField = Annotated[str, Field(max_length=255)]
 
 
 class ReadProfileResponse(BaseModel):

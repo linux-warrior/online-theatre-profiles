@@ -3,7 +3,7 @@
 set -e
 
 BASE_DIR=/opt/app
-SOURCE_PATHS=("$BASE_DIR/config" "$BASE_DIR/manage.py")
+SOURCE_PATHS=("$BASE_DIR/config" "$BASE_DIR/profiles_admin" "$BASE_DIR/manage.py")
 
 LINT_DIR=$BASE_DIR/.lint
 RUFF_JSON_FILE=$LINT_DIR/ruff.json

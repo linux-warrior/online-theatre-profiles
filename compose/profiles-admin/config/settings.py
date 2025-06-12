@@ -35,9 +35,11 @@ ALLOWED_HOSTS = allowed_hosts.split(',') if allowed_hosts else []
 # Application definition
 
 INSTALLED_APPS = [
+    'profiles_admin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.postgres',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',

@@ -133,6 +133,9 @@ services:
           path: ./compose/profiles-admin/config
           target: /opt/app/config
         - action: sync
+          path: ./compose/profiles-admin/profiles_admin
+          target: /opt/app/profiles_admin
+        - action: sync
           path: ./compose/profiles-admin/manage.py
           target: /opt/app/manage.py
         - action: rebuild

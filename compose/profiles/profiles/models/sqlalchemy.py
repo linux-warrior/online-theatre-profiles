@@ -48,19 +48,15 @@ class Profile(ProfilesBase):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         unique=True,
-        default=uuid.uuid4,
     )
     last_name: Mapped[str] = mapped_column(
         TEXT,
-        default='',
     )
     first_name: Mapped[str] = mapped_column(
         TEXT,
-        default='',
     )
     patronymic: Mapped[str] = mapped_column(
         TEXT,
-        default='',
     )
     phone_number: Mapped[str | None] = mapped_column(
         TEXT,
@@ -111,7 +107,6 @@ class Favorite(ProfilesBase):
     film_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         index=True,
-        default=uuid.uuid4,
     )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
@@ -147,7 +142,6 @@ class Rating(ProfilesBase):
     film_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         index=True,
-        default=uuid.uuid4,
     )
     rating: Mapped[decimal.Decimal] = mapped_column(
         Numeric(precision=3, scale=1),
@@ -192,15 +186,12 @@ class Review(ProfilesBase):
     film_id: Mapped[uuid.UUID] = mapped_column(
         UUID,
         index=True,
-        default=uuid.uuid4,
     )
     summary: Mapped[str] = mapped_column(
         TEXT,
-        default='',
     )
     content: Mapped[str] = mapped_column(
         TEXT,
-        default='',
     )
     rating: Mapped[decimal.Decimal | None] = mapped_column(
         Numeric(precision=3, scale=1),
