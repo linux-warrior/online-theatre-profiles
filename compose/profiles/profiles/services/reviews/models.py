@@ -11,8 +11,8 @@ from pydantic import (
 
 from ..common import RatingField
 
-SummaryField = Annotated[str, Field(min_length=1, max_length=256)]
-ContentField = Annotated[str, Field(min_length=1, max_length=65536)]
+SummaryField = Annotated[str, Field(min_length=1, max_length=255)]
+ContentField = Annotated[str, Field(min_length=1, max_length=65535)]
 
 
 class ReadReviewResponse(BaseModel):
