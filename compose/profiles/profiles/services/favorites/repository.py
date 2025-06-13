@@ -81,6 +81,7 @@ class FavoriteRepository:
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteFavoriteResult | None:
         statement = delete(Favorite).where(
+            Profile.id == Favorite.profile_id,
             Profile.user_id == user_id,
             Favorite.film_id == film_id,
         ).returning(Favorite.id, Profile.user_id, Favorite.film_id)
