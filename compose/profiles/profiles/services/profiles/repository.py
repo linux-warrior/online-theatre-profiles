@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends
 from sqlalchemy import (
@@ -15,6 +15,10 @@ from sqlalchemy import (
 from .models import (
     ProfileCreate,
     ProfileUpdate,
+)
+from ..cryptography import (
+    AbstractEncryptionService,
+    EncryptionServiceDep,
 )
 from ...db.sqlalchemy import (
     AsyncSession,
@@ -39,9 +43,14 @@ class DeleteProfileResult:
 
 class ProfileRepository:
     session: AsyncSession
+    encryption_service: AbstractEncryptionService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 encryption_service: AbstractEncryptionService) -> None:
         self.session = session
+        self.encryption_service = encryption_service
 
     async def get(self, *, user_id: uuid.UUID) -> Profile | None:
         statement = select(Profile).where(Profile.user_id == user_id)
@@ -54,10 +63,15 @@ class ProfileRepository:
                      *,
                      user_id: uuid.UUID,
                      profile_create: ProfileCreate) -> Profile:
-        profile_create_dict = {
+        profile_create_dict: dict[str, Any] = {
             **profile_create.model_dump(),
             'user_id': user_id,
         }
+        profile_create_dict = self.encryption_service.encrypt_dict(
+            profile_create_dict,
+            keys=['phone_number'],
+        )
+
         statement = insert(Profile).values([profile_create_dict]).returning(Profile)
 
         result = await self.session.execute(statement)
@@ -71,6 +85,11 @@ class ProfileRepository:
                      uuid.UUID,
                      profile_update: ProfileUpdate) -> UpdateProfileResult | None:
         profile_update_dict = profile_update.model_dump(exclude_unset=True)
+        profile_update_dict = self.encryption_service.encrypt_dict(
+            profile_update_dict,
+            keys=['phone_number'],
+        )
+
         statement = update(Profile).where(
             Profile.user_id == user_id,
         ).values(profile_update_dict).returning(Profile.id, Profile.user_id)
@@ -107,8 +126,9 @@ class ProfileRepository:
         )
 
 
-async def get_profile_repository(session: AsyncSessionDep) -> ProfileRepository:
-    return ProfileRepository(session=session)
+async def get_profile_repository(session: AsyncSessionDep,
+                                 encryption_service: EncryptionServiceDep) -> ProfileRepository:
+    return ProfileRepository(session=session, encryption_service=encryption_service)
 
 
 ProfileRepositoryDep = Annotated[ProfileRepository, Depends(get_profile_repository)]
