@@ -61,8 +61,25 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+EXCLUDED_TABLE_PREFIXES = [
+    'auth_',
+    'django_',
+]
+
+
+def include_object(_obj, name, type_, _reflected, _compare_to) -> bool:
+    if type_ == 'table' and any(name.startswith(prefix) for prefix in EXCLUDED_TABLE_PREFIXES):
+        return False
+
+    return True
+
+
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_object=include_object,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
