@@ -63,6 +63,11 @@ class Profile(ProfilesBase):
         unique=True,
         nullable=True,
     )
+    phone_number_hash: Mapped[str | None] = mapped_column(
+        TEXT,
+        unique=True,
+        nullable=True,
+    )
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         index=True,
