@@ -126,6 +126,7 @@ class RatingRepository:
                      rating_update: RatingUpdate) -> UpdateRatingResult | None:
         rating_update_dict = rating_update.model_dump(exclude_unset=True)
         statement = update(Rating).where(
+            Profile.id == Rating.profile_id,
             Profile.user_id == user_id,
             Rating.film_id == film_id,
         ).values(rating_update_dict).returning(Rating.id, Profile.user_id, Rating.film_id)
@@ -146,6 +147,7 @@ class RatingRepository:
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteRatingResult | None:
         statement = delete(Rating).where(
+            Profile.id == Rating.profile_id,
             Profile.user_id == user_id,
             Rating.film_id == film_id,
         ).returning(Rating.id, Profile.user_id, Rating.film_id)
