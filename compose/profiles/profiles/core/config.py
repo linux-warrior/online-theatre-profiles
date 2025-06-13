@@ -9,6 +9,7 @@ from pydantic_settings import (
 class ProfilesConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='profiles_')
 
+    encryption_key: str
     sql_echo: bool = False
 
 
@@ -52,7 +53,7 @@ class AuthConfig(BaseSettings):
 
 
 class Settings(BaseSettings):
-    profiles: ProfilesConfig = ProfilesConfig()
+    profiles: ProfilesConfig = ProfilesConfig()  # type: ignore[call-arg]
     otel: OpenTelemetryConfig = OpenTelemetryConfig()
     postgresql: PostgreSQLConfig = PostgreSQLConfig()  # type: ignore[call-arg]
     auth: AuthConfig = AuthConfig()
