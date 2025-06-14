@@ -6,6 +6,9 @@ from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken
 
+from .hashing import (
+    AbstractHashingTool,
+)
 from ...core.config import settings
 
 
@@ -49,34 +52,41 @@ class AbstractDictEncryptionTool(abc.ABC):
 
 class DictEncryptionTool(AbstractDictEncryptionTool):
     encryption_tool: AbstractEncryptionTool
-    keys: Iterable[str]
+    hashing_tool: AbstractHashingTool
+    fields: Iterable[str]
 
-    def __init__(self, *, encryption_tool: AbstractEncryptionTool, keys: Iterable[str]) -> None:
+    def __init__(self,
+                 *,
+                 encryption_tool: AbstractEncryptionTool,
+                 hashing_tool: AbstractHashingTool,
+                 fields: Iterable[str] | None = None) -> None:
         self.encryption_tool = encryption_tool
-        self.keys = keys
+        self.hashing_tool = hashing_tool
+        self.fields = fields or []
 
     def encrypt(self, data: dict[str, Any]) -> dict[str, Any]:
         result: dict[str, Any] = {**data}
 
-        for key in self.keys:
+        for field_name in self.fields:
             try:
-                value = result[key]
+                value = result[field_name]
             except KeyError:
                 continue
 
-            result[key] = self.encryption_tool.encrypt(value)
+            result[field_name] = self.encryption_tool.encrypt(value)
+            result[f'{field_name}_hash'] = self.hashing_tool.salted_hmac(value)
 
         return result
 
     def decrypt(self, data: dict[str, Any]) -> dict[str, Any]:
         result: dict[str, Any] = {**data}
 
-        for key in self.keys:
+        for field_name in self.fields:
             try:
-                value = result[key]
+                value = result[field_name]
             except KeyError:
                 continue
 
-            result[key] = self.encryption_tool.decrypt(value)
+            result[field_name] = self.encryption_tool.decrypt(value)
 
         return result

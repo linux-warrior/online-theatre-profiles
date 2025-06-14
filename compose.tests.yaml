@@ -253,6 +253,7 @@ services:
       - movies-network
     environment:
       - FASTAPI_WORKERS=${PROFILES_FASTAPI_WORKERS:-}
+      - PROFILES_SECRET_KEY=$PROFILES_SECRET_KEY
       - PROFILES_ENCRYPTION_KEY=$PROFILES_ENCRYPTION_KEY
       - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
       - POSTGRESQL_HOST=profiles-postgresql
@@ -291,6 +292,7 @@ services:
     networks:
       - movies-network
     environment:
+      - PROFILES_SECRET_KEY=$PROFILES_SECRET_KEY
       - PROFILES_ENCRYPTION_KEY=$PROFILES_ENCRYPTION_KEY
       - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
       - POSTGRESQL_HOST=profiles-postgresql

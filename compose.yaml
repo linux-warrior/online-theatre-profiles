@@ -267,6 +267,7 @@ services:
       - movies-network
     environment:
       - GUNICORN_WORKERS=${PROFILES_GUNICORN_WORKERS:-}
+      - PROFILES_SECRET_KEY=$PROFILES_SECRET_KEY
       - PROFILES_ENCRYPTION_KEY=$PROFILES_ENCRYPTION_KEY
       - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
       - OTEL_ENABLED=${OTEL_ENABLED:-True}
@@ -299,6 +300,7 @@ services:
     networks:
       - movies-network
     environment:
+      - PROFILES_SECRET_KEY=$PROFILES_SECRET_KEY
       - PROFILES_ENCRYPTION_KEY=$PROFILES_ENCRYPTION_KEY
       - PROFILES_SQL_ECHO=${PROFILES_SQL_ECHO:-False}
       - OTEL_ENABLED=${OTEL_ENABLED:-True}

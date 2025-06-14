@@ -72,7 +72,8 @@ class ProfileService(AbstractProfileService):
                  permission_service: AbstractPermissionService) -> None:
         self.repository = repository
         self.profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
-            keys=['phone_number'],
+            fields=['phone_number'],
+            salt='profiles.models.sqlalchemy.Profile',
         )
         self.permission_checker = permission_service.get_permission_checker()
 

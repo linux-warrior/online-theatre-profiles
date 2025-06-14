@@ -9,6 +9,7 @@ from pydantic_settings import (
 class ProfilesConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='profiles_')
 
+    secret_key: str
     encryption_key: str
     sql_echo: bool = False
 

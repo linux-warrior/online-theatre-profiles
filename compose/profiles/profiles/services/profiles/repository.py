@@ -52,7 +52,8 @@ class ProfileRepository:
                  cryptography_service: AbstractCryptographyService) -> None:
         self.session = session
         self.profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
-            keys=['phone_number'],
+            fields=['phone_number'],
+            salt='profiles.models.sqlalchemy.Profile',
         )
 
     async def get(self, *, user_id: uuid.UUID) -> Profile | None:

@@ -12,6 +12,10 @@ from .encryption import (
     AbstractDictEncryptionTool,
     DictEncryptionTool,
 )
+from .hashing import (
+    AbstractHashingTool,
+    HashingTool,
+)
 
 
 class AbstractCryptographyService(abc.ABC):
@@ -19,19 +23,33 @@ class AbstractCryptographyService(abc.ABC):
     def get_encryption_tool(self) -> AbstractEncryptionTool: ...
 
     @abc.abstractmethod
-    def get_dict_encryption_tool(self, *, keys: Iterable[str]) -> AbstractDictEncryptionTool: ...
+    def get_hashing_tool(self, *, salt: str | None = None) -> AbstractHashingTool: ...
+
+    @abc.abstractmethod
+    def get_dict_encryption_tool(self,
+                                 *,
+                                 fields: Iterable[str] | None = None,
+                                 salt: str | None = None) -> AbstractDictEncryptionTool: ...
 
 
 class CryptographyService(AbstractCryptographyService):
     def get_encryption_tool(self) -> AbstractEncryptionTool:
         return EncryptionTool()
 
-    def get_dict_encryption_tool(self, *, keys: Iterable[str]) -> AbstractDictEncryptionTool:
+    def get_hashing_tool(self, *, salt: str | None = None) -> AbstractHashingTool:
+        return HashingTool(salt=salt)
+
+    def get_dict_encryption_tool(self,
+                                 *,
+                                 fields: Iterable[str] | None = None,
+                                 salt: str | None = None) -> AbstractDictEncryptionTool:
         encryption_tool = self.get_encryption_tool()
+        hashing_tool = self.get_hashing_tool(salt=salt)
 
         return DictEncryptionTool(
             encryption_tool=encryption_tool,
-            keys=keys,
+            hashing_tool=hashing_tool,
+            fields=fields,
         )
 
 
