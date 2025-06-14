@@ -80,6 +80,7 @@ class ProfileAdmin(admin.ModelAdmin):
         'first_name',
         'patronymic',
         'phone_number',
+        'phone_number_hash',
         'created',
         'modified',
     )

@@ -80,6 +80,11 @@ class Profile(models.Model):
         unique=True,
         null=True,
     )
+    phone_number_hash = models.TextField(
+        verbose_name=_('phone number hash'),
+        unique=True,
+        null=True,
+    )
     created = CreationField()
     modified = ModificationField()
 
