@@ -28,8 +28,9 @@ from ..auth import (
     AbstractPermissionChecker,
 )
 from ..cryptography import (
-    AbstractEncryptionService,
-    EncryptionServiceDep,
+    AbstractCryptographyService,
+    CryptographyServiceDep,
+    AbstractDictEncryptionTool,
 )
 from ...models.schemas import (
     ProfileSchema,
@@ -61,18 +62,18 @@ class AbstractProfileService(abc.ABC):
 
 class ProfileService(AbstractProfileService):
     repository: ProfileRepository
-    encryption_service: AbstractEncryptionService
-
+    profile_encryption_tool: AbstractDictEncryptionTool
     permission_checker: AbstractPermissionChecker
 
     def __init__(self,
                  *,
                  repository: ProfileRepository,
-                 permission_service: AbstractPermissionService,
-                 encryption_service: AbstractEncryptionService) -> None:
+                 cryptography_service: AbstractCryptographyService,
+                 permission_service: AbstractPermissionService) -> None:
         self.repository = repository
-        self.encryption_service = encryption_service
-
+        self.profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
+            keys=['phone_number'],
+        )
         self.permission_checker = permission_service.get_permission_checker()
 
     async def get(self, *, user_id: uuid.UUID) -> ReadProfileResponse:
@@ -138,21 +139,18 @@ class ProfileService(AbstractProfileService):
     def _get_read_profile_response(self, *, profile: Profile) -> ReadProfileResponse:
         profile_schema = ProfileSchema.model_validate(profile, from_attributes=True)
         read_profile_response_dict = profile_schema.model_dump()
-        read_profile_response_dict = self.encryption_service.decrypt_dict(
-            read_profile_response_dict,
-            keys=['phone_number'],
-        )
+        read_profile_response_dict = self.profile_encryption_tool.decrypt(read_profile_response_dict)
 
         return ReadProfileResponse.model_validate(read_profile_response_dict)
 
 
 async def get_profile_service(repository: ProfileRepositoryDep,
-                              permission_service: PermissionServiceDep,
-                              encryption_service: EncryptionServiceDep) -> AbstractProfileService:
+                              cryptography_service: CryptographyServiceDep,
+                              permission_service: PermissionServiceDep) -> AbstractProfileService:
     return ProfileService(
         repository=repository,
+        cryptography_service=cryptography_service,
         permission_service=permission_service,
-        encryption_service=encryption_service,
     )
 
 
