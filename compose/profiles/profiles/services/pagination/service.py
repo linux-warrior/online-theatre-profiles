@@ -45,4 +45,4 @@ async def get_pagination_service() -> AbstractPaginationService:
     return PaginationService()
 
 
-PaginationServiceDep = Annotated[PaginationService, Depends(get_pagination_service)]
+PaginationServiceDep = Annotated[AbstractPaginationService, Depends(get_pagination_service)]
