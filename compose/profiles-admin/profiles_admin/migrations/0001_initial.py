@@ -40,6 +40,7 @@ class Migration(migrations.Migration):
                 ('first_name', models.TextField(verbose_name='first name')),
                 ('patronymic', models.TextField(verbose_name='patronymic')),
                 ('phone_number', models.TextField(null=True, unique=True, verbose_name='phone number')),
+                ('phone_number_hash', models.TextField(null=True, unique=True, verbose_name='phone number hash')),
                 ('created', profiles_admin.models.CreationField(verbose_name='created')),
                 ('modified', profiles_admin.models.ModificationField(verbose_name='modified')),
             ],

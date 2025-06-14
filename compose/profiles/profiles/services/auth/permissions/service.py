@@ -34,4 +34,4 @@ async def get_permission_service(current_user: CurrentUserDep) -> AbstractPermis
     return PermissionService(current_user=current_user)
 
 
-PermissionServiceDep = Annotated[PermissionService, Depends(get_permission_service)]
+PermissionServiceDep = Annotated[AbstractPermissionService, Depends(get_permission_service)]

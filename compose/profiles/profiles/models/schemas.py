@@ -14,6 +14,7 @@ class ProfileSchema(BaseModel):
     first_name: str
     patronymic: str
     phone_number: str | None
+    phone_number_hash: str | None
     created: datetime.datetime
     modified: datetime.datetime
 
