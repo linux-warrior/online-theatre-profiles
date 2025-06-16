@@ -7,7 +7,7 @@ python = "^3.12"
 aiohttp = { version = "^3.12.6", extras = ["speedups"] }
 asyncpg = "^0.30.0"
 elasticsearch = { version = "^9.0.1", extras = ["async"] }
-pydantic = "^2.11.5"
+pydantic = "^2.11.7"
 pydantic-settings = "^2.9.1"
 pytest = "^8.3.5"
 pytest-asyncio = "^1.0.0"
