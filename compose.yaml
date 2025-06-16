@@ -355,6 +355,8 @@ services:
       - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
       - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
       - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
     healthcheck:
       test: [ 'CMD-SHELL', 'curl -s -H "X-Request-Id: healthcheck" http://localhost:8000/profiles-admin/admin/login/' ]
       interval: 10s
@@ -373,13 +375,13 @@ services:
     environment:
       - SECRET_KEY=$PROFILES_ADMIN_SECRET_KEY
       - ALLOWED_HOSTS=${PROFILES_ADMIN_ALLOWED_HOSTS:-}
-      - SUPERUSER_LOGIN=$PROFILES_ADMIN_SUPERUSER_LOGIN
-      - SUPERUSER_PASSWORD=$PROFILES_ADMIN_SUPERUSER_PASSWORD
       - POSTGRESQL_HOST=profiles-postgresql
       - POSTGRESQL_PORT=5432
       - POSTGRESQL_DATABASE=$PROFILES_POSTGRESQL_DATABASE
       - POSTGRESQL_USERNAME=$PROFILES_POSTGRESQL_USERNAME
       - POSTGRESQL_PASSWORD=$PROFILES_POSTGRESQL_PASSWORD
+      - AUTH_HOST=auth-service
+      - AUTH_PORT=8000
     command: [ '/opt/app/commands/init.sh' ]
 
   jaeger:

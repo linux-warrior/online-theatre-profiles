@@ -17,7 +17,7 @@ opentelemetry-instrumentation-fastapi = "^0.54b1"
 opentelemetry-propagator-jaeger = "^1.33.1"
 opentelemetry-sdk = "^1.33.1"
 pwdlib = { version = "^0.2.1", extras = ["argon2", "bcrypt"] }
-pydantic = { version = "^2.11.5", extras = ["email"] }
+pydantic = { version = "^2.11.7", extras = ["email"] }
 pydantic-settings = "^2.9.1"
 PyJWT = { version = "^2.10.1", extras = ["crypto"] }
 redis = { version = "^6.2.0", extras = ["hiredis"] }

@@ -140,3 +140,15 @@ STATIC_ROOT = BASE_DIR / 'static'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication
+
+AUTHENTICATION_BACKENDS = [
+    'profiles_admin.services.auth.AuthServiceUserBackend',
+]
+
+AUTH_SERVICE = {
+    'scheme': os.environ.get('AUTH_SCHEME') or 'http',
+    'host': os.environ.get('AUTH_HOST') or 'localhost',
+    'port': os.environ.get('AUTH_PORT') or '8000',
+}
