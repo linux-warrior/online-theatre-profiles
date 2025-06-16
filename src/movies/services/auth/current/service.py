@@ -63,4 +63,4 @@ async def get_current_user_service(current_user_client: CurrentUserClientDep) ->
     return CurrentUserService(current_user_client=current_user_client)
 
 
-CurrentUserServiceDep = Annotated[CurrentUserService, Depends(get_current_user_service)]
+CurrentUserServiceDep = Annotated[AbstractCurrentUserService, Depends(get_current_user_service)]
