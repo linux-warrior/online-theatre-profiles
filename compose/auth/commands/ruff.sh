@@ -3,7 +3,7 @@
 set -e
 
 BASE_DIR=/opt/app
-SOURCE_PATHS=("$BASE_DIR/auth" "$BASE_DIR/scripts")
+SOURCE_PATHS=("$BASE_DIR/auth")
 
 LINT_DIR=$BASE_DIR/.lint
 RUFF_JSON_FILE=$LINT_DIR/ruff.json

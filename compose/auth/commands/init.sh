@@ -4,7 +4,7 @@ set -e
 
 alembic upgrade head
 
-export PYTHONPATH="/opt/app:$PYTHONPATH"
-cli_script_path=/opt/app/scripts/cli.py
-
-python "$cli_script_path" "$SUPERUSER_LOGIN" "$SUPERUSER_PASSWORD"
+typer /opt/app/auth/commands/create_superuser.py run \
+    --login="$SUPERUSER_LOGIN" \
+    --password="$SUPERUSER_PASSWORD" \
+    || :
