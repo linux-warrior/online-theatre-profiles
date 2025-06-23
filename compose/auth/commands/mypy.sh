@@ -3,7 +3,7 @@
 set -e
 
 BASE_DIR=/opt/app
-SOURCE_PATHS=("$BASE_DIR/auth" "$BASE_DIR/scripts")
+SOURCE_PATHS=("$BASE_DIR/auth")
 
 main() {
     mypy "${SOURCE_PATHS[@]}"

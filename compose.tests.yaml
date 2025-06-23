@@ -163,9 +163,6 @@ services:
         - action: sync+restart
           path: ./compose/auth/auth
           target: /opt/app/auth
-        - action: sync+restart
-          path: ./compose/auth/scripts
-          target: /opt/app/scripts
         - action: rebuild
           path: ./compose/auth/commands
         - action: rebuild
