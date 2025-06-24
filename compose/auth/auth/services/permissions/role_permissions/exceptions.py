@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ...base import BaseServiceException
+from ...common import BaseServiceException
 
 
 class RolePermissionServiceException(BaseServiceException):

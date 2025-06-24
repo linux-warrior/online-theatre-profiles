@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import dataclasses
 import uuid
 from collections.abc import Sequence
-from typing import Annotated, cast
+from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import (
     select,
+    insert,
     delete,
 )
 
@@ -17,6 +19,13 @@ from ....db.sqlalchemy import (
 from ....models.sqlalchemy import (
     RolePermission,
 )
+
+
+@dataclasses.dataclass(kw_only=True)
+class DeleteRolePermissionResult:
+    id: uuid.UUID
+    role_id: uuid.UUID
+    permission_id: uuid.UUID
 
 
 class RolePermissionRepository:
@@ -38,27 +47,43 @@ class RolePermissionRepository:
         return result.scalars().all()
 
     async def create(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> RolePermission:
-        role_permission = RolePermission(
-            role_id=role_id,
-            permission_id=permission_id,
-        )
-        self.session.add(role_permission)
+        role_permission_create_dict = {
+            'role_id': role_id,
+            'permission_id': permission_id,
+        }
+        statement = insert(RolePermission).values(role_permission_create_dict).returning(RolePermission)
 
+        result = await self.session.execute(statement)
         await self.session.commit()
-        await self.session.refresh(role_permission)
 
-        return role_permission
+        return result.scalar_one()
 
-    async def delete(self, *, role_id: uuid.UUID, permission_id: uuid.UUID) -> int:
+    async def delete(self,
+                     *,
+                     role_id: uuid.UUID,
+                     permission_id: uuid.UUID) -> DeleteRolePermissionResult | None:
         statement = delete(RolePermission).where(
             RolePermission.role_id == role_id,
             RolePermission.permission_id == permission_id,
+        ).returning(
+            RolePermission.id,
+            RolePermission.role_id,
+            RolePermission.permission_id,
         )
 
         result = await self.session.execute(statement)
         await self.session.commit()
 
-        return cast(int, result.rowcount)
+        delete_role_permission_row = result.one_or_none()
+
+        if delete_role_permission_row is None:
+            return None
+
+        return DeleteRolePermissionResult(
+            id=delete_role_permission_row.id,
+            role_id=delete_role_permission_row.role_id,
+            permission_id=delete_role_permission_row.permission_id,
+        )
 
 
 async def get_role_permission_repository(session: AsyncSessionDep) -> RolePermissionRepository:

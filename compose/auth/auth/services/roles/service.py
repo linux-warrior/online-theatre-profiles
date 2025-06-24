@@ -22,6 +22,12 @@ from .repository import (
     RoleRepository,
     RoleRepositoryDep,
 )
+from ...models.schemas import (
+    RoleSchema,
+)
+from ...models.sqlalchemy import (
+    Role,
+)
 
 
 class AbstractRoleService(abc.ABC):
@@ -50,10 +56,7 @@ class RoleService(AbstractRoleService):
     async def get_list(self) -> list[ReadRoleResponse]:
         roles_list = await self.repository.get_list()
 
-        return [
-            ReadRoleResponse.model_validate(role, from_attributes=True)
-            for role in roles_list
-        ]
+        return [self._get_read_role_response(role=role) for role in roles_list]
 
     async def get(self, *, role_id: uuid.UUID) -> ReadRoleResponse:
         role = await self.repository.get(role_id=role_id)
@@ -61,7 +64,7 @@ class RoleService(AbstractRoleService):
         if role is None:
             raise RoleNotFound
 
-        return ReadRoleResponse.model_validate(role, from_attributes=True)
+        return self._get_read_role_response(role=role)
 
     async def create(self, *, role_create: RoleCreate) -> ReadRoleResponse:
         try:
@@ -69,26 +72,32 @@ class RoleService(AbstractRoleService):
         except IntegrityError as e:
             raise RoleCreateError from e
 
-        return ReadRoleResponse.model_validate(role, from_attributes=True)
+        return self._get_read_role_response(role=role)
 
     async def update(self, *, role_id: uuid.UUID, role_update: RoleUpdate) -> ReadRoleResponse:
         try:
-            rows_count = await self.repository.update(role_id=role_id, role_update=role_update)
+            update_role_result = await self.repository.update(role_id=role_id, role_update=role_update)
         except IntegrityError as e:
             raise RoleUpdateError from e
 
-        if not rows_count:
+        if update_role_result is None:
             raise RoleNotFound
 
         return await self.get(role_id=role_id)
 
     async def delete(self, *, role_id: uuid.UUID) -> DeleteRoleResponse:
-        rows_count = await self.repository.delete(role_id=role_id)
+        delete_role_result = await self.repository.delete(role_id=role_id)
 
-        if not rows_count:
+        if delete_role_result is None:
             raise RoleNotFound
 
         return DeleteRoleResponse(id=role_id)
+
+    def _get_read_role_response(self, *, role: Role) -> ReadRoleResponse:
+        role_schema = RoleSchema.model_validate(role, from_attributes=True)
+        read_role_response_dict = role_schema.model_dump()
+
+        return ReadRoleResponse.model_validate(read_role_response_dict)
 
 
 async def get_role_service(repository: RoleRepositoryDep) -> AbstractRoleService:

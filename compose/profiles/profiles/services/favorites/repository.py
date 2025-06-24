@@ -72,7 +72,7 @@ class FavoriteRepository:
             'profile_id': select(Profile.id).where(Profile.user_id == user_id),
             'film_id': film_id,
         }
-        statement = insert(Favorite).values([favorite_create_dict]).returning(Favorite)
+        statement = insert(Favorite).values(favorite_create_dict).returning(Favorite)
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -84,7 +84,11 @@ class FavoriteRepository:
             Profile.id == Favorite.profile_id,
             Profile.user_id == user_id,
             Favorite.film_id == film_id,
-        ).returning(Favorite.id, Profile.user_id, Favorite.film_id)
+        ).returning(
+            Favorite.id,
+            Profile.user_id,
+            Favorite.film_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()

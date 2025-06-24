@@ -2,26 +2,33 @@ from __future__ import annotations
 
 import datetime
 import uuid
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    Field,
+)
+
+PermissionNameField = Annotated[str, Field(min_length=1, max_length=255)]
+PermissionCodeField = Annotated[str, Field(min_length=1, max_length=255)]
 
 
 class ReadPermissionResponse(BaseModel):
     id: uuid.UUID
-    name: str
-    code: str
+    name: PermissionNameField
+    code: PermissionCodeField
     created: datetime.datetime
     modified: datetime.datetime
 
 
 class PermissionCreate(BaseModel):
-    name: str
-    code: str
+    name: PermissionNameField
+    code: PermissionCodeField
 
 
 class PermissionUpdate(BaseModel):
-    name: str | None = None
-    code: str | None = None
+    name: PermissionNameField = ''
+    code: PermissionCodeField = ''
 
 
 class DeletePermissionResponse(BaseModel):

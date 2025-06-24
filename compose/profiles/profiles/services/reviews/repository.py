@@ -112,7 +112,7 @@ class ReviewRepository:
             'profile_id': select(Profile.id).where(Profile.user_id == user_id),
             'film_id': film_id,
         }
-        statement = insert(Review).values([review_create_dict]).returning(Review)
+        statement = insert(Review).values(review_create_dict).returning(Review)
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -129,7 +129,11 @@ class ReviewRepository:
             Profile.id == Review.profile_id,
             Profile.user_id == user_id,
             Review.film_id == film_id,
-        ).values(review_update_dict).returning(Review.id, Profile.user_id, Review.film_id)
+        ).values(review_update_dict).returning(
+            Review.id,
+            Profile.user_id,
+            Review.film_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -150,7 +154,11 @@ class ReviewRepository:
             Profile.id == Review.profile_id,
             Profile.user_id == user_id,
             Review.film_id == film_id,
-        ).returning(Review.id, Profile.user_id, Review.film_id)
+        ).returning(
+            Review.id,
+            Profile.user_id,
+            Review.film_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import dataclasses
 import uuid
 from collections.abc import Sequence
-from typing import Annotated, cast
+from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import (
     select,
+    insert,
     update,
     delete,
 )
@@ -22,6 +24,16 @@ from ...db.sqlalchemy import (
 from ...models.sqlalchemy import (
     Permission,
 )
+
+
+@dataclasses.dataclass(kw_only=True)
+class UpdatePermissionResult:
+    id: uuid.UUID
+
+
+@dataclasses.dataclass(kw_only=True)
+class DeletePermissionResult:
+    id: uuid.UUID
 
 
 class PermissionRepository:
@@ -46,30 +58,54 @@ class PermissionRepository:
 
     async def create(self, *, permission_create: PermissionCreate) -> Permission:
         permission_create_dict = permission_create.model_dump()
-        permission = Permission(**permission_create_dict)
-        self.session.add(permission)
+        statement = insert(Permission).values(permission_create_dict).returning(Permission)
 
+        result = await self.session.execute(statement)
         await self.session.commit()
-        await self.session.refresh(permission)
 
-        return permission
+        return result.scalar_one()
 
-    async def update(self, *, permission_id: uuid.UUID, permission_update: PermissionUpdate) -> int:
+    async def update(self,
+                     *,
+                     permission_id: uuid.UUID,
+                     permission_update: PermissionUpdate) -> UpdatePermissionResult | None:
         permission_update_dict = permission_update.model_dump(exclude_unset=True)
-        statement = update(Permission).where(Permission.id == permission_id).values(permission_update_dict)
+        statement = update(Permission).where(
+            Permission.id == permission_id,
+        ).values(permission_update_dict).returning(
+            Permission.id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()
 
-        return cast(int, result.rowcount)
+        update_permission_row = result.one_or_none()
 
-    async def delete(self, *, permission_id: uuid.UUID) -> int:
-        statement = delete(Permission).where(Permission.id == permission_id)
+        if update_permission_row is None:
+            return None
+
+        return UpdatePermissionResult(
+            id=update_permission_row.id,
+        )
+
+    async def delete(self, *, permission_id: uuid.UUID) -> DeletePermissionResult | None:
+        statement = delete(Permission).where(
+            Permission.id == permission_id,
+        ).returning(
+            Permission.id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()
 
-        return cast(int, result.rowcount)
+        delete_permission_row = result.one_or_none()
+
+        if delete_permission_row is None:
+            return None
+
+        return DeletePermissionResult(
+            id=delete_permission_row.id,
+        )
 
 
 async def get_permission_repository(session: AsyncSessionDep) -> PermissionRepository:

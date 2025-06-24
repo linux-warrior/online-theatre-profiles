@@ -112,7 +112,7 @@ class RatingRepository:
             'profile_id': select(Profile.id).where(Profile.user_id == user_id),
             'film_id': film_id,
         }
-        statement = insert(Rating).values([rating_create_dict]).returning(Rating)
+        statement = insert(Rating).values(rating_create_dict).returning(Rating)
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -129,7 +129,11 @@ class RatingRepository:
             Profile.id == Rating.profile_id,
             Profile.user_id == user_id,
             Rating.film_id == film_id,
-        ).values(rating_update_dict).returning(Rating.id, Profile.user_id, Rating.film_id)
+        ).values(rating_update_dict).returning(
+            Rating.id,
+            Profile.user_id,
+            Rating.film_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -150,7 +154,11 @@ class RatingRepository:
             Profile.id == Rating.profile_id,
             Profile.user_id == user_id,
             Rating.film_id == film_id,
-        ).returning(Rating.id, Profile.user_id, Rating.film_id)
+        ).returning(
+            Rating.id,
+            Profile.user_id,
+            Rating.film_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()
