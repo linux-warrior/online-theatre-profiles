@@ -15,3 +15,5 @@ class ReadUserRoleResponse(BaseModel):
 
 class DeleteUserRoleResponse(BaseModel):
     id: uuid.UUID
+    user_id: uuid.UUID
+    role_id: uuid.UUID

@@ -2,23 +2,29 @@ from __future__ import annotations
 
 import datetime
 import uuid
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    Field,
+)
+
+RoleNameField = Annotated[str, Field(min_length=1, max_length=255)]
 
 
 class ReadRoleResponse(BaseModel):
     id: uuid.UUID
-    name: str
+    name: RoleNameField
     created: datetime.datetime
     modified: datetime.datetime
 
 
 class RoleCreate(BaseModel):
-    name: str
+    name: RoleNameField
 
 
 class RoleUpdate(BaseModel):
-    name: str | None = None
+    name: RoleNameField = ''
 
 
 class DeleteRoleResponse(BaseModel):

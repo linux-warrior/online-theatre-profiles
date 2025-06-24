@@ -73,7 +73,7 @@ class ProfileRepository:
         }
         profile_create_dict = self.profile_encryption_tool.encrypt(profile_create_dict)
 
-        statement = insert(Profile).values([profile_create_dict]).returning(Profile)
+        statement = insert(Profile).values(profile_create_dict).returning(Profile)
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -90,7 +90,10 @@ class ProfileRepository:
 
         statement = update(Profile).where(
             Profile.user_id == user_id,
-        ).values(profile_update_dict).returning(Profile.id, Profile.user_id)
+        ).values(profile_update_dict).returning(
+            Profile.id,
+            Profile.user_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -108,7 +111,10 @@ class ProfileRepository:
     async def delete(self, *, user_id: uuid.UUID) -> DeleteProfileResult | None:
         statement = delete(Profile).where(
             Profile.user_id == user_id,
-        ).returning(Profile.id, Profile.user_id)
+        ).returning(
+            Profile.id,
+            Profile.user_id,
+        )
 
         result = await self.session.execute(statement)
         await self.session.commit()

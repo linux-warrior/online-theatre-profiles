@@ -15,3 +15,5 @@ class ReadRolePermissionResponse(BaseModel):
 
 class DeleteRolePermissionResponse(BaseModel):
     id: uuid.UUID
+    role_id: uuid.UUID
+    permission_id: uuid.UUID
