@@ -25,7 +25,7 @@ from ....services.profiles import ProfilesServiceDep
 router = APIRouter()
 
 
-class SortOrderEnum(enum.StrEnum):
+class SortOrder(enum.StrEnum):
     ASC = 'asc'
     DESC = 'desc'
 
@@ -48,13 +48,13 @@ async def get_films_list(*,
         is_first_dash = (sort[0] == '-')
 
         field = sort[1:] if is_first_dash else sort
-        sort = SortOrderEnum.DESC if is_first_dash else SortOrderEnum.ASC
+        sort = SortOrder.DESC if is_first_dash else SortOrder.ASC
 
         if field == 'imdb_rating':
             sort_by = {'field': 'rating', 'order': sort}
 
     if not sort_by:
-        sort_by = {'field': 'id', 'order': SortOrderEnum.ASC}
+        sort_by = {'field': 'id', 'order': SortOrder.ASC}
 
     films_list = await film_service.get_list(
         sort=sort_by,
