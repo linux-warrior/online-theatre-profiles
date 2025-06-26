@@ -12,6 +12,12 @@ from sqlalchemy import (
     delete,
 )
 
+from ...pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ....db.sqlalchemy import (
     AsyncSession,
     AsyncSessionDep,
@@ -30,19 +36,31 @@ class DeleteUserRoleResult:
 
 class UserRoleRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self, *, user_id: uuid.UUID) -> Sequence[UserRole]:
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> Sequence[UserRole]:
         statement = select(UserRole).where(
             UserRole.user_id == user_id,
-        ).order_by(
-            UserRole.created,
-            UserRole.id,
         )
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[UserRole]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=UserRole.id,
+            timestamp_column=UserRole.created,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -83,8 +101,9 @@ class UserRoleRepository:
         )
 
 
-async def get_user_role_repository(session: AsyncSessionDep) -> UserRoleRepository:
-    return UserRoleRepository(session=session)
+async def get_user_role_repository(session: AsyncSessionDep,
+                                   pagination_service: PaginationServiceDep) -> UserRoleRepository:
+    return UserRoleRepository(session=session, pagination_service=pagination_service)
 
 
 UserRoleRepositoryDep = Annotated[UserRoleRepository, Depends(get_user_role_repository)]

@@ -22,6 +22,9 @@ from .repository import (
     PermissionRepository,
     PermissionRepositoryDep,
 )
+from ..pagination import (
+    PageParams,
+)
 from ...models.schemas import (
     PermissionSchema,
 )
@@ -32,7 +35,7 @@ from ...models.sqlalchemy import (
 
 class AbstractPermissionService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self) -> list[ReadPermissionResponse]: ...
+    async def get_list(self, *, page_params: PageParams) -> list[ReadPermissionResponse]: ...
 
     @abc.abstractmethod
     async def get(self, *, permission_id: uuid.UUID) -> ReadPermissionResponse: ...
@@ -56,8 +59,8 @@ class PermissionService(AbstractPermissionService):
     def __init__(self, *, repository: PermissionRepository) -> None:
         self.repository = repository
 
-    async def get_list(self) -> list[ReadPermissionResponse]:
-        permissions_list = await self.repository.get_list()
+    async def get_list(self, *, page_params: PageParams) -> list[ReadPermissionResponse]:
+        permissions_list = await self.repository.get_list(page_params=page_params)
 
         return [
             self._get_read_permission_response(permission=permission)

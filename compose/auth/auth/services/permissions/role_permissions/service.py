@@ -19,6 +19,9 @@ from .repository import (
     RolePermissionRepository,
     RolePermissionRepositoryDep,
 )
+from ...pagination import (
+    PageParams,
+)
 from ....models.schemas import (
     RolePermissionSchema,
 )
@@ -29,7 +32,10 @@ from ....models.sqlalchemy import (
 
 class AbstractRolePermissionService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self, *, role_id: uuid.UUID) -> list[ReadRolePermissionResponse]: ...
+    async def get_list(self,
+                       *,
+                       role_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadRolePermissionResponse]: ...
 
     @abc.abstractmethod
     async def create(self,
@@ -50,8 +56,14 @@ class RolePermissionService(AbstractRolePermissionService):
     def __init__(self, *, repository: RolePermissionRepository) -> None:
         self.repository = repository
 
-    async def get_list(self, *, role_id: uuid.UUID) -> list[ReadRolePermissionResponse]:
-        role_permissions_list = await self.repository.get_list(role_id=role_id)
+    async def get_list(self,
+                       *,
+                       role_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadRolePermissionResponse]:
+        role_permissions_list = await self.repository.get_list(
+            role_id=role_id,
+            page_params=page_params,
+        )
 
         return [
             self._get_read_role_permission_response(role_permission=role_permission)

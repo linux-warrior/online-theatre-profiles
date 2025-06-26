@@ -12,6 +12,12 @@ from sqlalchemy import (
     delete,
 )
 
+from ...pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ....db.sqlalchemy import (
     AsyncSession,
     AsyncSessionDep,
@@ -30,19 +36,31 @@ class DeleteRolePermissionResult:
 
 class RolePermissionRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self, *, role_id: uuid.UUID) -> Sequence[RolePermission]:
+    async def get_list(self,
+                       *,
+                       role_id: uuid.UUID,
+                       page_params: PageParams) -> Sequence[RolePermission]:
         statement = select(RolePermission).where(
             RolePermission.role_id == role_id,
-        ).order_by(
-            RolePermission.created,
-            RolePermission.id,
         )
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[RolePermission]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=RolePermission.id,
+            timestamp_column=RolePermission.created,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -86,8 +104,9 @@ class RolePermissionRepository:
         )
 
 
-async def get_role_permission_repository(session: AsyncSessionDep) -> RolePermissionRepository:
-    return RolePermissionRepository(session=session)
+async def get_role_permission_repository(session: AsyncSessionDep,
+                                         pagination_service: PaginationServiceDep) -> RolePermissionRepository:
+    return RolePermissionRepository(session=session, pagination_service=pagination_service)
 
 
 RolePermissionRepositoryDep = Annotated[RolePermissionRepository, Depends(get_role_permission_repository)]
