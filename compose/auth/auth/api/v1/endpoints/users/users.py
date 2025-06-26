@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import datetime
 import uuid
-from typing import Annotated
 
 from fastapi import (
     APIRouter,
     HTTPException,
-    Query,
     status,
 )
 
@@ -16,6 +13,9 @@ from .....services.extended_users import (
     ExtendedUserServiceDep,
     ExtendedCurrentUserResponse,
     ExtendedReadUserResponse,
+)
+from .....services.pagination import (
+    PageParamsDep,
 )
 from .....services.users import (
     CurrentUserDep,
@@ -127,16 +127,10 @@ async def get_user(user_id: uuid.UUID,
     response_model=list[ReadUserResponse],
 )
 async def get_users_list(*,
-                         user_id: uuid.UUID | None = None,
-                         user_created: datetime.datetime | None = None,
-                         page_size: Annotated[int, Query(ge=1, le=100)] = 100,
+                         page_params: PageParamsDep,
                          user_manager: UserManagerDep,
                          _current_superuser: CurrentSuperuserDep) -> list[ReadUserResponse]:
-    users_list = await user_manager.get_list(
-        id=user_id,
-        created=user_created,
-        count=page_size,
-    )
+    users_list = await user_manager.get_list(page_params=page_params)
 
     return [
         ReadUserResponse.model_validate(user, from_attributes=True)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import uuid
 from collections.abc import Sequence
 from typing import Any, Optional, Annotated
@@ -20,7 +19,13 @@ from .models import (
     UserCreate,
     UserUpdate,
 )
-from .password import PasswordHelper, PasswordHelperProtocol
+from .password import (
+    PasswordHelper,
+    PasswordHelperProtocol,
+)
+from ..pagination import (
+    PageParams,
+)
 from ...models.sqlalchemy import User
 
 
@@ -71,16 +76,8 @@ class UserManager:
 
         return user
 
-    async def get_list(self,
-                       *,
-                       id: uuid.UUID | None = None,
-                       created: datetime.datetime | None = None,
-                       count: int) -> Sequence[User]:
-        return await self.user_db.get_list(
-            created=created,
-            id=id,
-            count=count,
-        )
+    async def get_list(self, *, page_params: PageParams) -> Sequence[User]:
+        return await self.user_db.get_list(page_params=page_params)
 
     async def get_by_login(self, user_login: str) -> User:
         """

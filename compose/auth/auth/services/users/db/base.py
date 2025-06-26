@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import datetime
 import uuid
 from collections.abc import Sequence
 from typing import Any
 
+from ...pagination import (
+    PageParams,
+)
 from ....models.sqlalchemy import (
     User,
     OAuthAccount,
@@ -15,11 +17,7 @@ class BaseUserDatabase:
     async def get(self, id: uuid.UUID) -> User | None:
         raise NotImplementedError
 
-    async def get_list(self,
-                       *,
-                       id: uuid.UUID | None = None,
-                       created: datetime.datetime | None = None,
-                       count: int) -> Sequence[User]:
+    async def get_list(self, *, page_params: PageParams) -> Sequence[User]:
         raise NotImplementedError
 
     async def get_by_login(self, login: str) -> User | None:
