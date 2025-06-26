@@ -17,6 +17,12 @@ from .models import (
     PermissionCreate,
     PermissionUpdate,
 )
+from ..pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ...db.sqlalchemy import (
     AsyncSessionDep,
     AsyncSession
@@ -38,14 +44,26 @@ class DeletePermissionResult:
 
 class PermissionRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self) -> Sequence[Permission]:
-        statement = select(Permission).order_by(Permission.created, Permission.id)
+    async def get_list(self, *, page_params: PageParams) -> Sequence[Permission]:
+        statement = select(Permission)
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[Permission]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=Permission.id,
+            timestamp_column=Permission.modified,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -108,8 +126,9 @@ class PermissionRepository:
         )
 
 
-async def get_permission_repository(session: AsyncSessionDep) -> PermissionRepository:
-    return PermissionRepository(session=session)
+async def get_permission_repository(session: AsyncSessionDep,
+                                    pagination_service: PaginationServiceDep) -> PermissionRepository:
+    return PermissionRepository(session=session, pagination_service=pagination_service)
 
 
 PermissionRepositoryDep = Annotated[PermissionRepository, Depends(get_permission_repository)]

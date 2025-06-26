@@ -22,6 +22,9 @@ from .repository import (
     RoleRepository,
     RoleRepositoryDep,
 )
+from ..pagination import (
+    PageParams,
+)
 from ...models.schemas import (
     RoleSchema,
 )
@@ -32,7 +35,7 @@ from ...models.sqlalchemy import (
 
 class AbstractRoleService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self) -> list[ReadRoleResponse]: ...
+    async def get_list(self, *, page_params: PageParams) -> list[ReadRoleResponse]: ...
 
     @abc.abstractmethod
     async def get(self, *, role_id: uuid.UUID) -> ReadRoleResponse: ...
@@ -53,8 +56,8 @@ class RoleService(AbstractRoleService):
     def __init__(self, *, repository: RoleRepository) -> None:
         self.repository = repository
 
-    async def get_list(self) -> list[ReadRoleResponse]:
-        roles_list = await self.repository.get_list()
+    async def get_list(self, *, page_params: PageParams) -> list[ReadRoleResponse]:
+        roles_list = await self.repository.get_list(page_params=page_params)
 
         return [self._get_read_role_response(role=role) for role in roles_list]
 

@@ -19,6 +19,9 @@ from .repository import (
     UserRoleRepository,
     UserRoleRepositoryDep,
 )
+from ...pagination import (
+    PageParams,
+)
 from ....models.schemas import (
     UserRoleSchema,
 )
@@ -29,7 +32,10 @@ from ....models.sqlalchemy import (
 
 class AbstractUserRoleService(abc.ABC):
     @abc.abstractmethod
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadUserRoleResponse]: ...
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadUserRoleResponse]: ...
 
     @abc.abstractmethod
     async def create(self, *, user_id: uuid.UUID, role_id: uuid.UUID) -> ReadUserRoleResponse: ...
@@ -44,8 +50,14 @@ class UserRoleService(AbstractUserRoleService):
     def __init__(self, *, repository: UserRoleRepository) -> None:
         self.repository = repository
 
-    async def get_list(self, *, user_id: uuid.UUID) -> list[ReadUserRoleResponse]:
-        user_roles_list = await self.repository.get_list(user_id=user_id)
+    async def get_list(self,
+                       *,
+                       user_id: uuid.UUID,
+                       page_params: PageParams) -> list[ReadUserRoleResponse]:
+        user_roles_list = await self.repository.get_list(
+            user_id=user_id,
+            page_params=page_params,
+        )
 
         return [self._get_read_user_role_response(user_role=user_role) for user_role in user_roles_list]
 

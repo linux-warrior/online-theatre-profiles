@@ -17,6 +17,12 @@ from .models import (
     RoleCreate,
     RoleUpdate,
 )
+from ..pagination import (
+    AbstractPaginationService,
+    PaginationServiceDep,
+    AbstractPaginator,
+    PageParams,
+)
 from ...db.sqlalchemy import (
     AsyncSession,
     AsyncSessionDep,
@@ -38,14 +44,26 @@ class DeleteRoleResult:
 
 class RoleRepository:
     session: AsyncSession
+    pagination_service: AbstractPaginationService
 
-    def __init__(self, *, session: AsyncSession) -> None:
+    def __init__(self,
+                 *,
+                 session: AsyncSession,
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
+        self.pagination_service = pagination_service
 
-    async def get_list(self) -> Sequence[Role]:
-        statement = select(Role).order_by(Role.created, Role.id)
+    async def get_list(self, *, page_params: PageParams) -> Sequence[Role]:
+        statement = select(Role)
 
-        result = await self.session.execute(statement)
+        paginator: AbstractPaginator[tuple[Role]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=Role.id,
+            timestamp_column=Role.modified,
+        )
+        page_statement = paginator.get_page(page_params=page_params)
+
+        result = await self.session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -105,8 +123,9 @@ class RoleRepository:
         )
 
 
-async def get_role_repository(session: AsyncSessionDep) -> RoleRepository:
-    return RoleRepository(session=session)
+async def get_role_repository(session: AsyncSessionDep,
+                              pagination_service: PaginationServiceDep) -> RoleRepository:
+    return RoleRepository(session=session, pagination_service=pagination_service)
 
 
 RoleRepositoryDep = Annotated[RoleRepository, Depends(get_role_repository)]

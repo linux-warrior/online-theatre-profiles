@@ -8,6 +8,9 @@ from fastapi import (
     status,
 )
 
+from .....services.pagination import (
+    PageParamsDep,
+)
 from .....services.permissions import (
     PermissionServiceDep,
     ReadPermissionResponse,
@@ -29,9 +32,10 @@ router = APIRouter()
     response_model=list[ReadPermissionResponse],
     summary='Get a list of permissions',
 )
-async def get_permissions_list(permission_service: PermissionServiceDep,
+async def get_permissions_list(page_params: PageParamsDep,
+                               permission_service: PermissionServiceDep,
                                _current_superuser: CurrentSuperuserDep) -> list[ReadPermissionResponse]:
-    return await permission_service.get_list()
+    return await permission_service.get_list(page_params=page_params)
 
 
 @router.get(

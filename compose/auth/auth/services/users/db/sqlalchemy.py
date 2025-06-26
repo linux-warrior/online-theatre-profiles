@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-import datetime
 import uuid
 from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import (
     select,
-    or_,
-    and_,
-    true,
-    ColumnElement,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from ..db.base import BaseUserDatabase
+from .base import BaseUserDatabase
+from ...pagination import (
+    AbstractPaginationService,
+    AbstractPaginator,
+    PageParams,
+)
 from ....models.sqlalchemy import (
     User,
     OAuthAccount,
@@ -26,52 +26,34 @@ class SQLAlchemyUserDatabase(BaseUserDatabase):
     session: AsyncSession
     user_table: type[User]
     oauth_account_table: type[OAuthAccount]
+    pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  user_table: type[User],
-                 oauth_account_table: type[OAuthAccount]) -> None:
+                 oauth_account_table: type[OAuthAccount],
+                 pagination_service: AbstractPaginationService) -> None:
         self.session = session
         self.user_table = user_table
         self.oauth_account_table = oauth_account_table
+        self.pagination_service = pagination_service
 
     async def get(self, id: uuid.UUID) -> User | None:
         statement = select(self.user_table).where(self.user_table.id == id)
         return await self._get_user(statement)
 
-    async def get_list(self,
-                       *,
-                       id: uuid.UUID | None = None,
-                       created: datetime.datetime | None = None,
-                       count: int) -> Sequence[User]:
-        created_parts: list[ColumnElement[bool]] = []
+    async def get_list(self, *, page_params: PageParams) -> Sequence[User]:
+        statement = select(self.user_table)
 
-        if created is not None:
-            created_parts.append(
-                self.user_table.created > created,
-            )
-
-        if created is not None and id is not None:
-            created_parts.append(
-                and_(
-                    self.user_table.created == created,
-                    self.user_table.id > id,
-                ),
-            )
-
-        statement = select(
-            self.user_table,
-        ).where(
-            or_(*created_parts) if created_parts else true(),
-        ).limit(
-            count,
-        ).order_by(
-            self.user_table.created,
-            self.user_table.id,
+        paginator: AbstractPaginator[tuple[User]] = self.pagination_service.get_paginator(
+            statement=statement,
+            id_column=self.user_table.id,
+            timestamp_column=self.user_table.created,
         )
+        page_statement = paginator.get_page(page_params=page_params)
 
-        return await self._get_users_list(statement)
+        return await self._get_users_list(page_statement)
 
     async def get_by_login(self, login: str) -> User | None:
         statement = select(self.user_table).where(self.user_table.login == login)
@@ -137,10 +119,10 @@ class SQLAlchemyUserDatabase(BaseUserDatabase):
 
         return user
 
-    async def _get_user(self, statement: Select) -> User | None:
+    async def _get_user(self, statement: Select[tuple[User]]) -> User | None:
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
 
-    async def _get_users_list(self, statement: Select) -> Sequence[User]:
+    async def _get_users_list(self, statement: Select[tuple[User]]) -> Sequence[User]:
         result = await self.session.execute(statement)
         return result.unique().scalars().all()
