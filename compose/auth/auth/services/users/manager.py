@@ -9,11 +9,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import exceptions
-from .authentication.login_history.models import LoginHistoryCreate
-from .authentication.login_history.service import LoginHistoryService, LoginHistoryServiceDep
 from .db import (
     BaseUserDatabase,
     UserDatabaseDep,
+)
+from .login_history import (
+    LoginHistoryCreate,
+    LoginHistoryService,
+    LoginHistoryServiceDep,
 )
 from .models import (
     UserCreate,

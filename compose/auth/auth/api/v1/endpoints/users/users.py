@@ -26,9 +26,11 @@ from .....services.users import (
     ReadUserResponse,
     UserUpdate,
 )
-from .....services.users.authentication.login_history.dependencies import PageDep
-from .....services.users.authentication.login_history.models import LoginHistoryInDb
-from .....services.users.authentication.login_history.service import LoginHistoryServiceDep
+from .....services.users.login_history import (
+    PageDep,
+    LoginHistoryInDb,
+    LoginHistoryServiceDep,
+)
 
 router = APIRouter()
 

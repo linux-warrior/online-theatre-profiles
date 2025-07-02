@@ -13,11 +13,11 @@ from .dependencies import Page
 from .models import (
     LoginHistoryCreate,
 )
-from .....db.sqlalchemy import (
+from ....db.sqlalchemy import (
     AsyncSessionDep,
     AsyncSession
 )
-from .....models.sqlalchemy import LoginHistory
+from ....models.sqlalchemy import LoginHistory
 
 
 class LoginHistoryRepository:

@@ -12,7 +12,7 @@ from .repository import (
     LoginHistoryRepositoryDep,
     LoginHistoryRepository
 )
-from .....models.sqlalchemy import LoginHistory
+from ....models.sqlalchemy import LoginHistory
 
 
 class LoginHistoryService:
