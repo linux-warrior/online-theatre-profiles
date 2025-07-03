@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Sequence
-from typing import Any, Optional, Annotated
+from typing import Any, Annotated
 
 from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.exc import SQLAlchemyError
 
 from . import exceptions
 from .db import (
@@ -15,8 +15,9 @@ from .db import (
 )
 from .login_history import (
     LoginHistoryCreate,
-    LoginHistoryService,
+    AbstractLoginHistoryService,
     LoginHistoryServiceDep,
+    LoginHistoryServiceException,
 )
 from .models import (
     UserCreate,
@@ -31,6 +32,8 @@ from ..pagination import (
 )
 from ...models.sqlalchemy import User
 
+logger = logging.getLogger(__name__)
+
 
 class UserManager:
     """
@@ -41,16 +44,16 @@ class UserManager:
 
     user_db: BaseUserDatabase
     password_helper: PasswordHelperProtocol
-    login_logger: LoginHistoryService
+    login_history_service: AbstractLoginHistoryService
 
     def __init__(
             self,
             user_db: BaseUserDatabase,
-            login_logger: LoginHistoryService,
-            password_helper: Optional[PasswordHelperProtocol] = None,
-    ):
+            login_history_service: AbstractLoginHistoryService,
+            password_helper: PasswordHelperProtocol | None = None) -> None:
         self.user_db = user_db
-        self.login_logger = login_logger
+        self.login_history_service = login_history_service
+
         if password_helper is None:
             self.password_helper = PasswordHelper()
         else:
@@ -184,20 +187,23 @@ class UserManager:
                 'password': updated_password_hash,
             })
 
-        await self._record_user_login(user, request)
+        await self._log_user_login(request=request, user=user)
 
         return user
 
-    async def _record_user_login(self, user: User, request: Request) -> None:
-        row = LoginHistoryCreate(
-            user_id=user.id,
+    async def _log_user_login(self, *, request: Request, user: User) -> None:
+        login_history_create = LoginHistoryCreate(
             user_agent=request.headers.get('User-Agent') or '',
         )
 
         try:
-            await self.login_logger.record_to_log(row)
-        except SQLAlchemyError:
-            pass
+            await self.login_history_service.create(
+                user_id=user.id,
+                login_history_create=login_history_create,
+            )
+
+        except LoginHistoryServiceException as e:
+            logger.exception(e)
 
     async def _update(self, user: User, update_dict: dict[str, Any]) -> User:
         validated_update_dict = {}
@@ -270,8 +276,9 @@ class UserManager:
         return user
 
 
-async def get_user_manager(user_db: UserDatabaseDep, login_logger: LoginHistoryServiceDep) -> UserManager:
-    return UserManager(user_db=user_db, login_logger=login_logger)
+async def get_user_manager(user_db: UserDatabaseDep,
+                           login_history_service: LoginHistoryServiceDep) -> UserManager:
+    return UserManager(user_db=user_db, login_history_service=login_history_service)
 
 
 UserManagerDep = Annotated[UserManager, Depends(get_user_manager)]

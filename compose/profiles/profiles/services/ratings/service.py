@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from .exceptions import (
     RatingNotFound,
     RatingCreateError,
-    RatingUpdateError
+    RatingUpdateError,
 )
 from .models import (
     ReadRatingResponse,

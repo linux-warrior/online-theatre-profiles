@@ -27,9 +27,8 @@ from .....services.users import (
     UserUpdate,
 )
 from .....services.users.login_history import (
-    PageDep,
-    LoginHistoryInDb,
     LoginHistoryServiceDep,
+    ReadLoginHistoryResponse,
 )
 
 router = APIRouter()
@@ -125,7 +124,7 @@ async def get_user(user_id: uuid.UUID,
 
 @router.get(
     '/list',
-    name='users:users-list',
+    name='users:users_list',
     response_model=list[ReadUserResponse],
 )
 async def get_users_list(*,
@@ -142,17 +141,10 @@ async def get_users_list(*,
 
 @router.get(
     '/login-history',
-    name='users:history_login_current_user',
-    response_model=list[LoginHistoryInDb],
-    status_code=status.HTTP_200_OK,
+    name='users:current_user_login_history',
+    response_model=list[ReadLoginHistoryResponse],
 )
-async def get_login_history(
-        login_history_service: LoginHistoryServiceDep,
-        page: PageDep,
-        user: CurrentUserDep,
-):
-    login_history_list = await login_history_service.get_list(user.id, page)
-    return [
-        LoginHistoryInDb.model_validate(login_history, from_attributes=True)
-        for login_history in login_history_list
-    ]
+async def get_login_history_list(user: CurrentUserDep,
+                                 page_params: PageParamsDep,
+                                 login_history_service: LoginHistoryServiceDep) -> list[ReadLoginHistoryResponse]:
+    return await login_history_service.get_list(user_id=user.id, page_params=page_params)
