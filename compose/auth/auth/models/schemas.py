@@ -33,3 +33,10 @@ class RolePermissionSchema(BaseModel):
     role_id: uuid.UUID
     permission_id: uuid.UUID
     created: datetime.datetime
+
+
+class LoginHistorySchema(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    user_agent: str
+    created: datetime.datetime

@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from .exceptions import (
     ReviewNotFound,
     ReviewCreateError,
-    ReviewUpdateError
+    ReviewUpdateError,
 )
 from .models import (
     ReadReviewResponse,
