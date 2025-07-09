@@ -1,7 +1,7 @@
 from .base import (
-    Strategy,
+    AbstractTokenStrategy,
 )
 from .dependencies import (
-    AccessStrategyDep,
-    RefreshStrategyDep,
+    AccessTokenStrategyDep,
+    RefreshTokenStrategyDep,
 )

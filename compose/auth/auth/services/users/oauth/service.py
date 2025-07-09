@@ -17,11 +17,11 @@ from .exceptions import (
     InvalidOAuthProvider,
     InvalidStateToken,
 )
-from ..jwt import (
-    generate_jwt,
-    decode_jwt,
+from ...jwt import (
+    JWTServiceDep,
+    AbstractJWTService,
+    AbstractJWTHelper,
 )
-from ....core import settings
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -55,9 +55,14 @@ class OAuthService(AbstractOAuthService):
     state_token_audience: ClassVar[str] = 'users:oauth-state:{provider_name}'
 
     oauth_client_service: AbstractOAuthClientService
+    jwt_helper: AbstractJWTHelper
 
-    def __init__(self, *, oauth_client_service: AbstractOAuthClientService) -> None:
+    def __init__(self,
+                 *,
+                 oauth_client_service: AbstractOAuthClientService,
+                 jwt_service: AbstractJWTService) -> None:
         self.oauth_client_service = oauth_client_service
+        self.jwt_helper = jwt_service.get_jwt_helper()
 
     async def get_authorization_url(self,
                                     *,
@@ -68,9 +73,7 @@ class OAuthService(AbstractOAuthService):
 
         authorize_redirect_url = str(request.url_for('oauth:callback', provider_name=provider_name))
         audience = self._get_state_token_audience(provider_name=provider_name)
-        state = generate_jwt({
-            'aud': audience,
-        }, secret=settings.auth.secret_key)
+        state = self.jwt_helper.encode({}, audience=audience)
 
         return await oauth_client.get_authorization_url(
             authorize_redirect_url,
@@ -93,7 +96,7 @@ class OAuthService(AbstractOAuthService):
 
         audience = self._get_state_token_audience(provider_name=provider_name)
         try:
-            decode_jwt(state, secret=settings.auth.secret_key, audience=[audience])
+            self.jwt_helper.decode(state, audience=audience)
         except jwt.DecodeError:
             raise InvalidStateToken(state=state)
 
@@ -130,8 +133,12 @@ class OAuthService(AbstractOAuthService):
         return self.state_token_audience.format(provider_name=provider_name)
 
 
-async def get_oauth_service(oauth_client_service: OAuthClientServiceDep) -> AbstractOAuthService:
-    return OAuthService(oauth_client_service=oauth_client_service)
+async def get_oauth_service(oauth_client_service: OAuthClientServiceDep,
+                            jwt_service: JWTServiceDep) -> AbstractOAuthService:
+    return OAuthService(
+        oauth_client_service=oauth_client_service,
+        jwt_service=jwt_service,
+    )
 
 
 OAuthServiceDep = Annotated[AbstractOAuthService, Depends(get_oauth_service)]

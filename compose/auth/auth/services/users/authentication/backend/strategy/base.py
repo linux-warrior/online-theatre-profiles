@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import abc
 import dataclasses
 import uuid
-from typing import Protocol
 
 from ....manager import UserManager
 from ......models.sqlalchemy import User
@@ -15,11 +15,15 @@ class Token:
     token: str
 
 
-class Strategy(Protocol):
-    async def read_token(self, token: str, user_manager: UserManager) -> User | None: ...
+class AbstractTokenStrategy(abc.ABC):
+    @abc.abstractmethod
+    async def read_token(self, *, token: str, user_manager: UserManager) -> User | None: ...
 
-    async def write_token(self, user: User, parent_id: uuid.UUID | None = None) -> Token: ...
+    @abc.abstractmethod
+    async def write_token(self, *, user: User, parent_id: uuid.UUID | None = None) -> Token: ...
 
-    async def destroy_token(self, token: str, user: User) -> Token | None: ...
+    @abc.abstractmethod
+    async def destroy_token(self, *, token: str, user: User) -> Token | None: ...
 
-    async def destroy_token_id(self, token_id: uuid.UUID) -> None: ...
+    @abc.abstractmethod
+    async def destroy_token_id(self, *, token_id: uuid.UUID) -> None: ...

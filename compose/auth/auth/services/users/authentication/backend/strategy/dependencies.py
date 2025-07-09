@@ -4,31 +4,34 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from .base import Strategy
+from .base import AbstractTokenStrategy
 from .jwt import (
     AccessJWTStrategy,
     RefreshJWTStrategy,
 )
 from .....cache import CacheServiceDep
+from .....jwt import JWTServiceDep
 from ......core import settings
 
 
-async def get_access_strategy(cache_service: CacheServiceDep) -> Strategy:
+async def get_access_token_strategy(jwt_service: JWTServiceDep,
+                                    cache_service: CacheServiceDep) -> AbstractTokenStrategy:
     return AccessJWTStrategy(
-        secret=settings.auth.secret_key,
-        lifetime_seconds=settings.auth.access_jwt_lifetime,
+        lifetime=settings.auth.access_jwt_lifetime,
+        jwt_service=jwt_service,
         cache_service=cache_service,
     )
 
 
-async def get_refresh_strategy(cache_service: CacheServiceDep) -> Strategy:
+async def get_refresh_token_strategy(jwt_service: JWTServiceDep,
+                                     cache_service: CacheServiceDep) -> AbstractTokenStrategy:
     return RefreshJWTStrategy(
-        secret=settings.auth.secret_key,
-        lifetime_seconds=settings.auth.refresh_jwt_lifetime,
-        token_audience=['users:refresh'],
+        lifetime=settings.auth.refresh_jwt_lifetime,
+        audience=['users:refresh'],
+        jwt_service=jwt_service,
         cache_service=cache_service,
     )
 
 
-AccessStrategyDep = Annotated[Strategy, Depends(get_access_strategy)]
-RefreshStrategyDep = Annotated[Strategy, Depends(get_refresh_strategy)]
+AccessTokenStrategyDep = Annotated[AbstractTokenStrategy, Depends(get_access_token_strategy)]
+RefreshTokenStrategyDep = Annotated[AbstractTokenStrategy, Depends(get_refresh_token_strategy)]

@@ -2,23 +2,24 @@ from __future__ import annotations
 
 import dataclasses
 import uuid
+from collections.abc import Iterable
+from typing import Any
 
 import jwt
 
 from .base import (
-    Strategy,
+    AbstractTokenStrategy,
     Token,
 )
 from .... import exceptions
-from ....jwt import (
-    SecretType,
-    decode_jwt,
-    generate_jwt,
-)
 from ....manager import UserManager
 from .....cache import (
     AbstractCache,
     AbstractCacheService,
+)
+from .....jwt import (
+    AbstractJWTHelper,
+    AbstractJWTService,
 )
 from ......models.sqlalchemy import User
 
@@ -31,45 +32,34 @@ class InvalidToken(Exception):
 class TokenData:
     token_id: uuid.UUID
     parent_id: uuid.UUID | None = None
-    data: dict
+    data: dict[str, Any]
 
 
-class JWTStrategy(Strategy):
-    secret: SecretType
-    lifetime_seconds: int | None
-    token_audience: list[str]
-    algorithm: str
-    public_key: SecretType | None
+class JWTStrategy(AbstractTokenStrategy):
+    lifetime: int | None
+    audience: Iterable[str]
 
+    jwt_helper: AbstractJWTHelper
     cache: AbstractCache
 
     def __init__(self,
                  *,
-                 secret: SecretType,
-                 lifetime_seconds: int | None = None,
-                 token_audience: list[str] | None = None,
-                 algorithm: str = 'HS256',
-                 public_key: SecretType | None = None,
+                 lifetime: int | None = None,
+                 audience: str | Iterable[str] | None = None,
+                 jwt_service: AbstractJWTService,
                  cache_service: AbstractCacheService) -> None:
-        self.secret = secret
-        self.lifetime_seconds = lifetime_seconds
+        self.lifetime = lifetime
 
-        if token_audience is None:
-            token_audience = ['users:auth']
+        if audience is None:
+            audience = 'users:auth'
 
-        self.token_audience = token_audience
-        self.algorithm = algorithm
-        self.public_key = public_key
+        if isinstance(audience, str):
+            audience = [audience]
 
+        self.audience = audience
+
+        self.jwt_helper = jwt_service.get_jwt_helper()
         self.cache = cache_service.get_cache(key_prefix='jwt')
-
-    @property
-    def encode_key(self) -> SecretType:
-        return self.secret
-
-    @property
-    def decode_key(self) -> SecretType:
-        return self.public_key or self.secret
 
     async def read_token(self, token: str, user_manager: UserManager) -> User | None:
         token_data = self._decode_token(token)
@@ -77,17 +67,17 @@ class JWTStrategy(Strategy):
         if not token_data:
             return None
 
-        user_id = token_data.data.get('sub')
-        if user_id is None:
+        user_id_str: str | None = token_data.data.get('sub')
+        if user_id_str is None:
             return None
 
         try:
-            parsed_id = user_manager.parse_id(user_id)
-        except exceptions.InvalidID:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
             return None
 
         try:
-            user = await user_manager.get(parsed_id)
+            user = await user_manager.get(user_id)
         except exceptions.UserDoesNotExist:
             return None
 
@@ -100,12 +90,7 @@ class JWTStrategy(Strategy):
 
     def _decode_token(self, token: str) -> TokenData | None:
         try:
-            data = decode_jwt(
-                token,
-                secret=self.decode_key,
-                audience=self.token_audience,
-                algorithms=[self.algorithm],
-            )
+            data = self.jwt_helper.decode(token, audience=self.audience)
         except jwt.PyJWTError:
             return None
 
@@ -127,7 +112,11 @@ class JWTStrategy(Strategy):
             except ValueError:
                 pass
 
-        return TokenData(token_id=token_id, parent_id=parent_id, data=data)
+        return TokenData(
+            token_id=token_id,
+            parent_id=parent_id,
+            data=data,
+        )
 
     async def _validate_token(self, token_id: uuid.UUID) -> None:
         pass
@@ -137,17 +126,15 @@ class JWTStrategy(Strategy):
         data = {
             'jti': str(token_id),
             'sub': str(user.id),
-            'aud': self.token_audience,
         }
 
         if parent_id is not None:
             data['parent_id'] = str(parent_id)
 
-        token = generate_jwt(
+        token = self.jwt_helper.encode(
             data,
-            secret=self.encode_key,
-            lifetime_seconds=self.lifetime_seconds,
-            algorithm=self.algorithm,
+            audience=self.audience,
+            lifetime=self.lifetime,
         )
         await self._save_token(token_id)
 
@@ -187,7 +174,7 @@ class AccessJWTStrategy(JWTStrategy):
 
     async def destroy_token_id(self, token_id: uuid.UUID) -> None:
         cache_key = self._create_cache_key(token_id)
-        await self.cache.set(cache_key, 'access', timeout=self.lifetime_seconds)
+        await self.cache.set(cache_key, 'access', timeout=self.lifetime)
 
     def _create_cache_key(self, token_id: uuid.UUID) -> str:
         return f'access-{token_id}'
@@ -202,7 +189,7 @@ class RefreshJWTStrategy(JWTStrategy):
 
     async def _save_token(self, token_id: uuid.UUID) -> None:
         cache_key = self._create_cache_key(token_id)
-        await self.cache.set(cache_key, 'refresh', timeout=self.lifetime_seconds)
+        await self.cache.set(cache_key, 'refresh', timeout=self.lifetime)
 
     async def destroy_token_id(self, token_id: uuid.UUID) -> None:
         cache_key = self._create_cache_key(token_id)
