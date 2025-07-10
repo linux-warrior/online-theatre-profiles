@@ -7,7 +7,7 @@ from fastapi import (
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from .base import Transport
+from .base import AbstractTokenTransport
 
 
 class BearerResponse(BaseModel):
@@ -16,8 +16,8 @@ class BearerResponse(BaseModel):
     refresh_token: str
 
 
-class BearerTransport(Transport):
-    async def get_login_response(self, access_token: str, refresh_token: str) -> Response:
+class BearerTransport(AbstractTokenTransport):
+    async def get_login_response(self, *, access_token: str, refresh_token: str) -> Response:
         return await self._create_bearer_response(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -26,13 +26,13 @@ class BearerTransport(Transport):
     async def get_logout_response(self) -> Response:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-    async def get_refresh_response(self, access_token: str, refresh_token: str) -> Response:
+    async def get_refresh_response(self, *, access_token: str, refresh_token: str) -> Response:
         return await self._create_bearer_response(
             access_token=access_token,
             refresh_token=refresh_token,
         )
 
-    async def _create_bearer_response(self, access_token: str, refresh_token: str) -> Response:
+    async def _create_bearer_response(self, *, access_token: str, refresh_token: str) -> Response:
         bearer_response = BearerResponse(
             token_type='bearer',
             access_token=access_token,

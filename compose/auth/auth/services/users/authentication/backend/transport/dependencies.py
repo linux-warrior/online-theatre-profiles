@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from .base import Transport
+from .base import AbstractTokenTransport
 from .bearer import BearerTransport
 from ......core import settings
 
@@ -20,9 +20,9 @@ async def get_token(token: OAuth2TokenDep) -> str:
     return token
 
 
-async def get_transport() -> Transport:
+async def get_token_transport() -> AbstractTokenTransport:
     return BearerTransport()
 
 
 TokenDep = Annotated[str, Depends(get_token)]
-TransportDep = Annotated[Transport, Depends(get_transport)]
+TokenTransportDep = Annotated[AbstractTokenTransport, Depends(get_token_transport)]

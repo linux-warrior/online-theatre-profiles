@@ -10,9 +10,9 @@ from .strategy import (
     RefreshTokenStrategyDep,
 )
 from .transport import (
-    Transport,
-    TransportDep,
-    TransportLogoutNotSupportedError,
+    AbstractTokenTransport,
+    TokenTransportDep,
+    LogoutNotSupportedError,
 )
 from ...manager import UserManager
 from .....models.sqlalchemy import User
@@ -20,14 +20,14 @@ from .....models.sqlalchemy import User
 
 class AuthenticationBackend:
     name: str
-    transport: Transport
+    transport: AbstractTokenTransport
     access_token_strategy: AbstractTokenStrategy
     refresh_token_strategy: AbstractTokenStrategy
 
     def __init__(
             self,
             name: str,
-            transport: Transport,
+            transport: AbstractTokenTransport,
             access_token_strategy: AbstractTokenStrategy,
             refresh_token_strategy: AbstractTokenStrategy,
     ) -> None:
@@ -68,7 +68,7 @@ class AuthenticationBackend:
 
         try:
             response = await self.transport.get_logout_response()
-        except TransportLogoutNotSupportedError:
+        except LogoutNotSupportedError:
             response = Response(status_code=status.HTTP_204_NO_CONTENT)
 
         return response
@@ -88,7 +88,7 @@ class AuthenticationBackend:
         )
 
 
-async def get_authentication_backend(transport: TransportDep,
+async def get_authentication_backend(transport: TokenTransportDep,
                                      access_token_strategy: AccessTokenStrategyDep,
                                      refresh_token_strategy: RefreshTokenStrategyDep) -> AuthenticationBackend:
     return AuthenticationBackend(
