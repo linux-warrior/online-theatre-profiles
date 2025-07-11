@@ -4,9 +4,11 @@ from .authenticator import (
 )
 from .backend import (
     AuthenticationBackend,
-    TokenDep,
 )
 from .dependencies import (
     CurrentUserDep,
     CurrentSuperuserDep,
+)
+from .token import (
+    TokenDep,
 )

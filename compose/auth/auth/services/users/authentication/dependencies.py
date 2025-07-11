@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from .authenticator import AuthenticatorDep
-from .backend import TokenDep
+from .token import TokenDep
 from ....models.sqlalchemy import User
 
 

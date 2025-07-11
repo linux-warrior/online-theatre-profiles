@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import Depends, Response, status
+from fastapi import Response, status
 
 from .strategy import (
     AbstractTokenStrategy,
-    AccessTokenStrategyDep,
-    RefreshTokenStrategyDep,
 )
 from .transport import (
     AbstractTokenTransport,
-    TokenTransportDep,
     LogoutNotSupportedError,
 )
 from ...manager import UserManager
@@ -86,17 +81,3 @@ class AuthenticationBackend:
             access_token=access_token.token,
             refresh_token=refresh_token.token,
         )
-
-
-async def get_authentication_backend(transport: TokenTransportDep,
-                                     access_token_strategy: AccessTokenStrategyDep,
-                                     refresh_token_strategy: RefreshTokenStrategyDep) -> AuthenticationBackend:
-    return AuthenticationBackend(
-        name='jwt',
-        transport=transport,
-        access_token_strategy=access_token_strategy,
-        refresh_token_strategy=refresh_token_strategy,
-    )
-
-
-AuthenticationBackendDep = Annotated[AuthenticationBackend, Depends(get_authentication_backend)]

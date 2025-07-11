@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import dataclasses
 import uuid
 from collections.abc import Iterable
@@ -11,21 +12,15 @@ from .base import (
     AbstractTokenStrategy,
     Token,
 )
+from .exceptions import InvalidToken
+from .processors import AbstractTokenProcessor
 from .... import exceptions
 from ....manager import UserManager
-from .....cache import (
-    AbstractCache,
-    AbstractCacheService,
-)
 from .....jwt import (
     AbstractJWTHelper,
     AbstractJWTService,
 )
 from ......models.sqlalchemy import User
-
-
-class InvalidToken(Exception):
-    pass
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -35,34 +30,16 @@ class TokenData:
     data: dict[str, Any]
 
 
-class JWTStrategy(AbstractTokenStrategy):
-    lifetime: int | None
-    audience: Iterable[str]
-
-    jwt_helper: AbstractJWTHelper
-    cache: AbstractCache
+class BaseTokenStrategy(AbstractTokenStrategy):
+    token_processor: AbstractTokenProcessor
 
     def __init__(self,
                  *,
-                 lifetime: int | None = None,
-                 audience: str | Iterable[str] | None = None,
-                 jwt_service: AbstractJWTService,
-                 cache_service: AbstractCacheService) -> None:
-        self.lifetime = lifetime
+                 token_processor: AbstractTokenProcessor) -> None:
+        self.token_processor = token_processor
 
-        if audience is None:
-            audience = 'users:auth'
-
-        if isinstance(audience, str):
-            audience = [audience]
-
-        self.audience = audience
-
-        self.jwt_helper = jwt_service.get_jwt_helper()
-        self.cache = cache_service.get_cache(key_prefix='jwt')
-
-    async def read_token(self, token: str, user_manager: UserManager) -> User | None:
-        token_data = self._decode_token(token)
+    async def read_token(self, *, token: str, user_manager: UserManager) -> User | None:
+        token_data = self.decode_token(token=token)
 
         if not token_data:
             return None
@@ -82,19 +59,20 @@ class JWTStrategy(AbstractTokenStrategy):
             return None
 
         try:
-            await self._validate_token(token_data.token_id)
+            await self.token_processor.validate_token(token_id=token_data.token_id)
         except InvalidToken:
             return None
 
         return user
 
-    def _decode_token(self, token: str) -> TokenData | None:
-        try:
-            data = self.jwt_helper.decode(token, audience=self.audience)
-        except jwt.PyJWTError:
+    def decode_token(self, *, token: str) -> TokenData | None:
+        data = self._decode_token(token=token)
+
+        if data is None:
             return None
 
         jti = data.get('jti')
+
         if jti is None:
             return None
 
@@ -118,10 +96,11 @@ class JWTStrategy(AbstractTokenStrategy):
             data=data,
         )
 
-    async def _validate_token(self, token_id: uuid.UUID) -> None:
-        pass
+    @abc.abstractmethod
+    def _decode_token(self, *, token: str) -> dict[str, Any] | None:
+        ...
 
-    async def write_token(self, user: User, parent_id: uuid.UUID | None = None) -> Token:
+    async def write_token(self, *, user: User, parent_id: uuid.UUID | None = None) -> Token:
         token_id = uuid.uuid4()
         data = {
             'jti': str(token_id),
@@ -131,12 +110,8 @@ class JWTStrategy(AbstractTokenStrategy):
         if parent_id is not None:
             data['parent_id'] = str(parent_id)
 
-        token = self.jwt_helper.encode(
-            data,
-            audience=self.audience,
-            lifetime=self.lifetime,
-        )
-        await self._save_token(token_id)
+        token = self._encode_token(data=data)
+        await self.token_processor.save_token(token_id=token_id)
 
         return Token(
             token_id=token_id,
@@ -144,16 +119,17 @@ class JWTStrategy(AbstractTokenStrategy):
             token=token,
         )
 
-    async def _save_token(self, token_id: uuid.UUID) -> None:
-        pass
+    @abc.abstractmethod
+    def _encode_token(self, *, data: dict[str, Any]) -> str:
+        ...
 
-    async def destroy_token(self, token: str, user: User) -> Token | None:
-        token_data = self._decode_token(token)
+    async def destroy_token(self, *, token: str, user: User) -> Token | None:
+        token_data = self.decode_token(token=token)
 
         if token_data is None:
             return None
 
-        await self.destroy_token_id(token_data.token_id)
+        await self.token_processor.destroy_token(token_id=token_data.token_id)
 
         return Token(
             token_id=token_data.token_id,
@@ -161,39 +137,43 @@ class JWTStrategy(AbstractTokenStrategy):
             token=token,
         )
 
-    async def destroy_token_id(self, token_id: uuid.UUID) -> None:
-        pass
+    async def destroy_token_id(self, *, token_id: uuid.UUID) -> None:
+        await self.token_processor.destroy_token(token_id=token_id)
 
 
-class AccessJWTStrategy(JWTStrategy):
-    async def _validate_token(self, token_id: uuid.UUID) -> None:
-        cache_key = self._create_cache_key(token_id)
+class JWTStrategy(BaseTokenStrategy):
+    lifetime: int | None
+    audience: Iterable[str]
+    jwt_helper: AbstractJWTHelper
 
-        if await self.cache.get(cache_key) is not None:
-            raise InvalidToken
+    def __init__(self,
+                 *,
+                 lifetime: int | None = None,
+                 audience: str | Iterable[str] | None = None,
+                 jwt_service: AbstractJWTService,
+                 **kwargs: Any) -> None:
+        super().__init__(**kwargs)
 
-    async def destroy_token_id(self, token_id: uuid.UUID) -> None:
-        cache_key = self._create_cache_key(token_id)
-        await self.cache.set(cache_key, 'access', timeout=self.lifetime)
+        self.lifetime = lifetime
 
-    def _create_cache_key(self, token_id: uuid.UUID) -> str:
-        return f'access-{token_id}'
+        if audience is None:
+            audience = 'users:auth'
 
+        if isinstance(audience, str):
+            audience = [audience]
 
-class RefreshJWTStrategy(JWTStrategy):
-    async def _validate_token(self, token_id: uuid.UUID) -> None:
-        cache_key = self._create_cache_key(token_id)
+        self.audience = audience
+        self.jwt_helper = jwt_service.get_jwt_helper()
 
-        if await self.cache.get(cache_key) is None:
-            raise InvalidToken
+    def _decode_token(self, *, token: str) -> dict[str, Any] | None:
+        try:
+            return self.jwt_helper.decode(token, audience=self.audience)
+        except jwt.PyJWTError:
+            return None
 
-    async def _save_token(self, token_id: uuid.UUID) -> None:
-        cache_key = self._create_cache_key(token_id)
-        await self.cache.set(cache_key, 'refresh', timeout=self.lifetime)
-
-    async def destroy_token_id(self, token_id: uuid.UUID) -> None:
-        cache_key = self._create_cache_key(token_id)
-        await self.cache.delete(cache_key)
-
-    def _create_cache_key(self, token_id: uuid.UUID) -> str:
-        return f'refresh-{token_id}'
+    def _encode_token(self, *, data: dict[str, Any]) -> str:
+        return self.jwt_helper.encode(
+            data,
+            audience=self.audience,
+            lifetime=self.lifetime,
+        )
