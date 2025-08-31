@@ -1,6 +1,6 @@
 from .backend import (
     AuthenticationBackend,
+)
+from .dependencies import (
     AuthenticationBackendDep,
 )
-from .strategy import Strategy
-from .transport import TokenDep

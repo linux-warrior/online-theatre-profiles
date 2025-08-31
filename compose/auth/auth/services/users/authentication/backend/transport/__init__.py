@@ -1,8 +1,9 @@
 from .base import (
-    Transport,
-    TransportLogoutNotSupportedError,
+    AbstractTokenTransport,
 )
-from .dependencies import (
-    TokenDep,
-    TransportDep,
+from .bearer import (
+    BearerTransport,
+)
+from .exceptions import (
+    LogoutNotSupportedError,
 )

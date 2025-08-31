@@ -1,7 +1,11 @@
 from .base import (
-    Strategy,
+    AbstractTokenStrategy,
 )
-from .dependencies import (
-    AccessStrategyDep,
-    RefreshStrategyDep,
+from .jwt import (
+    JWTStrategy,
+)
+from .processors import (
+    AbstractTokenProcessor,
+    AccessTokenProcessor,
+    RefreshTokenProcessor,
 )
