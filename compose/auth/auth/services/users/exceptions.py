@@ -5,10 +5,6 @@ class UsersException(Exception):
     pass
 
 
-class InvalidID(UsersException):
-    pass
-
-
 class UserDoesNotExist(UsersException):
     pass
 

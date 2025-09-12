@@ -38,4 +38,4 @@ class BearerTransport(AbstractTokenTransport):
             access_token=access_token,
             refresh_token=refresh_token,
         )
-        return JSONResponse(bearer_response.model_dump())
+        return JSONResponse(bearer_response.model_dump(mode='json'))
