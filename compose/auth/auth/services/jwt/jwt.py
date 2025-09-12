@@ -10,10 +10,13 @@ import jwt
 from ...core import settings
 
 
+type JWTPayload = dict[str, Any]
+
+
 class AbstractJWTHelper(abc.ABC):
     @abc.abstractmethod
     def encode(self,
-               data: dict[str, Any],
+               payload: JWTPayload,
                *,
                audience: str | Iterable[str] | None = None,
                lifetime: int | None = None) -> str: ...
@@ -22,7 +25,7 @@ class AbstractJWTHelper(abc.ABC):
     def decode(self,
                value: str,
                *,
-               audience: str | Iterable[str] | None = None) -> dict[str, Any]: ...
+               audience: str | Iterable[str] | None = None) -> JWTPayload: ...
 
 
 class JWTHelper(AbstractJWTHelper):
@@ -34,12 +37,12 @@ class JWTHelper(AbstractJWTHelper):
         self.algorithm = algorithm or 'HS256'
 
     def encode(self,
-               data: dict[str, Any],
+               payload: JWTPayload,
                *,
                audience: str | Iterable[str] | None = None,
                lifetime: int | None = None) -> str:
         payload = {
-            **data,
+            **payload,
         }
 
         if isinstance(audience, str):
@@ -56,7 +59,7 @@ class JWTHelper(AbstractJWTHelper):
     def decode(self,
                value: str,
                *,
-               audience: str | Iterable[str] | None = None) -> dict[str, Any]:
+               audience: str | Iterable[str] | None = None) -> JWTPayload:
         return jwt.decode(
             value,
             key=self.secret_key,
