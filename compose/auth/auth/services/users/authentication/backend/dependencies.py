@@ -21,20 +21,24 @@ from .....core import settings
 async def get_authentication_backend(cache_service: CacheServiceDep,
                                      jwt_service: JWTServiceDep) -> AuthenticationBackend:
     cache = cache_service.get_cache(key_prefix='jwt')
+
+    access_jwt_lifetime = settings.auth.access_jwt_lifetime
     access_token_strategy = JWTStrategy(
         token_processor=AccessTokenProcessor(
             cache=cache,
-            lifetime=settings.auth.access_jwt_lifetime,
+            lifetime=access_jwt_lifetime,
         ),
-        lifetime=settings.auth.access_jwt_lifetime,
+        lifetime=access_jwt_lifetime,
         jwt_service=jwt_service,
     )
+
+    refresh_jwt_lifetime = settings.auth.refresh_jwt_lifetime
     refresh_token_strategy = JWTStrategy(
         token_processor=RefreshTokenProcessor(
             cache=cache,
-            lifetime=settings.auth.refresh_jwt_lifetime,
+            lifetime=refresh_jwt_lifetime,
         ),
-        lifetime=settings.auth.refresh_jwt_lifetime,
+        lifetime=refresh_jwt_lifetime,
         audience=['users:refresh'],
         jwt_service=jwt_service,
     )

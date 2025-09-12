@@ -59,14 +59,6 @@ class UserManager:
         else:
             self.password_helper = password_helper
 
-    def parse_id(self, value: Any) -> uuid.UUID:
-        if isinstance(value, uuid.UUID):
-            return value
-        try:
-            return uuid.UUID(value)
-        except ValueError as e:
-            raise exceptions.InvalidID() from e
-
     async def get(self, id: uuid.UUID) -> User:
         """
         Get a user by id.
