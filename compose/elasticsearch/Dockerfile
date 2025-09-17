@@ -1,3 +1,3 @@
 # syntax=docker/dockerfile:1
 
-FROM bitnami/elasticsearch:9.0.1
+FROM bitnamilegacy/elasticsearch:9.1.2
