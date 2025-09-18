@@ -43,7 +43,7 @@ async def register(user_create: UserCreate,
                    user_manager: UserManagerDep,
                    ext_user_service: ExtendedUserServiceDep) -> ExtendedCurrentUserResponse:
     try:
-        user = await user_manager.create(user_create)
+        user = await user_manager.create(user_create=user_create)
 
     except UserAlreadyExists:
         raise HTTPException(

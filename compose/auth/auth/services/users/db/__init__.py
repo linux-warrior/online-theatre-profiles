@@ -1,2 +1,2 @@
-from .base import BaseUserDatabase
+from .base import AbstractUserDatabase
 from .dependencies import UserDatabaseDep

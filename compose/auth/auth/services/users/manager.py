@@ -8,10 +8,13 @@ from typing import Any, Annotated
 from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
-from . import exceptions
 from .db import (
-    BaseUserDatabase,
+    AbstractUserDatabase,
     UserDatabaseDep,
+)
+from .exceptions import (
+    UserDoesNotExist,
+    UserAlreadyExists,
 )
 from .login_history import (
     LoginHistoryCreate,
@@ -24,8 +27,8 @@ from .models import (
     UserUpdate,
 )
 from .password import (
-    PasswordHelper,
-    PasswordHelperProtocol,
+    AbstractPasswordHelper,
+    PasswordHelperDep,
 )
 from ..pagination import (
     PageParams,
@@ -36,146 +39,110 @@ logger = logging.getLogger(__name__)
 
 
 class UserManager:
-    """
-    User management logic.
-
-    :param user_db: Database adapter instance.
-    """
-
-    user_db: BaseUserDatabase
-    password_helper: PasswordHelperProtocol
+    user_db: AbstractUserDatabase
+    password_helper: AbstractPasswordHelper
     login_history_service: AbstractLoginHistoryService
 
     def __init__(
             self,
-            user_db: BaseUserDatabase,
-            login_history_service: AbstractLoginHistoryService,
-            password_helper: PasswordHelperProtocol | None = None) -> None:
+            *,
+            user_db: AbstractUserDatabase,
+            password_helper: AbstractPasswordHelper,
+            login_history_service: AbstractLoginHistoryService) -> None:
         self.user_db = user_db
+        self.password_helper = password_helper
         self.login_history_service = login_history_service
 
-        if password_helper is None:
-            self.password_helper = PasswordHelper()
-        else:
-            self.password_helper = password_helper
-
-    async def get(self, id: uuid.UUID) -> User:
-        """
-        Get a user by id.
-
-        :param id: Id. of the user to retrieve.
-        :raises UserDoesNotExist: The user does not exist.
-        :return: A user.
-        """
-        user = await self.user_db.get(id)
+    async def get(self, *, user_id: uuid.UUID) -> User:
+        user = await self.user_db.get(user_id=user_id)
 
         if user is None:
-            raise exceptions.UserDoesNotExist
+            raise UserDoesNotExist
+
+        return user
+
+    async def get_by_login(self, *, login: str) -> User:
+        user = await self.user_db.get_by_login(login=login)
+
+        if user is None:
+            raise UserDoesNotExist
+
+        return user
+
+    async def get_by_email(self, *, email: str) -> User:
+        user = await self.user_db.get_by_email(email=email)
+
+        if user is None:
+            raise UserDoesNotExist
 
         return user
 
     async def get_list(self, *, page_params: PageParams) -> Sequence[User]:
         return await self.user_db.get_list(page_params=page_params)
 
-    async def get_by_login(self, user_login: str) -> User:
-        """
-        Get a user by login.
+    async def create(self, *, user_create: UserCreate) -> User:
+        existing_user = await self.user_db.get_by_login(login=user_create.login)
 
-        :param user_login: Login of the user to retrieve.
-        :raises UserDoesNotExist: The user does not exist.
-        :return: A user.
-        """
-        user = await self.user_db.get_by_login(user_login)
-
-        if user is None:
-            raise exceptions.UserDoesNotExist
-
-        return user
-
-    async def get_by_email(self, user_email: str) -> User:
-        user = await self.user_db.get_by_email(user_email)
-
-        if user is None:
-            raise exceptions.UserDoesNotExist
-
-        return user
-
-    async def get_by_oauth_account(self, *, oauth_name: str, account_id: str) -> User:
-        user = await self.user_db.get_by_oauth_account(oauth_name=oauth_name, account_id=account_id)
-
-        if user is None:
-            raise exceptions.UserDoesNotExist
-
-        return user
-
-    async def create(self, user_create: UserCreate) -> User:
-        """
-        Create a user in database.
-
-        :param user_create: The UserCreate model to create.
-        :raises UserAlreadyExists: A user already exists with the same login.
-        :return: A new user.
-        """
-        existing_user = await self.user_db.get_by_login(user_create.login)
         if existing_user is not None:
-            raise exceptions.UserAlreadyExists()
+            raise UserAlreadyExists
 
-        user_dict = user_create.model_dump()
-        password = user_dict.pop("password")
-        user_dict["password"] = self.password_helper.hash(password)
+        user_create_dict = user_create.model_dump()
+        password = user_create_dict.pop('password')
+        user_create_dict['password'] = self.password_helper.hash(password=password)
 
-        created_user = await self.user_db.create(user_dict)
+        created_user = await self.user_db.create(create_dict=user_create_dict)
 
         return created_user
 
-    async def update(self, user_update: UserUpdate, user: User) -> User:
-        """
-        Update a user.
+    async def update(self, *, user: User, user_update: UserUpdate) -> User:
+        update_dict = user_update.model_dump(exclude_unset=True)
 
-        Triggers the on_after_update handler on success
+        for field, value in update_dict.items():
+            if field == 'login' and value != user.login:
+                try:
+                    await self.get_by_login(login=value)
+                    raise UserAlreadyExists
 
-        :param user_update: The UserUpdate model containing
-        the changes to apply to the user.
-        :param user: The current user to update.
-        :return: The updated user.
-        """
-        updated_user_data = user_update.model_dump(exclude_unset=True)
-        updated_user = await self._update(user, updated_user_data)
+                except UserDoesNotExist:
+                    update_dict['login'] = value
+
+            elif field == 'password' and value is not None:
+                update_dict['password'] = self.password_helper.hash(password=value)
+
+            else:
+                update_dict[field] = value
+
+        updated_user = await self.user_db.update(user_id=user.id, update_dict=update_dict)
+
+        if updated_user is None:
+            raise UserDoesNotExist
 
         return updated_user
 
-    async def authenticate(self, credentials: OAuth2PasswordRequestForm, request: Request) -> User | None:
-        """
-        Authenticate and return a user following a login and a password.
-
-        Will automatically upgrade password hash if necessary.
-
-        :param request: http request
-        :param credentials: The user credentials.
-        """
+    async def authenticate(self, *, credentials: OAuth2PasswordRequestForm, request: Request) -> User | None:
         try:
-            user = await self.get_by_login(credentials.username)
+            user = await self.get_by_login(login=credentials.username)
 
-        except exceptions.UserDoesNotExist:
-            # Run the hasher to mitigate timing attack
-            # Inspired from Django: https://code.djangoproject.com/ticket/20760
-            self.password_helper.hash(credentials.password)
+        except UserDoesNotExist:
+            # Вычисляем хеш пароля, чтобы исключить возможность атаки по времени
+            # https://code.djangoproject.com/ticket/20760
+            self.password_helper.hash(password=credentials.password)
             return None
 
         if user.password is None:
             return None
 
         verified, updated_password_hash = self.password_helper.verify_and_update(
-            credentials.password,
-            user.password,
+            password=credentials.password,
+            password_hash=user.password,
         )
 
         if not verified:
             return None
 
-        # Update password hash to a more robust one if needed
+        # Обновляем хеш пароля, если был использован более надежный алгоритм
         if updated_password_hash is not None:
-            await self.user_db.update(user, {
+            await self.user_db.update(user_id=user.id, update_dict={
                 'password': updated_password_hash,
             })
 
@@ -197,24 +164,16 @@ class UserManager:
         except LoginHistoryServiceException as e:
             logger.exception(e)
 
-    async def _update(self, user: User, update_dict: dict[str, Any]) -> User:
-        validated_update_dict = {}
+    async def get_by_oauth_account(self, *, oauth_name: str, account_id: str) -> User:
+        user = await self.user_db.get_by_oauth_account(
+            oauth_name=oauth_name,
+            account_id=account_id,
+        )
 
-        for field, value in update_dict.items():
-            if field == "login" and value != user.login:
-                try:
-                    await self.get_by_login(value)
-                    raise exceptions.UserAlreadyExists()
-                except exceptions.UserDoesNotExist:
-                    validated_update_dict["login"] = value
+        if user is None:
+            raise UserDoesNotExist
 
-            elif field == "password" and value is not None:
-                validated_update_dict["password"] = self.password_helper.hash(value)
-
-            else:
-                validated_update_dict[field] = value
-
-        return await self.user_db.update(user, validated_update_dict)
+        return user
 
     async def oauth_callback(self,
                              *,
@@ -225,7 +184,7 @@ class UserManager:
                              expires_at: int | None = None,
                              refresh_token: str | None = None) -> User:
         account_email = account_email.lower()
-        oauth_account_dict = {
+        oauth_account_dict: dict[str, Any] = {
             'oauth_name': oauth_name,
             'access_token': access_token,
             'account_id': account_id,
@@ -237,19 +196,18 @@ class UserManager:
         try:
             user = await self.get_by_oauth_account(oauth_name=oauth_name, account_id=account_id)
 
-        except exceptions.UserDoesNotExist:
+        except UserDoesNotExist:
             try:
-                user = await self.get_by_email(account_email)
+                user = await self.get_by_email(email=account_email)
 
-            except exceptions.UserDoesNotExist:
+            except UserDoesNotExist:
                 password = self.password_helper.generate()
-                user_dict = {
+                user = await self.user_db.create(create_dict={
                     'email': account_email,
-                    'password': self.password_helper.hash(password),
-                }
-                user = await self.user_db.create(user_dict)
+                    'password': self.password_helper.hash(password=password),
+                })
 
-            user = await self.user_db.add_oauth_account(user, oauth_account_dict)
+            await self.user_db.add_oauth_account(user_id=user.id, create_dict=oauth_account_dict)
 
             return user
 
@@ -258,10 +216,10 @@ class UserManager:
                 oauth_account.oauth_name == oauth_name,
                 oauth_account.account_id == account_id,
             ]):
-                user = await self.user_db.update_oauth_account(
-                    user,
-                    oauth_account,
-                    oauth_account_dict,
+                await self.user_db.update_oauth_account(
+                    user_id=user.id,
+                    oauth_account=oauth_account,
+                    update_dict=oauth_account_dict,
                 )
                 break
 
@@ -269,8 +227,13 @@ class UserManager:
 
 
 async def get_user_manager(user_db: UserDatabaseDep,
+                           password_helper: PasswordHelperDep,
                            login_history_service: LoginHistoryServiceDep) -> UserManager:
-    return UserManager(user_db=user_db, login_history_service=login_history_service)
+    return UserManager(
+        user_db=user_db,
+        password_helper=password_helper,
+        login_history_service=login_history_service,
+    )
 
 
 UserManagerDep = Annotated[UserManager, Depends(get_user_manager)]

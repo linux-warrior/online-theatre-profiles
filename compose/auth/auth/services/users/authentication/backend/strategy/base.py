@@ -48,7 +48,7 @@ class BaseTokenStrategy(AbstractTokenStrategy):
             return None
 
         try:
-            user = await user_manager.get(token_data.user_id)
+            user = await user_manager.get(user_id=token_data.user_id)
         except UserDoesNotExist:
             return None
 

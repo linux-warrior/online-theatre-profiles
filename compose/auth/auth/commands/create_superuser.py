@@ -16,7 +16,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 from auth.db.sqlalchemy import async_session_maker  # noqa: E402
 from auth.models.sqlalchemy import User  # noqa: E402
-from auth.services.users.password import PasswordHelper  # noqa: E402
+from auth.services.users.password import get_password_helper  # noqa: E402
 
 stderr = Console(stderr=True)
 
@@ -50,9 +50,11 @@ async def main_async(*, login: str, password: str) -> None:
 
 
 async def create_superuser(*, session: AsyncSession, login: str, password: str) -> None:
+    password_helper = await get_password_helper()
+
     statement = insert(User).values(
         login=login,
-        password=PasswordHelper().hash(password),
+        password=password_helper.hash(password=password),
         is_superuser=True,
     )
 

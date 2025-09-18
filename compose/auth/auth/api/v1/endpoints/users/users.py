@@ -79,7 +79,13 @@ async def patch_current_user(user: CurrentUserDep,
                              user_manager: UserManagerDep,
                              ext_user_service: ExtendedUserServiceDep) -> ExtendedCurrentUserResponse:
     try:
-        user = await user_manager.update(user_update, user)
+        user = await user_manager.update(user=user, user_update=user_update)
+
+    except UserDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorCode.USER_DOES_NOT_EXIST,
+        )
 
     except UserAlreadyExists:
         raise HTTPException(
@@ -111,7 +117,7 @@ async def get_user(user_id: uuid.UUID,
                    ext_user_service: ExtendedUserServiceDep,
                    _current_superuser: CurrentSuperuserDep) -> ExtendedReadUserResponse:
     try:
-        user = await user_manager.get(user_id)
+        user = await user_manager.get(user_id=user_id)
 
     except UserDoesNotExist:
         raise HTTPException(
