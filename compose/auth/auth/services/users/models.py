@@ -31,5 +31,5 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    login: str | None = None
-    password: str | None = None
+    login: str = ''
+    password: str = ''

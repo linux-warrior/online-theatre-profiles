@@ -77,13 +77,22 @@ class UserDatabase(AbstractUserDatabase):
 
         return result.scalar_one()
 
-    async def update(self, *, user: User, update_dict: dict[str, Any]) -> User | None:
-        statement = update(User).where(User.id == user.id).values(update_dict)
+    async def update(self, *, user_id: uuid.UUID, update_dict: dict[str, Any]) -> User | None:
+        statement = update(User).where(
+            User.id == user_id,
+        ).values(update_dict).returning(
+            User.id,
+        )
 
-        await self.session.execute(statement)
+        result = await self.session.execute(statement)
         await self.session.commit()
 
-        return await self.get(user_id=user.id)
+        update_user_row = result.one_or_none()
+
+        if update_user_row is None:
+            return None
+
+        return await self.get(user_id=update_user_row.id)
 
     async def get_by_oauth_account(self, *, oauth_name: str, account_id: str) -> User | None:
         statement = select(
@@ -99,26 +108,25 @@ class UserDatabase(AbstractUserDatabase):
 
         return result.scalar_one_or_none()
 
-    async def add_oauth_account(self, *, user: User, create_dict: dict[str, Any]) -> User:
+    async def add_oauth_account(self,
+                                *,
+                                user_id: uuid.UUID,
+                                create_dict: dict[str, Any]) -> None:
         create_dict = {
             **create_dict,
-            'user_id': user.id,
+            'user_id': user_id,
         }
         statement = insert(OAuthAccount).values(create_dict)
 
         await self.session.execute(statement)
         await self.session.commit()
 
-        return user
-
     async def update_oauth_account(self,
                                    *,
-                                   user: User,
+                                   user_id: uuid.UUID,
                                    oauth_account: OAuthAccount,
-                                   update_dict: dict[str, Any]) -> User:
-        statement = update(User).where(User.id == user.id).values(update_dict)
+                                   update_dict: dict[str, Any]) -> None:
+        statement = update(User).where(User.id == user_id).values(update_dict)
 
         await self.session.execute(statement)
         await self.session.commit()
-
-        return user

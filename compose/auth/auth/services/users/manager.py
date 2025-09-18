@@ -112,7 +112,7 @@ class UserManager:
             else:
                 update_dict[field] = value
 
-        updated_user = await self.user_db.update(user=user, update_dict=update_dict)
+        updated_user = await self.user_db.update(user_id=user.id, update_dict=update_dict)
 
         if updated_user is None:
             raise UserDoesNotExist
@@ -142,7 +142,7 @@ class UserManager:
 
         # Обновляем хеш пароля, если был использован более надежный алгоритм
         if updated_password_hash is not None:
-            await self.user_db.update(user=user, update_dict={
+            await self.user_db.update(user_id=user.id, update_dict={
                 'password': updated_password_hash,
             })
 
@@ -207,7 +207,7 @@ class UserManager:
                     'password': self.password_helper.hash(password=password),
                 })
 
-            user = await self.user_db.add_oauth_account(user=user, create_dict=oauth_account_dict)
+            await self.user_db.add_oauth_account(user_id=user.id, create_dict=oauth_account_dict)
 
             return user
 
@@ -216,8 +216,8 @@ class UserManager:
                 oauth_account.oauth_name == oauth_name,
                 oauth_account.account_id == account_id,
             ]):
-                user = await self.user_db.update_oauth_account(
-                    user=user,
+                await self.user_db.update_oauth_account(
+                    user_id=user.id,
                     oauth_account=oauth_account,
                     update_dict=oauth_account_dict,
                 )
