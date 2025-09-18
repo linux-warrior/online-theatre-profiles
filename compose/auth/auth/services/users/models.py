@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import datetime
 import uuid
+from typing import Annotated
 
 from pydantic import (
     BaseModel,
+    Field,
     EmailStr,
 )
+
+UserLoginField = Annotated[str, Field(min_length=1, max_length=255)]
+UserPasswordField = Annotated[str, Field(min_length=1, max_length=255)]
 
 
 class CurrentUserResponse(BaseModel):
@@ -26,10 +31,10 @@ class ReadUserResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    login: str
-    password: str
+    login: UserLoginField
+    password: UserPasswordField
 
 
 class UserUpdate(BaseModel):
-    login: str = ''
-    password: str = ''
+    login: UserLoginField = ''
+    password: UserPasswordField = ''
