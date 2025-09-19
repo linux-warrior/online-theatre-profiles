@@ -10,6 +10,7 @@ from .authentication.backend import (
 from .exceptions import (
     UserDoesNotExist,
     UserAlreadyExists,
+    BadCredentials,
 )
 from .manager import (
     UserManager,

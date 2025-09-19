@@ -1,18 +1,21 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
 from pydantic import BaseModel
 
-from .common import (
-    ErrorCode,
-)
 from .....services.users import (
     OAuthServiceDep,
     InvalidOAuthProvider,
     InvalidStateToken,
     AuthenticationBackendDep,
     UserManagerDep,
-    UserAlreadyExists,
 )
 
 router = APIRouter()
@@ -58,7 +61,7 @@ async def callback(*,
                    error: str | None = Query(None),
                    oauth_service: OAuthServiceDep,
                    user_manager: UserManagerDep,
-                   backend: AuthenticationBackendDep):
+                   backend: AuthenticationBackendDep) -> Response:
     try:
         oauth_result = await oauth_service.authorize(
             request=request,
@@ -75,29 +78,22 @@ async def callback(*,
     except InvalidStateToken:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ErrorCode.OAUTH_INVALID_STATE_TOKEN,
+            detail='OAUTH_INVALID_STATE_TOKEN',
         )
 
     if oauth_result.user_email is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ErrorCode.OAUTH_EMAIL_NOT_AVAILABLE,
+            detail='OAUTH_EMAIL_NOT_AVAILABLE',
         )
 
-    try:
-        user = await user_manager.oauth_callback(
-            oauth_name=oauth_result.client_name,
-            access_token=oauth_result.token['access_token'],
-            account_id=oauth_result.user_id,
-            account_email=oauth_result.user_email,
-            expires_at=oauth_result.token.get('expires_at'),
-            refresh_token=oauth_result.token.get('refresh_token'),
-        )
-
-    except UserAlreadyExists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ErrorCode.OAUTH_USER_ALREADY_EXISTS,
-        )
+    user = await user_manager.oauth_callback(
+        oauth_name=oauth_result.client_name,
+        access_token=oauth_result.token['access_token'],
+        account_id=oauth_result.user_id,
+        account_email=oauth_result.user_email,
+        expires_at=oauth_result.token.get('expires_at'),
+        refresh_token=oauth_result.token.get('refresh_token'),
+    )
 
     return await backend.login(user)
