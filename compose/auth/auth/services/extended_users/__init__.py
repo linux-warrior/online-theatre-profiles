@@ -3,6 +3,6 @@ from .models import (
     ExtendedReadUserResponse,
 )
 from .service import (
-    ExtendedUserService,
+    AbstractExtendedUserService,
     ExtendedUserServiceDep,
 )

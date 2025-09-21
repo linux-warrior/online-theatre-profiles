@@ -38,3 +38,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     login: UserLoginField = ''
     password: UserPasswordField = ''
+
+
+class OAuth2AuthorizeResponse(BaseModel):
+    authorization_url: str

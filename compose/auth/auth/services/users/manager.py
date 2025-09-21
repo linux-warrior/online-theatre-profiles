@@ -15,6 +15,7 @@ from .db import (
 from .exceptions import (
     UserDoesNotExist,
     UserAlreadyExists,
+    BadCredentials,
 )
 from .login_history import (
     LoginHistoryCreate,
@@ -84,7 +85,7 @@ class UserManager:
         existing_user = await self.user_db.get_by_login(login=user_create.login)
 
         if existing_user is not None:
-            raise UserAlreadyExists
+            raise UserAlreadyExists(message='REGISTER_USER_ALREADY_EXISTS')
 
         user_create_dict = user_create.model_dump()
         password = user_create_dict.pop('password')
@@ -101,7 +102,7 @@ class UserManager:
             if field == 'login' and value != user.login:
                 try:
                     await self.get_by_login(login=value)
-                    raise UserAlreadyExists
+                    raise UserAlreadyExists(message='UPDATE_USER_LOGIN_ALREADY_EXISTS')
 
                 except UserDoesNotExist:
                     update_dict['login'] = value
@@ -119,7 +120,21 @@ class UserManager:
 
         return updated_user
 
-    async def authenticate(self, *, credentials: OAuth2PasswordRequestForm, request: Request) -> User | None:
+    async def authenticate(self,
+                           *,
+                           request: Request,
+                           credentials: OAuth2PasswordRequestForm) -> User:
+        user = await self._authenticate_user(request=request, credentials=credentials)
+
+        if user is None:
+            raise BadCredentials(message='LOGIN_BAD_CREDENTIALS')
+
+        return user
+
+    async def _authenticate_user(self,
+                                 *,
+                                 request: Request,
+                                 credentials: OAuth2PasswordRequestForm) -> User | None:
         try:
             user = await self.get_by_login(login=credentials.username)
 
