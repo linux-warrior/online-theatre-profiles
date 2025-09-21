@@ -3,11 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 
 from .....services.extended_users import (
-    ExtendedUserServiceDep,
     ExtendedCurrentUserResponse,
 )
 from .....services.users import (
-    UserManagerDep,
+    UserServiceDep,
     UserCreate,
     UserAlreadyExists,
 )
@@ -22,15 +21,12 @@ router = APIRouter()
     name='register:register',
 )
 async def register(user_create: UserCreate,
-                   user_manager: UserManagerDep,
-                   ext_user_service: ExtendedUserServiceDep) -> ExtendedCurrentUserResponse:
+                   user_service: UserServiceDep) -> ExtendedCurrentUserResponse:
     try:
-        user = await user_manager.create(user_create=user_create)
+        return await user_service.register(user_create=user_create)
 
     except UserAlreadyExists as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
-    return await ext_user_service.extend_current_user(user=user)

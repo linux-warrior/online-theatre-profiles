@@ -16,11 +16,11 @@ from fastapi_limiter.depends import RateLimiter
 
 from .....core.config import settings
 from .....services.users import (
+    UserServiceDep,
     CurrentUserDep,
     TokenDep,
-    AuthenticationBackendDep,
-    UserManagerDep,
     BadCredentials,
+    InvalidToken,
 )
 
 router = APIRouter()
@@ -37,23 +37,17 @@ router = APIRouter()
     ],
 )
 async def login(*,
+                request: Request,
                 credentials: OAuth2PasswordRequestForm = Depends(),
-                user_manager: UserManagerDep,
-                backend: AuthenticationBackendDep,
-                request: Request) -> Response:
+                user_service: UserServiceDep) -> Response:
     try:
-        user = await user_manager.authenticate(
-            credentials=credentials,
-            request=request,
-        )
+        return await user_service.login(request=request, credentials=credentials)
 
     except BadCredentials as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
-    return await backend.login(user)
 
 
 @router.post(
@@ -67,8 +61,8 @@ async def login(*,
 )
 async def logout(user: CurrentUserDep,
                  token: TokenDep,
-                 backend: AuthenticationBackendDep) -> Response:
-    return await backend.logout(user=user, token=token)
+                 user_service: UserServiceDep) -> Response:
+    return await user_service.logout(user=user, token=token)
 
 
 @router.post(
@@ -76,14 +70,12 @@ async def logout(user: CurrentUserDep,
     name='auth:refresh',
 )
 async def refresh(refresh_token: Annotated[str, Form()],
-                  user_manager: UserManagerDep,
-                  backend: AuthenticationBackendDep):
-    user = await backend.authenticate_refresh(user_manager=user_manager, token=refresh_token)
+                  user_service: UserServiceDep) -> Response:
+    try:
+        return await user_service.refresh(refresh_token=refresh_token)
 
-    if user is None:
+    except InvalidToken as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='REFRESH_INVALID_TOKEN',
+            detail=str(e),
         )
-
-    return await backend.refresh(user=user, token=refresh_token)

@@ -8,21 +8,16 @@ from fastapi import (
     Response,
     status,
 )
-from pydantic import BaseModel
 
 from .....services.users import (
-    OAuthServiceDep,
-    InvalidOAuthProvider,
-    InvalidStateToken,
-    AuthenticationBackendDep,
-    UserManagerDep,
+    UserServiceDep,
+    OAuth2AuthorizeResponse,
+    OAuthInvalidProvider,
+    OAuthInvalidStateToken,
+    OAuthEmailNotAvailable,
 )
 
 router = APIRouter()
-
-
-class OAuth2AuthorizeResponse(BaseModel):
-    authorization_url: str
 
 
 @router.get(
@@ -34,18 +29,16 @@ async def authorize(*,
                     request: Request,
                     provider_name: str,
                     scope: list[str] | None = Query(None),
-                    oauth_service: OAuthServiceDep) -> OAuth2AuthorizeResponse:
+                    user_service: UserServiceDep) -> OAuth2AuthorizeResponse:
     try:
-        authorization_url = await oauth_service.get_authorization_url(
+        return await user_service.oauth_authorize(
             request=request,
             provider_name=provider_name,
             scope=scope,
         )
 
-    except InvalidOAuthProvider:
+    except OAuthInvalidProvider:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    return OAuth2AuthorizeResponse(authorization_url=authorization_url)
 
 
 @router.get(
@@ -59,11 +52,9 @@ async def callback(*,
                    code_verifier: str | None = Query(None),
                    state: str | None = Query(None),
                    error: str | None = Query(None),
-                   oauth_service: OAuthServiceDep,
-                   user_manager: UserManagerDep,
-                   backend: AuthenticationBackendDep) -> Response:
+                   user_service: UserServiceDep) -> Response:
     try:
-        oauth_result = await oauth_service.authorize(
+        return await user_service.oauth_callback(
             request=request,
             provider_name=provider_name,
             code=code,
@@ -72,28 +63,17 @@ async def callback(*,
             error=error,
         )
 
-    except InvalidOAuthProvider:
+    except OAuthInvalidProvider:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    except InvalidStateToken:
+    except OAuthInvalidStateToken as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='OAUTH_INVALID_STATE_TOKEN',
+            detail=str(e),
         )
 
-    if oauth_result.user_email is None:
+    except OAuthEmailNotAvailable as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='OAUTH_EMAIL_NOT_AVAILABLE',
+            detail=str(e),
         )
-
-    user = await user_manager.oauth_callback(
-        oauth_name=oauth_result.client_name,
-        access_token=oauth_result.token['access_token'],
-        account_id=oauth_result.user_id,
-        account_email=oauth_result.user_email,
-        expires_at=oauth_result.token.get('expires_at'),
-        refresh_token=oauth_result.token.get('refresh_token'),
-    )
-
-    return await backend.login(user)

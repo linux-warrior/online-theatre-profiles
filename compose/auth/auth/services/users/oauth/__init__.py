@@ -1,9 +1,9 @@
-from .service import (
-    OAuthService,
-    OAuthServiceDep,
-    OAuthAuthorizeResult,
-)
 from .exceptions import (
     InvalidOAuthProvider,
     InvalidStateToken,
+)
+from .service import (
+    AbstractOAuthService,
+    OAuthServiceDep,
+    OAuthAuthorizeResult,
 )

@@ -120,15 +120,21 @@ class UserManager:
 
         return updated_user
 
-    async def authenticate(self, *, credentials: OAuth2PasswordRequestForm, request: Request) -> User:
-        user = await self._authenticate_user(credentials=credentials, request=request)
+    async def authenticate(self,
+                           *,
+                           request: Request,
+                           credentials: OAuth2PasswordRequestForm) -> User:
+        user = await self._authenticate_user(request=request, credentials=credentials)
 
         if user is None:
             raise BadCredentials(message='LOGIN_BAD_CREDENTIALS')
 
         return user
 
-    async def _authenticate_user(self, *, credentials: OAuth2PasswordRequestForm, request: Request) -> User | None:
+    async def _authenticate_user(self,
+                                 *,
+                                 request: Request,
+                                 credentials: OAuth2PasswordRequestForm) -> User | None:
         try:
             user = await self.get_by_login(login=credentials.username)
 

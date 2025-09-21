@@ -7,25 +7,40 @@ from ..common import (
 )
 
 
-class UserException(BaseServiceException, abc.ABC):
+class UserServiceException(BaseServiceException, abc.ABC):
     pass
 
 
-class UserDoesNotExist(UserException):
+class UserDoesNotExist(UserServiceException):
     def get_default_message(self) -> str:
         return 'USER_DOES_NOT_EXIST'
 
 
-class UserAlreadyExists(UserException):
+class UserAlreadyExists(UserServiceException):
     def get_default_message(self) -> str:
         return 'USER_ALREADY_EXISTS'
 
 
-class BadCredentials(UserException):
+class BadCredentials(UserServiceException):
     def get_default_message(self) -> str:
         return 'BAD_CREDENTIALS'
 
 
-class InvalidToken(UserException):
+class InvalidToken(UserServiceException):
     def get_default_message(self) -> str:
         return 'INVALID_TOKEN'
+
+
+class OAuthInvalidProvider(UserServiceException):
+    def get_default_message(self) -> str:
+        return 'OAUTH_INVALID_PROVIDER'
+
+
+class OAuthInvalidStateToken(UserServiceException):
+    def get_default_message(self) -> str:
+        return 'OAUTH_INVALID_STATE_TOKEN'
+
+
+class OAuthEmailNotAvailable(UserServiceException):
+    def get_default_message(self) -> str:
+        return 'OAUTH_EMAIL_NOT_AVAILABLE'

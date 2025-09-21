@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+from collections.abc import Iterable
 from typing import ClassVar, Annotated
 
 import jwt
@@ -38,7 +39,7 @@ class AbstractOAuthService(abc.ABC):
                                     *,
                                     request: Request,
                                     provider_name: str,
-                                    scope: list[str] | None = None) -> str: ...
+                                    scope: Iterable[str] | None = None) -> str: ...
 
     @abc.abstractmethod
     async def authorize(self,
@@ -68,7 +69,8 @@ class OAuthService(AbstractOAuthService):
                                     *,
                                     request: Request,
                                     provider_name: str,
-                                    scope: list[str] | None = None) -> str:
+                                    scope: Iterable[str] | None = None) -> str:
+        scope_list = list(scope) if scope is not None else scope
         oauth_client = self._create_oauth_client(provider_name=provider_name)
 
         authorize_redirect_url = str(request.url_for('oauth:callback', provider_name=provider_name))
@@ -78,7 +80,7 @@ class OAuthService(AbstractOAuthService):
         return await oauth_client.get_authorization_url(
             authorize_redirect_url,
             state=state,
-            scope=scope,
+            scope=scope_list,
         )
 
     async def authorize(self,

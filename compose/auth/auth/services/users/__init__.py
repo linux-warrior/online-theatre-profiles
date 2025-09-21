@@ -3,29 +3,23 @@ from .authentication import (
     CurrentSuperuserDep,
     TokenDep,
 )
-from .authentication.backend import (
-    AuthenticationBackend,
-    AuthenticationBackendDep,
-)
 from .exceptions import (
     UserDoesNotExist,
     UserAlreadyExists,
     BadCredentials,
-)
-from .manager import (
-    UserManager,
-    UserManagerDep,
+    InvalidToken,
+    OAuthInvalidProvider,
+    OAuthInvalidStateToken,
+    OAuthEmailNotAvailable,
 )
 from .models import (
     CurrentUserResponse,
     ReadUserResponse,
     UserCreate,
     UserUpdate,
+    OAuth2AuthorizeResponse,
 )
-from .oauth import (
-    OAuthService,
-    OAuthServiceDep,
-    OAuthAuthorizeResult,
-    InvalidOAuthProvider,
-    InvalidStateToken,
+from .service import (
+    AbstractUserService,
+    UserServiceDep,
 )

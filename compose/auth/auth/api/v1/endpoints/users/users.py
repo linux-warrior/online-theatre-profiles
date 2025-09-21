@@ -9,7 +9,6 @@ from fastapi import (
 )
 
 from .....services.extended_users import (
-    ExtendedUserServiceDep,
     ExtendedCurrentUserResponse,
     ExtendedReadUserResponse,
 )
@@ -17,9 +16,9 @@ from .....services.pagination import (
     PageParamsDep,
 )
 from .....services.users import (
+    UserServiceDep,
     CurrentUserDep,
     CurrentSuperuserDep,
-    UserManagerDep,
     UserDoesNotExist,
     UserAlreadyExists,
     ReadUserResponse,
@@ -44,8 +43,8 @@ router = APIRouter()
     },
 )
 async def get_current_user(user: CurrentUserDep,
-                           ext_user_service: ExtendedUserServiceDep) -> ExtendedCurrentUserResponse:
-    return await ext_user_service.extend_current_user(user=user)
+                           user_service: UserServiceDep) -> ExtendedCurrentUserResponse:
+    return await user_service.get_current_user(user=user)
 
 
 @router.patch(
@@ -60,10 +59,9 @@ async def get_current_user(user: CurrentUserDep,
 )
 async def patch_current_user(user: CurrentUserDep,
                              user_update: UserUpdate,
-                             user_manager: UserManagerDep,
-                             ext_user_service: ExtendedUserServiceDep) -> ExtendedCurrentUserResponse:
+                             user_service: UserServiceDep) -> ExtendedCurrentUserResponse:
     try:
-        user = await user_manager.update(user=user, user_update=user_update)
+        return await user_service.patch_current_user(user=user, user_update=user_update)
 
     except UserDoesNotExist as e:
         raise HTTPException(
@@ -76,8 +74,6 @@ async def patch_current_user(user: CurrentUserDep,
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
-    return await ext_user_service.extend_current_user(user=user)
 
 
 @router.get(
@@ -97,19 +93,16 @@ async def patch_current_user(user: CurrentUserDep,
     },
 )
 async def get_user(user_id: uuid.UUID,
-                   user_manager: UserManagerDep,
-                   ext_user_service: ExtendedUserServiceDep,
+                   user_service: UserServiceDep,
                    _current_superuser: CurrentSuperuserDep) -> ExtendedReadUserResponse:
     try:
-        user = await user_manager.get(user_id=user_id)
+        return await user_service.get_user(user_id=user_id)
 
     except UserDoesNotExist as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
-
-    return await ext_user_service.extend_user(user=user)
 
 
 @router.get(
@@ -119,14 +112,9 @@ async def get_user(user_id: uuid.UUID,
 )
 async def get_users_list(*,
                          page_params: PageParamsDep,
-                         user_manager: UserManagerDep,
+                         user_service: UserServiceDep,
                          _current_superuser: CurrentSuperuserDep) -> list[ReadUserResponse]:
-    users_list = await user_manager.get_list(page_params=page_params)
-
-    return [
-        ReadUserResponse.model_validate(user, from_attributes=True)
-        for user in users_list
-    ]
+    return await user_service.get_users_list(page_params=page_params)
 
 
 @router.get(

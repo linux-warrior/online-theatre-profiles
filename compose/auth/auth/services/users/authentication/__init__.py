@@ -4,6 +4,7 @@ from .authenticator import (
 )
 from .backend import (
     AuthenticationBackend,
+    AuthenticationBackendDep,
 )
 from .dependencies import (
     CurrentUserDep,
