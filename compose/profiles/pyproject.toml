@@ -6,7 +6,7 @@ python = "^3.12"
 
 alembic = "^1.16.1"
 asyncpg = "^0.30.0"
-cryptography = "^45.0.4"
+cryptography = "^46.0.5"
 fastapi = { version = "^0.116.1", extras = ["standard"] }
 httpx = "^0.28.1"
 opentelemetry-api = "^1.33.1"
