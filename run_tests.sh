@@ -2,7 +2,7 @@
 
 set -e
 
-PYTHON_VERSION=${PYTHON_VERSION:-3.13}
+PYTHON_VERSION=${PYTHON_VERSION:-3.14}
 
 docker_compose() {
     PROJECT_NAME=movies \
