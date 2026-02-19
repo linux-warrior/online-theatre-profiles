@@ -37,7 +37,7 @@ class PostgreSQLCursorExecutor:
     @backoff.on_exception(backoff.expo, psycopg.OperationalError)
     def execute(self,
                 *,
-                query: psycopg.abc.Query,
+                query: psycopg.abc.QueryNoTemplate,
                 params: psycopg.abc.Params | None = None) -> psycopg.Cursor[dict]:
         return self.cursor.execute(query, params)
 

@@ -2,25 +2,25 @@
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13"
 
-Django = "^5.2.8"
-gunicorn = "^23.0.0"
+Django = "^5.2.11"
+gunicorn = "^25.1.0"
 httpx = "^0.28.1"
-psycopg = { version = "^3.2.9", extras = ["binary"] }
-pydantic = { version = "^2.11.7", extras = ["email"] }
-python-dotenv = "^1.1.0"
+psycopg = { version = "^3.3.3", extras = ["binary"] }
+pydantic = { version = "^2.12.5", extras = ["email"] }
+python-dotenv = "^1.2.1"
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
 ciqar = "^1.1.0"
-mypy = "^1.16.0"
-ruff = "^0.11.13"
+mypy = "^1.19.1"
+ruff = "^0.15.1"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 120
 
 [tool.ruff.lint]
@@ -29,7 +29,7 @@ select = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 disable_error_code = [
     "import-untyped",
 ]
