@@ -13,8 +13,8 @@ FROM base AS venv
 ENV PATH="/root/.local/bin:$PATH"
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --user pipx==1.7.1
-RUN pipx install poetry==2.1.3
+    pip install --user pipx==1.8.0
+RUN pipx install poetry==2.3.2
 
 ENV VIRTUAL_ENV=/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"

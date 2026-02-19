@@ -2,34 +2,34 @@
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13"
 
-alembic = "^1.16.1"
-asyncpg = "^0.30.0"
+alembic = "^1.18.4"
+asyncpg = "^0.31.0"
 cryptography = "^46.0.5"
-fastapi = { version = "^0.116.1", extras = ["standard"] }
+fastapi = { version = "^0.129.0", extras = ["standard"] }
 httpx = "^0.28.1"
-opentelemetry-api = "^1.33.1"
-opentelemetry-exporter-otlp-proto-http = "^1.33.1"
-opentelemetry-instrumentation = "^0.54b1"
-opentelemetry-instrumentation-fastapi = "^0.54b1"
-opentelemetry-propagator-jaeger = "^1.33.1"
-opentelemetry-sdk = "^1.33.1"
-pydantic = { version = "^2.11.7", extras = ["email"] }
-pydantic-settings = "^2.9.1"
-SQLAlchemy = { version = "^2.0.41", extras = ["asyncio"] }
-uvicorn-worker = "^0.3.0"
+opentelemetry-api = "^1.39.1"
+opentelemetry-exporter-otlp-proto-http = "^1.39.1"
+opentelemetry-instrumentation = "^0.60b1"
+opentelemetry-instrumentation-fastapi = "^0.60b1"
+opentelemetry-propagator-jaeger = "^1.39.1"
+opentelemetry-sdk = "^1.39.1"
+pydantic = { version = "^2.12.5", extras = ["email"] }
+pydantic-settings = "^2.13.0"
+SQLAlchemy = { version = "^2.0.46", extras = ["asyncio"] }
+uvicorn-worker = "^0.4.0"
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
 ciqar = "^1.1.0"
-mypy = "^1.16.0"
-ruff = "^0.11.13"
+mypy = "^1.19.1"
+ruff = "^0.15.1"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 120
 
 [tool.ruff.lint]
@@ -38,7 +38,7 @@ select = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 
 [build-system]
 requires = ["poetry-core"]

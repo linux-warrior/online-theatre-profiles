@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: [ '3.12', '3.13' ]
+        python_version: [ '3.13', 'default' ]
 
     env:
       python_version: ${{ matrix.python_version }}
@@ -65,7 +65,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run tests
-        run: PYTHON_VERSION="$python_version" ./run_tests.sh
+        run: |
+          if [[ "$python_version" == "default" ]]; then
+            python_version=
+          fi
+          
+          PYTHON_VERSION="$python_version" ./run_tests.sh
 
   telegram:
     runs-on: ubuntu-latest
@@ -93,7 +98,7 @@ jobs:
               repository_name=$github_repository
               repository_url=https://github.com/$repository_name
               echo "*Repository*: [$repository_name]($repository_url)"
-
+          
               if [[ "$pull_request_number" ]]; then
                   pull_request_url=$repository_url/pull/$pull_request_number
                   echo "*Pull request*: [$pull_request_title]($pull_request_url)"
@@ -105,11 +110,11 @@ jobs:
           
               commit_url=https://github.com/$github_repository/commit/$commit_sha
               echo "*Commit*: [$commit_sha]($commit_url)"
-
+          
               author_name=$github_actor
               author_url=https://github.com/$author_name
               echo  "*Author*: [$author_name]($author_url)"
-
+          
               echo '```'
               git log -n 1 --format=%B "$commit_sha"
               echo '```'

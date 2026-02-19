@@ -50,7 +50,7 @@ $ ./run_tests.sh
 ### Запуск тестов с указанием версии Python
 
 ```shell
-$ PYTHON_VERSION=3.12 ./run_tests.sh
+$ PYTHON_VERSION=3.13 ./run_tests.sh
 ```
 
 ### Запуск тестов с использованием Docker Compose Watch
