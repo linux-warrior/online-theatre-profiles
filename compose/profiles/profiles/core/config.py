@@ -53,10 +53,11 @@ class AuthConfig(BaseSettings):
         return f'{self.scheme}://{self.host}:{self.port}/auth/api/v1/users/profile'
 
 
+# noinspection PyArgumentList
 class Settings(BaseSettings):
-    profiles: ProfilesConfig = ProfilesConfig()  # type: ignore[call-arg]
+    profiles: ProfilesConfig = ProfilesConfig()
     otel: OpenTelemetryConfig = OpenTelemetryConfig()
-    postgresql: PostgreSQLConfig = PostgreSQLConfig()  # type: ignore[call-arg]
+    postgresql: PostgreSQLConfig = PostgreSQLConfig()
     auth: AuthConfig = AuthConfig()
 
 

@@ -61,12 +61,13 @@ class RateLimiterConfig(BaseSettings):
     seconds: int = 60
 
 
+# noinspection PyArgumentList
 class Settings(BaseSettings):
     redis: RedisSettings = RedisSettings()
     elasticsearch: ElasticsearchSettings = ElasticsearchSettings()
-    auth_postgresql: AuthPostgresqlSettings = AuthPostgresqlSettings()  # type: ignore[call-arg]
+    auth_postgresql: AuthPostgresqlSettings = AuthPostgresqlSettings()
     auth_redis: AuthRedisConfig = AuthRedisConfig()
-    superuser: SuperUserSettings = SuperUserSettings()  # type: ignore[call-arg]
+    superuser: SuperUserSettings = SuperUserSettings()
     ratelimiter: RateLimiterConfig = RateLimiterConfig()
 
     movies_url: str = 'http://localhost:8000'

@@ -74,7 +74,7 @@ class RateLimiterConfig(BaseSettings):
 class Settings(BaseSettings):
     auth: AuthConfig = AuthConfig()
     oauth: OAuthConfig = OAuthConfig()
-    postgresql: PostgreSQLConfig = PostgreSQLConfig()  # type: ignore[call-arg]
+    postgresql: PostgreSQLConfig = PostgreSQLConfig()
     redis: RedisConfig = RedisConfig()
     cache: CacheConfig = CacheConfig()
     ratelimiter: RateLimiterConfig = RateLimiterConfig()
