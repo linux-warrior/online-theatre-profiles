@@ -29,6 +29,9 @@ select = [
 ]
 
 [tool.mypy]
+plugins = [
+    "pydantic.mypy",
+]
 python_version = "3.13"
 disable_error_code = [
     "import-untyped",
