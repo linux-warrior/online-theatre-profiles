@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from ..extract import (
     PostgreSQLExtractor,
@@ -80,24 +80,27 @@ class PersonsTransformExecutor(DocumentsTransformExecutor[Person]):
         )
 
 
-class ETLPipeline[TDocument: Document]:
+TDocument_co = TypeVar('TDocument_co', bound=Document, covariant=True)
+
+
+class ETLPipeline(Generic[TDocument_co]):
     extractor: PostgreSQLExtractor
     extractor_state: ExtractorState
-    transform_executor: DocumentsTransformExecutor[TDocument]
-    loader: ElasticsearchLoader[TDocument]
+    transform_executor: DocumentsTransformExecutor[TDocument_co]
+    loader: ElasticsearchLoader[TDocument_co]
 
     def __init__(self,
                  *,
                  extractor: PostgreSQLExtractor,
                  extractor_state: ExtractorState,
-                 transform_executor: DocumentsTransformExecutor[TDocument],
-                 loader: ElasticsearchLoader[TDocument]) -> None:
+                 transform_executor: DocumentsTransformExecutor[TDocument_co],
+                 loader: ElasticsearchLoader[TDocument_co]) -> None:
         self.extractor = extractor
         self.extractor_state = extractor_state
         self.transform_executor = transform_executor
         self.loader = loader
 
-    def transfer_data(self) -> DocumentsTransformResult[TDocument]:
+    def transfer_data(self) -> DocumentsTransformResult[TDocument_co]:
         documents_data = self.extractor.extract(last_modified=self.extractor_state.last_modified)
         documents_transform_result = self.transform_executor.transform_documents(
             documents_data=documents_data,
