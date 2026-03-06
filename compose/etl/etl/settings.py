@@ -41,8 +41,9 @@ class ElasticsearchSettings(BaseSettings):
         return f'{self.scheme}://{self.host}:{self.port}'
 
 
+# noinspection PyArgumentList
 class Settings(BaseSettings):
-    postgresql: PostgreSQLSettings = PostgreSQLSettings()  # type: ignore[call-arg]
+    postgresql: PostgreSQLSettings = PostgreSQLSettings()
     elasticsearch: ElasticsearchSettings = ElasticsearchSettings()
 
 

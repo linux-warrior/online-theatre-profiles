@@ -32,6 +32,9 @@ select = [
 ]
 
 [tool.mypy]
+plugins = [
+    "pydantic.mypy",
+]
 python_version = "3.13"
 
 [build-system]
