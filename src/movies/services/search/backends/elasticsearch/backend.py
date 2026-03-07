@@ -21,13 +21,16 @@ class ElasticsearchSearchBackend(AbstractSearchBackend):
 
     def __init__(self, *, elasticsearch_client: elasticsearch.AsyncElasticsearch) -> None:
         self.elasticsearch_client = elasticsearch_client
-        self.query_factory = ElasticsearchQueryFactory()
+        self.query_factory = ElasticsearchQueryFactory(backend=self)
+
+    def create_query(self) -> ElasticsearchQueryFactory:
+        return self.query_factory
 
     @backoff.on_exception(backoff.expo, (
             elasticsearch.exceptions.ConnectionError,
             elasticsearch.exceptions.ConnectionTimeout,
     ))
-    async def get(self, *, query: CompiledElasticsearchGetQuery) -> dict | None:  # type: ignore[override]
+    async def get(self, query: CompiledElasticsearchGetQuery) -> dict | None:
         try:
             response = await self.elasticsearch_client.get(index=query.index, id=query.id)
         except elasticsearch.NotFoundError:
@@ -39,7 +42,7 @@ class ElasticsearchSearchBackend(AbstractSearchBackend):
             elasticsearch.exceptions.ConnectionError,
             elasticsearch.exceptions.ConnectionTimeout,
     ))
-    async def search(self, *, query: CompiledElasticsearchSearchQuery) -> list[dict] | None:  # type: ignore[override]
+    async def search(self, query: CompiledElasticsearchSearchQuery) -> list[dict] | None:
         try:
             response = await self.elasticsearch_client.search(index=query.index, body=query.body)
         except elasticsearch.NotFoundError:
@@ -51,9 +54,6 @@ class ElasticsearchSearchBackend(AbstractSearchBackend):
             return None
 
         return [result['_source'] for result in results]
-
-    def create_query(self) -> ElasticsearchQueryFactory:
-        return self.query_factory
 
 
 async def get_search_backend(elasticsearch_client: ElasticsearchClientDep) -> ElasticsearchSearchBackend:

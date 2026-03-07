@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
 
 from .....cache import Parameterizable
-
-if TYPE_CHECKING:
-    from ..backend import AbstractSearchBackend
 
 
 class AbstractQuery[TResult](abc.ABC):
@@ -16,7 +12,7 @@ class AbstractQuery[TResult](abc.ABC):
 
 class AbstractCompiledQuery[TResult](Parameterizable):
     @abc.abstractmethod
-    async def execute(self, *, backend: AbstractSearchBackend) -> TResult: ...
+    async def execute(self) -> TResult: ...
 
 
 class AbstractGetQuery(AbstractQuery[dict | None]):
@@ -25,8 +21,7 @@ class AbstractGetQuery(AbstractQuery[dict | None]):
 
 
 class AbstractCompiledGetQuery(AbstractCompiledQuery[dict | None], abc.ABC):
-    async def execute(self, *, backend: AbstractSearchBackend) -> dict | None:
-        return await backend.get(query=self)
+    pass
 
 
 class AbstractSearchQuery(AbstractQuery[list[dict] | None]):
@@ -35,5 +30,4 @@ class AbstractSearchQuery(AbstractQuery[list[dict] | None]):
 
 
 class AbstractCompiledSearchQuery(AbstractCompiledQuery[list[dict] | None], abc.ABC):
-    async def execute(self, *, backend: AbstractSearchBackend) -> list[dict] | None:
-        return await backend.search(query=self)
+    pass

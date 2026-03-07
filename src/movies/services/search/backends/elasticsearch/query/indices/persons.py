@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import uuid
+from typing import TYPE_CHECKING
 
 from ..query import (
     ElasticsearchGetQuery,
@@ -9,11 +10,15 @@ from ..query import (
 )
 from .......core.config import settings
 
+if TYPE_CHECKING:
+    from ...backend import ElasticsearchSearchBackend
+
 
 class GetPersonQuery(ElasticsearchGetQuery):
     person_id: uuid.UUID
 
-    def __init__(self, *, person_id: uuid.UUID) -> None:
+    def __init__(self, *, backend: ElasticsearchSearchBackend, person_id: uuid.UUID) -> None:
+        super().__init__(backend=backend)
         self.person_id = person_id
 
     def get_index(self) -> str:
@@ -33,7 +38,13 @@ class SearchPersonsQuery(BaseSearchPersonsQuery):
     page_number: int
     page_size: int
 
-    def __init__(self, *, query: str, page_number: int, page_size: int) -> None:
+    def __init__(self,
+                 *,
+                 backend: ElasticsearchSearchBackend,
+                 query: str,
+                 page_number: int,
+                 page_size: int) -> None:
+        super().__init__(backend=backend)
         self.query = query
         self.page_number = page_number
         self.page_size = page_size
