@@ -24,13 +24,13 @@ from ..cache import (
 
 class AbstractSearchService(abc.ABC):
     @abc.abstractmethod
+    def create_query(self) -> AbstractQueryFactory: ...
+
+    @abc.abstractmethod
     async def get(self, *, query: AbstractGetQuery) -> dict | None: ...
 
     @abc.abstractmethod
     async def search(self, *, query: AbstractSearchQuery) -> list[dict] | None: ...
-
-    @abc.abstractmethod
-    def create_query(self) -> AbstractQueryFactory: ...
 
 
 class SearchService(AbstractSearchService):
@@ -40,6 +40,9 @@ class SearchService(AbstractSearchService):
     def __init__(self, *, backend: AbstractSearchBackend, cache_service: AbstractCacheService) -> None:
         self.backend = backend
         self.cache = cache_service.get_cache(key_prefix='search')
+
+    def create_query(self) -> AbstractQueryFactory:
+        return self.backend.create_query()
 
     async def get(self, *, query: AbstractGetQuery) -> dict | None:
         return await self._execute_query(query=query)
@@ -55,7 +58,7 @@ class SearchService(AbstractSearchService):
         if result is not None:
             return result
 
-        result = await compiled_query.execute(backend=self.backend)
+        result = await compiled_query.execute()
 
         if result is None:
             return None
@@ -64,11 +67,9 @@ class SearchService(AbstractSearchService):
 
         return result
 
-    def create_query(self) -> AbstractQueryFactory:
-        return self.backend.create_query()
 
-
-async def get_search_service(backend: SearchBackendDep, cache_service: CacheServiceDep) -> AbstractSearchService:
+async def get_search_service(backend: SearchBackendDep,
+                             cache_service: CacheServiceDep) -> AbstractSearchService:
     return SearchService(backend=backend, cache_service=cache_service)
 
 

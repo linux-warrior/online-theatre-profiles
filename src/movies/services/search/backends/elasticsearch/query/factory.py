@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import TYPE_CHECKING
 
 from .indices import (
     films,
@@ -17,13 +18,21 @@ from ...base import (
     AbstractQueryFactory,
 )
 
+if TYPE_CHECKING:
+    from ..backend import ElasticsearchSearchBackend
+
 
 class ElasticsearchQueryFactory(AbstractQueryFactory):
+    backend: ElasticsearchSearchBackend
+
+    def __init__(self, *, backend: ElasticsearchSearchBackend) -> None:
+        self.backend = backend
+
     def get_film(self, *, film_id: uuid.UUID) -> ElasticsearchGetQuery:
-        return films.GetFilmQuery(film_id=film_id)
+        return films.GetFilmQuery(backend=self.backend, film_id=film_id)
 
     def films_by_person(self, *, person_id: uuid.UUID) -> ElasticsearchSearchQuery:
-        return films.FilmsByPersonQuery(person_id=person_id)
+        return films.FilmsByPersonQuery(backend=self.backend, person_id=person_id)
 
     def films_list(self,
                    *,
@@ -32,6 +41,7 @@ class ElasticsearchQueryFactory(AbstractQueryFactory):
                    page_size: int,
                    genre_id: uuid.UUID | None = None) -> ElasticsearchSearchQuery:
         return films.FilmsListQuery(
+            backend=self.backend,
             sort=sort,
             page_number=page_number,
             page_size=page_size,
@@ -39,16 +49,30 @@ class ElasticsearchQueryFactory(AbstractQueryFactory):
         )
 
     def search_films(self, *, query: str, page_number: int, page_size: int) -> AbstractSearchQuery:
-        return films.SearchFilmsQuery(query=query, page_number=page_number, page_size=page_size)
+        return films.SearchFilmsQuery(
+            backend=self.backend,
+            query=query,
+            page_number=page_number,
+            page_size=page_size,
+        )
 
     def get_genre(self, *, genre_id: uuid.UUID) -> AbstractGetQuery:
-        return genres.GetGenreQuery(genre_id=genre_id)
+        return genres.GetGenreQuery(backend=self.backend, genre_id=genre_id)
 
     def genres_list(self, *, page_number: int, page_size: int) -> AbstractSearchQuery:
-        return genres.GenresListQuery(page_number=page_number, page_size=page_size)
+        return genres.GenresListQuery(
+            backend=self.backend,
+            page_number=page_number,
+            page_size=page_size,
+        )
 
     def get_person(self, *, person_id: uuid.UUID) -> AbstractGetQuery:
-        return persons.GetPersonQuery(person_id=person_id)
+        return persons.GetPersonQuery(backend=self.backend, person_id=person_id)
 
     def search_persons(self, *, query: str, page_number: int, page_size: int) -> AbstractSearchQuery:
-        return persons.SearchPersonsQuery(query=query, page_number=page_number, page_size=page_size)
+        return persons.SearchPersonsQuery(
+            backend=self.backend,
+            query=query,
+            page_number=page_number,
+            page_size=page_size,
+        )
