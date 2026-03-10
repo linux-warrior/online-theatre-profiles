@@ -13,33 +13,35 @@ logger = logging.getLogger(__name__)
 
 
 class ElasticsearchLoader[TDocument: Document]:
-    client: elasticsearch.Elasticsearch
-    index_name: str
-    index_data: dict | None
-    index_created: bool
+    _client: elasticsearch.Elasticsearch
+    _index_name: str
+    _index_data: dict | None
+
+    _index_created: bool
 
     def __init__(self,
                  *,
                  client: elasticsearch.Elasticsearch,
                  index_name: str,
                  index_data: dict | None = None) -> None:
-        self.client = client
-        self.index_name = index_name
-        self.index_data = index_data
+        self._client = client
+        self._index_name = index_name
+        self._index_data = index_data
 
-        self.index_created = False
+        self._index_created = False
 
     @backoff.on_exception(backoff.expo, (
             elasticsearch.ConnectionError,
             elasticsearch.ConnectionTimeout,
     ))
     def load(self, *, documents: Iterable[TDocument]) -> None:
-        if self.index_data and not self.index_created:
+        if self._index_data and not self._index_created:
+            # noinspection PyArgumentList
             self._create_index()
 
         try:
-            elasticsearch.helpers.bulk(self.client, ({
-                '_index': self.index_name,
+            elasticsearch.helpers.bulk(self._client, ({
+                '_index': self._index_name,
                 '_id': document.id,
                 '_source': document.model_dump(mode='json'),
             } for document in documents))
@@ -55,7 +57,7 @@ class ElasticsearchLoader[TDocument: Document]:
     ))
     def _create_index(self) -> None:
         try:
-            self.client.indices.create(index=self.index_name, body=self.index_data)
+            self._client.indices.create(index=self._index_name, body=self._index_data)
         except elasticsearch.BadRequestError as e:
             if e.error == 'resource_already_exists_exception':
                 pass

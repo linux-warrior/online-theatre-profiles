@@ -1,29 +1,31 @@
 from __future__ import annotations
 
+import abc
+
 from psycopg import sql
 
 from ..state import LastModified
 
 
 class TableModifiedCondition:
-    table_name: str
+    _table_name: str
 
     def __init__(self, *, table_name: str) -> None:
-        self.table_name = table_name
+        self._table_name = table_name
 
     def compile(self, *, last_modified: LastModified) -> sql.Composable:
         sql_parts: list[sql.Composable] = []
 
         if last_modified.modified is not None:
             sql_parts.append(sql.SQL('({table_name}.modified > {last_modified})').format(
-                table_name=sql.Identifier(self.table_name),
+                table_name=sql.Identifier(self._table_name),
                 last_modified=last_modified.modified,
             ))
 
         if last_modified.modified is not None and last_modified.id is not None:
             sql_parts.append(
                 sql.SQL('({table_name}.modified = {last_modified} AND {table_name}.id > {last_id})').format(
-                    table_name=sql.Identifier(self.table_name),
+                    table_name=sql.Identifier(self._table_name),
                     last_modified=last_modified.modified,
                     last_id=last_modified.id,
                 ),
@@ -37,25 +39,26 @@ class TableModifiedCondition:
         )
 
 
-class ExtractSQLStatement:
+class ExtractSQLStatement(abc.ABC):
     batch_size: int
 
     def __init__(self, *, batch_size: int) -> None:
         self.batch_size = batch_size
 
+    @abc.abstractmethod
     def compile(self, *, last_modified: LastModified) -> sql.Composed:
-        raise NotImplementedError
+        ...
 
 
 class ExtractFilmWorksSQLStatement(ExtractSQLStatement):
-    table_modified_condition: TableModifiedCondition
+    _table_modified_condition: TableModifiedCondition
 
     def __init__(self, *, batch_size: int) -> None:
         super().__init__(batch_size=batch_size)
-        self.table_modified_condition = TableModifiedCondition(table_name='modified_film_work')
+        self._table_modified_condition = TableModifiedCondition(table_name='modified_film_work')
 
     def compile(self, *, last_modified: LastModified) -> sql.Composed:
-        where_condition = self.table_modified_condition.compile(last_modified=last_modified)
+        where_condition = self._table_modified_condition.compile(last_modified=last_modified)
 
         # noinspection SqlNoDataSourceInspection,SqlResolve
         return sql.SQL('''
@@ -117,14 +120,14 @@ class ExtractFilmWorksSQLStatement(ExtractSQLStatement):
 
 
 class ExtractGenresSQLStatement(ExtractSQLStatement):
-    table_modified_condition: TableModifiedCondition
+    _table_modified_condition: TableModifiedCondition
 
     def __init__(self, *, batch_size: int) -> None:
         super().__init__(batch_size=batch_size)
-        self.table_modified_condition = TableModifiedCondition(table_name='genre')
+        self._table_modified_condition = TableModifiedCondition(table_name='genre')
 
     def compile(self, *, last_modified: LastModified) -> sql.Composed:
-        where_condition = self.table_modified_condition.compile(last_modified=last_modified)
+        where_condition = self._table_modified_condition.compile(last_modified=last_modified)
 
         # noinspection SqlNoDataSourceInspection,SqlResolve
         return sql.SQL('''
@@ -145,14 +148,14 @@ class ExtractGenresSQLStatement(ExtractSQLStatement):
 
 
 class ExtractPersonsSQLStatement(ExtractSQLStatement):
-    table_modified_condition: TableModifiedCondition
+    _table_modified_condition: TableModifiedCondition
 
     def __init__(self, *, batch_size: int) -> None:
         super().__init__(batch_size=batch_size)
-        self.table_modified_condition = TableModifiedCondition(table_name='modified_person')
+        self._table_modified_condition = TableModifiedCondition(table_name='modified_person')
 
     def compile(self, *, last_modified: LastModified) -> sql.Composed:
-        where_condition = self.table_modified_condition.compile(last_modified=last_modified)
+        where_condition = self._table_modified_condition.compile(last_modified=last_modified)
 
         # noinspection SqlNoDataSourceInspection,SqlResolve
         return sql.SQL('''

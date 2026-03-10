@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import dataclasses
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Generic, TypeVar
@@ -36,9 +37,10 @@ class DocumentsTransformResult[TDocument: Document]:
         def __init__(self, *, documents: list[TDocument], last_modified: LastModified) -> None: ...
 
 
-class DocumentsTransformExecutor[TDocument: Document]:
+class DocumentsTransformExecutor[TDocument: Document](abc.ABC):
+    @abc.abstractmethod
     def transform_documents(self, *, documents_data: Iterable[dict]) -> DocumentsTransformResult[TDocument]:
-        raise NotImplementedError
+        ...
 
 
 class FilmsTransformExecutor(DocumentsTransformExecutor[Film]):
@@ -46,7 +48,7 @@ class FilmsTransformExecutor(DocumentsTransformExecutor[Film]):
         film_works_parser = FilmWorksParser(film_works=documents_data)
         films_transformer = FilmsTransformer()
         film_works_parser.parse(visitor=films_transformer)
-        films_transform_result = films_transformer.get_result()
+        films_transform_result = films_transformer.result
 
         return DocumentsTransformResult[Film](
             documents=films_transform_result.films,
@@ -59,7 +61,7 @@ class GenresTransformExecutor(DocumentsTransformExecutor[Genre]):
         genres_parser = GenresParser(genres=documents_data)
         genres_transformer = GenresTransformer()
         genres_parser.parse(visitor=genres_transformer)
-        genres_transform_result = genres_transformer.get_result()
+        genres_transform_result = genres_transformer.result
 
         return DocumentsTransformResult[Genre](
             documents=genres_transform_result.genres,
@@ -72,7 +74,7 @@ class PersonsTransformExecutor(DocumentsTransformExecutor[Person]):
         persons_parser = PersonsParser(persons=documents_data)
         persons_transformer = PersonsTransformer()
         persons_parser.parse(visitor=persons_transformer)
-        persons_transform_result = persons_transformer.get_result()
+        persons_transform_result = persons_transformer.result
 
         return DocumentsTransformResult[Person](
             documents=persons_transform_result.persons,
@@ -84,10 +86,10 @@ TDocument_co = TypeVar('TDocument_co', bound=Document, covariant=True)
 
 
 class ETLPipeline(Generic[TDocument_co]):
-    extractor: PostgreSQLExtractor
-    extractor_state: ExtractorState
-    transform_executor: DocumentsTransformExecutor[TDocument_co]
-    loader: ElasticsearchLoader[TDocument_co]
+    _extractor: PostgreSQLExtractor
+    _extractor_state: ExtractorState
+    _transform_executor: DocumentsTransformExecutor[TDocument_co]
+    _loader: ElasticsearchLoader[TDocument_co]
 
     def __init__(self,
                  *,
@@ -95,19 +97,19 @@ class ETLPipeline(Generic[TDocument_co]):
                  extractor_state: ExtractorState,
                  transform_executor: DocumentsTransformExecutor[TDocument_co],
                  loader: ElasticsearchLoader[TDocument_co]) -> None:
-        self.extractor = extractor
-        self.extractor_state = extractor_state
-        self.transform_executor = transform_executor
-        self.loader = loader
+        self._extractor = extractor
+        self._extractor_state = extractor_state
+        self._transform_executor = transform_executor
+        self._loader = loader
 
     def transfer_data(self) -> DocumentsTransformResult[TDocument_co]:
-        documents_data = self.extractor.extract(last_modified=self.extractor_state.last_modified)
-        documents_transform_result = self.transform_executor.transform_documents(
+        documents_data = self._extractor.extract(last_modified=self._extractor_state.last_modified)
+        documents_transform_result = self._transform_executor.transform_documents(
             documents_data=documents_data,
         )
 
         if documents_transform_result.documents:
-            self.loader.load(documents=documents_transform_result.documents)
-            self.extractor_state.last_modified = documents_transform_result.last_modified
+            self._loader.load(documents=documents_transform_result.documents)
+            self._extractor_state.last_modified = documents_transform_result.last_modified
 
         return documents_transform_result

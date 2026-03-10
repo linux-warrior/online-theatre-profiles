@@ -41,67 +41,68 @@ class FilmsTransformResult:
 
 
 class FilmsTransformer(FilmWorksVisitor):
-    film_state: FilmTransformState
-    result: FilmsTransformResult
+    _film_state: FilmTransformState
+    _result: FilmsTransformResult
 
     def __init__(self) -> None:
-        self.film_state = FilmTransformState()
-        self.result = FilmsTransformResult()
+        self._film_state = FilmTransformState()
+        self._result = FilmsTransformResult()
 
-    def get_result(self) -> FilmsTransformResult:
-        return self.result
+    @property
+    def result(self) -> FilmsTransformResult:
+        return self._result
 
     def start_handle_film_work(self, *, film_work_data: dict) -> None:
-        self.film_state = FilmTransformState()
+        self._film_state = FilmTransformState()
 
     def end_handle_film_work(self, *, film_work_data: dict) -> None:
-        self.result.films.append(Film(
+        self._result.films.append(Film(
             id=film_work_data['id'],
             title=film_work_data['title'],
             description=film_work_data['description'],
             rating=film_work_data['rating'],
-            genres_names=self.film_state.genres_names,
-            directors_names=self.film_state.directors_names,
-            actors_names=self.film_state.actors_names,
-            writers_names=self.film_state.writers_names,
-            genres=self.film_state.genres,
-            directors=self.film_state.directors,
-            actors=self.film_state.actors,
-            writers=self.film_state.writers,
+            genres_names=self._film_state.genres_names,
+            directors_names=self._film_state.directors_names,
+            actors_names=self._film_state.actors_names,
+            writers_names=self._film_state.writers_names,
+            genres=self._film_state.genres,
+            directors=self._film_state.directors,
+            actors=self._film_state.actors,
+            writers=self._film_state.writers,
         ))
 
-        self.result.last_modified = LastModified(
+        self._result.last_modified = LastModified(
             modified=film_work_data['modified'],
             id=film_work_data['id'],
         )
 
     def handle_genre(self, *, genre_data: dict) -> None:
-        self.film_state.genres_names.append(genre_data['name'])
-        self.film_state.genres.append(FilmGenre(
+        self._film_state.genres_names.append(genre_data['name'])
+        self._film_state.genres.append(FilmGenre(
             id=genre_data['id'],
             name=genre_data['name'],
         ))
 
     def handle_person(self, *, person_data: dict) -> None:
         if person_data['role'] == 'director':
-            self.film_state.directors_names.append(person_data['full_name'])
-            self.film_state.directors.append(FilmDirector(
+            self._film_state.directors_names.append(person_data['full_name'])
+            self._film_state.directors.append(FilmDirector(
                 id=person_data['id'],
                 full_name=person_data['full_name'],
             ))
             return
 
         if person_data['role'] == 'actor':
-            self.film_state.actors_names.append(person_data['full_name'])
-            self.film_state.actors.append(FilmActor(
+            self._film_state.actors_names.append(person_data['full_name'])
+            self._film_state.actors.append(FilmActor(
                 id=person_data['id'],
                 full_name=person_data['full_name'],
             ))
             return
 
         if person_data['role'] == 'writer':
-            self.film_state.writers_names.append(person_data['full_name'])
-            self.film_state.writers.append(FilmWriter(
+            self._film_state.writers_names.append(person_data['full_name'])
+            self._film_state.writers.append(FilmWriter(
                 id=person_data['id'],
                 full_name=person_data['full_name'],
             ))
@@ -114,21 +115,22 @@ class GenresTransformResult:
 
 
 class GenresTransformer(GenresVisitor):
-    result: GenresTransformResult
+    _result: GenresTransformResult
 
     def __init__(self) -> None:
-        self.result = GenresTransformResult()
+        self._result = GenresTransformResult()
 
-    def get_result(self) -> GenresTransformResult:
-        return self.result
+    @property
+    def result(self) -> GenresTransformResult:
+        return self._result
 
     def handle_genre(self, *, genre_data: dict) -> None:
-        self.result.genres.append(Genre(
+        self._result.genres.append(Genre(
             id=genre_data['id'],
             name=genre_data['name'],
         ))
 
-        self.result.last_modified = LastModified(
+        self._result.last_modified = LastModified(
             modified=genre_data['modified'],
             id=genre_data['id'],
         )
@@ -146,33 +148,34 @@ class PersonsTransformResult:
 
 
 class PersonsTransformer(PersonsVisitor):
-    person_state: PersonTransformState
-    result: PersonsTransformResult
+    _person_state: PersonTransformState
+    _result: PersonsTransformResult
 
     def __init__(self) -> None:
-        self.person_state = PersonTransformState()
-        self.result = PersonsTransformResult()
+        self._person_state = PersonTransformState()
+        self._result = PersonsTransformResult()
 
-    def get_result(self) -> PersonsTransformResult:
-        return self.result
+    @property
+    def result(self) -> PersonsTransformResult:
+        return self._result
 
     def start_handle_person(self, *, person_data: dict) -> None:
-        self.person_state = PersonTransformState()
+        self._person_state = PersonTransformState()
 
     def end_handle_person(self, *, person_data: dict) -> None:
-        self.result.persons.append(Person(
+        self._result.persons.append(Person(
             id=person_data['id'],
             full_name=person_data['full_name'],
             films=[
                 PersonFilm(id=film_id, roles=person_roles)
-                for film_id, person_roles in self.person_state.films.items()
+                for film_id, person_roles in self._person_state.films.items()
             ],
         ))
 
-        self.result.last_modified = LastModified(
+        self._result.last_modified = LastModified(
             modified=person_data['modified'],
             id=person_data['id'],
         )
 
     def handle_film_work(self, *, film_work_data: dict) -> None:
-        self.person_state.films[film_work_data['id']].append(film_work_data['role'])
+        self._person_state.films[film_work_data['id']].append(film_work_data['role'])
