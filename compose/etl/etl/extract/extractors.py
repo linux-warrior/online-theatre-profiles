@@ -43,16 +43,17 @@ class PostgreSQLCursorExecutor:
 
 
 class PostgreSQLExtractor:
-    batch_size: int = 100
+    batch_size: ClassVar[int] = 100
     extract_sql_statement_class: ClassVar[type[ExtractSQLStatement]]
 
     _connection_factory: PostgreSQLConnectionFactory
+    _batch_size: int
     _extract_sql_statement: ExtractSQLStatement
 
     def __init__(self, *, connection_params: dict, batch_size: int | None = None) -> None:
         self._connection_factory = PostgreSQLConnectionFactory(connection_params=connection_params)
-        self.batch_size = batch_size or self.batch_size
-        self._extract_sql_statement = self.extract_sql_statement_class(batch_size=self.batch_size)
+        self._batch_size = batch_size or self.batch_size
+        self._extract_sql_statement = self.extract_sql_statement_class(batch_size=self._batch_size)
 
     def extract(self, *, last_modified: LastModified) -> Iterable[dict]:
         with self._connection_factory.create() as connection:
