@@ -40,10 +40,10 @@ class TableModifiedCondition:
 
 
 class ExtractSQLStatement(abc.ABC):
-    batch_size: int
+    _batch_size: int
 
     def __init__(self, *, batch_size: int) -> None:
-        self.batch_size = batch_size
+        self._batch_size = batch_size
 
     @abc.abstractmethod
     def compile(self, *, last_modified: LastModified) -> sql.Composed:
@@ -115,7 +115,7 @@ class ExtractFilmWorksSQLStatement(ExtractSQLStatement):
             LIMIT {batch_size}
         ''').format(
             where_condition=where_condition,
-            batch_size=self.batch_size,
+            batch_size=self._batch_size,
         )
 
 
@@ -143,7 +143,7 @@ class ExtractGenresSQLStatement(ExtractSQLStatement):
             LIMIT {batch_size}
         ''').format(
             where_condition=where_condition,
-            batch_size=self.batch_size,
+            batch_size=self._batch_size,
         )
 
 
@@ -196,5 +196,5 @@ class ExtractPersonsSQLStatement(ExtractSQLStatement):
             LIMIT {batch_size}
         ''').format(
             where_condition=where_condition,
-            batch_size=self.batch_size,
+            batch_size=self._batch_size,
         )
