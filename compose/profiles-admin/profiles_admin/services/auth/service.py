@@ -10,7 +10,7 @@ from .tokens import AuthTokensProcessor
 
 
 class AuthService:
-    auth_service_client: AuthServiceClient
+    _auth_service_client: AuthServiceClient
 
     def __init__(self,
                  *,
@@ -22,10 +22,10 @@ class AuthService:
             user_login=user_login,
             user_password=user_password,
         )
-        self.auth_service_client = AuthServiceClient(
+        self._auth_service_client = AuthServiceClient(
             httpx_client=httpx_client,
             auth_tokens_processor=auth_tokens_processor,
         )
 
     def get_user_profile(self) -> CurrentUser:
-        return self.auth_service_client.get_user_profile()
+        return self._auth_service_client.get_user_profile()

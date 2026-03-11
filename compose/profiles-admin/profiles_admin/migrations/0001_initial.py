@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import ClassVar
 
 from django.db import migrations, models
 from django.db.migrations.operations.base import Operation
@@ -12,10 +13,10 @@ import profiles_admin.models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies: Sequence[tuple[str, str]] = [
+    dependencies: ClassVar[Sequence[tuple[str, str]]] = [
     ]
 
-    operations: Sequence[Operation] = [
+    operations: ClassVar[Sequence[Operation]] = [
         migrations.CreateModel(
             name='Favorite',
             fields=[
