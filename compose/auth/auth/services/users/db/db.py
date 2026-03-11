@@ -24,56 +24,56 @@ from ....models.sqlalchemy import (
 
 
 class UserDatabase(AbstractUserDatabase):
-    session: AsyncSession
-    pagination_service: AbstractPaginationService
+    _session: AsyncSession
+    _pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  pagination_service: AbstractPaginationService) -> None:
-        self.session = session
-        self.pagination_service = pagination_service
+        self._session = session
+        self._pagination_service = pagination_service
 
     async def get(self, *, user_id: uuid.UUID) -> User | None:
         statement = select(User).where(User.id == user_id)
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
     async def get_by_login(self, *, login: str) -> User | None:
         statement = select(User).where(User.login == login)
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
     async def get_by_email(self, *, email: str) -> User | None:
         statement = select(User).where(User.email == email)
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
     async def get_list(self, *, page_params: PageParams) -> Sequence[User]:
         statement = select(User)
 
-        paginator: AbstractPaginator[tuple[User]] = self.pagination_service.get_paginator(
+        paginator: AbstractPaginator[tuple[User]] = self._pagination_service.get_paginator(
             statement=statement,
             id_column=User.id,
             timestamp_column=User.created,
         )
         page_statement = paginator.get_page(page_params=page_params)
 
-        result = await self.session.execute(page_statement)
+        result = await self._session.execute(page_statement)
 
         return result.scalars().all()
 
     async def create(self, *, create_dict: dict[str, Any]) -> User:
         statement = insert(User).values(create_dict).returning(User)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -84,8 +84,8 @@ class UserDatabase(AbstractUserDatabase):
             User.id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         update_user_row = result.one_or_none()
 
@@ -104,7 +104,7 @@ class UserDatabase(AbstractUserDatabase):
             OAuthAccount.account_id == account_id,
         )
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
@@ -118,8 +118,8 @@ class UserDatabase(AbstractUserDatabase):
         }
         statement = insert(OAuthAccount).values(create_dict)
 
-        await self.session.execute(statement)
-        await self.session.commit()
+        await self._session.execute(statement)
+        await self._session.commit()
 
     async def update_oauth_account(self,
                                    *,
@@ -128,5 +128,5 @@ class UserDatabase(AbstractUserDatabase):
                                    update_dict: dict[str, Any]) -> None:
         statement = update(User).where(User.id == user_id).values(update_dict)
 
-        await self.session.execute(statement)
-        await self.session.commit()
+        await self._session.execute(statement)
+        await self._session.commit()

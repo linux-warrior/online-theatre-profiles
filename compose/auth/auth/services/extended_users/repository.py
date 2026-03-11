@@ -22,10 +22,10 @@ from ...models.sqlalchemy import (
 
 
 class ExtendedUserRepository:
-    session: AsyncSession
+    _session: AsyncSession
 
     def __init__(self, *, session: AsyncSession) -> None:
-        self.session = session
+        self._session = session
 
     async def get_user_permissions(self, *, user_id: uuid.UUID) -> Sequence[Permission]:
         statement = select(
@@ -43,7 +43,7 @@ class ExtendedUserRepository:
             Permission.id,
         ).distinct()
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalars().all()
 

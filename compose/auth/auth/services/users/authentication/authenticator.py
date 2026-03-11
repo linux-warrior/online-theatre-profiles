@@ -16,17 +16,17 @@ from ....models.sqlalchemy import User
 
 
 class Authenticator:
-    backend: AuthenticationBackend
-    user_manager: UserManager
+    _backend: AuthenticationBackend
+    _user_manager: UserManager
 
     def __init__(self,
                  backend: AuthenticationBackend,
                  user_manager: UserManager) -> None:
-        self.backend = backend
-        self.user_manager = user_manager
+        self._backend = backend
+        self._user_manager = user_manager
 
     async def authenticate(self, *, token: str, is_superuser: bool = False) -> User:
-        user = await self.backend.authenticate(token=token, user_manager=self.user_manager)
+        user = await self._backend.authenticate(token=token, user_manager=self._user_manager)
 
         if user and is_superuser and not user.is_superuser:
             raise HTTPException(status.HTTP_403_FORBIDDEN)

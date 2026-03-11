@@ -11,17 +11,17 @@ from .....db import RedisClientDep
 
 
 class RedisCacheService(AbstractCacheService):
-    redis_client: redis.Redis
+    _redis_client: redis.Redis
 
     def __init__(self, *, redis_client: redis.Redis) -> None:
-        self.redis_client = redis_client
+        self._redis_client = redis_client
 
     def get_cache(self,
                   *,
                   key_prefix: str | None = None,
                   key_version: str | None = None) -> RedisCache:
         return RedisCache(
-            redis_client=self.redis_client,
+            redis_client=self._redis_client,
             key_prefix=key_prefix,
             key_version=key_version,
         )

@@ -54,13 +54,13 @@ class AbstractPermissionService(abc.ABC):
 
 
 class PermissionService(AbstractPermissionService):
-    repository: PermissionRepository
+    _repository: PermissionRepository
 
     def __init__(self, *, repository: PermissionRepository) -> None:
-        self.repository = repository
+        self._repository = repository
 
     async def get_list(self, *, page_params: PageParams) -> list[ReadPermissionResponse]:
-        permissions_list = await self.repository.get_list(page_params=page_params)
+        permissions_list = await self._repository.get_list(page_params=page_params)
 
         return [
             self._get_read_permission_response(permission=permission)
@@ -68,7 +68,7 @@ class PermissionService(AbstractPermissionService):
         ]
 
     async def get(self, *, permission_id: uuid.UUID) -> ReadPermissionResponse:
-        permission = await self.repository.get(permission_id=permission_id)
+        permission = await self._repository.get(permission_id=permission_id)
 
         if permission is None:
             raise PermissionNotFound
@@ -77,7 +77,7 @@ class PermissionService(AbstractPermissionService):
 
     async def create(self, *, permission_create: PermissionCreate) -> ReadPermissionResponse:
         try:
-            permission = await self.repository.create(permission_create=permission_create)
+            permission = await self._repository.create(permission_create=permission_create)
         except IntegrityError as e:
             raise PermissionCreateError from e
 
@@ -88,7 +88,7 @@ class PermissionService(AbstractPermissionService):
                      permission_id: uuid.UUID,
                      permission_update: PermissionUpdate) -> ReadPermissionResponse:
         try:
-            update_permission_result = await self.repository.update(
+            update_permission_result = await self._repository.update(
                 permission_id=permission_id,
                 permission_update=permission_update,
             )
@@ -102,7 +102,7 @@ class PermissionService(AbstractPermissionService):
         return await self.get(permission_id=permission_id)
 
     async def delete(self, *, permission_id: uuid.UUID) -> DeletePermissionResponse:
-        delete_permission_result = await self.repository.delete(permission_id=permission_id)
+        delete_permission_result = await self._repository.delete(permission_id=permission_id)
 
         if delete_permission_result is None:
             raise PermissionNotFound

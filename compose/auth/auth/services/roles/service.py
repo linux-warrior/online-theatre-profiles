@@ -51,18 +51,18 @@ class AbstractRoleService(abc.ABC):
 
 
 class RoleService(AbstractRoleService):
-    repository: RoleRepository
+    _repository: RoleRepository
 
     def __init__(self, *, repository: RoleRepository) -> None:
-        self.repository = repository
+        self._repository = repository
 
     async def get_list(self, *, page_params: PageParams) -> list[ReadRoleResponse]:
-        roles_list = await self.repository.get_list(page_params=page_params)
+        roles_list = await self._repository.get_list(page_params=page_params)
 
         return [self._get_read_role_response(role=role) for role in roles_list]
 
     async def get(self, *, role_id: uuid.UUID) -> ReadRoleResponse:
-        role = await self.repository.get(role_id=role_id)
+        role = await self._repository.get(role_id=role_id)
 
         if role is None:
             raise RoleNotFound
@@ -71,7 +71,7 @@ class RoleService(AbstractRoleService):
 
     async def create(self, *, role_create: RoleCreate) -> ReadRoleResponse:
         try:
-            role = await self.repository.create(role_create=role_create)
+            role = await self._repository.create(role_create=role_create)
         except IntegrityError as e:
             raise RoleCreateError from e
 
@@ -79,7 +79,7 @@ class RoleService(AbstractRoleService):
 
     async def update(self, *, role_id: uuid.UUID, role_update: RoleUpdate) -> ReadRoleResponse:
         try:
-            update_role_result = await self.repository.update(role_id=role_id, role_update=role_update)
+            update_role_result = await self._repository.update(role_id=role_id, role_update=role_update)
         except IntegrityError as e:
             raise RoleUpdateError from e
 
@@ -89,7 +89,7 @@ class RoleService(AbstractRoleService):
         return await self.get(role_id=role_id)
 
     async def delete(self, *, role_id: uuid.UUID) -> DeleteRoleResponse:
-        delete_role_result = await self.repository.delete(role_id=role_id)
+        delete_role_result = await self._repository.delete(role_id=role_id)
 
         if delete_role_result is None:
             raise RoleNotFound

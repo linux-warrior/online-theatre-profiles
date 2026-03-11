@@ -35,15 +35,15 @@ class DeleteRolePermissionResult:
 
 
 class RolePermissionRepository:
-    session: AsyncSession
-    pagination_service: AbstractPaginationService
+    _session: AsyncSession
+    _pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  pagination_service: AbstractPaginationService) -> None:
-        self.session = session
-        self.pagination_service = pagination_service
+        self._session = session
+        self._pagination_service = pagination_service
 
     async def get_list(self,
                        *,
@@ -53,14 +53,14 @@ class RolePermissionRepository:
             RolePermission.role_id == role_id,
         )
 
-        paginator: AbstractPaginator[tuple[RolePermission]] = self.pagination_service.get_paginator(
+        paginator: AbstractPaginator[tuple[RolePermission]] = self._pagination_service.get_paginator(
             statement=statement,
             id_column=RolePermission.id,
             timestamp_column=RolePermission.created,
         )
         page_statement = paginator.get_page(page_params=page_params)
 
-        result = await self.session.execute(page_statement)
+        result = await self._session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -71,8 +71,8 @@ class RolePermissionRepository:
         }
         statement = insert(RolePermission).values(role_permission_create_dict).returning(RolePermission)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -89,8 +89,8 @@ class RolePermissionRepository:
             RolePermission.permission_id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         delete_role_permission_row = result.one_or_none()
 

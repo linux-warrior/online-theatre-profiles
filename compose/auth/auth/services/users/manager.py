@@ -40,9 +40,9 @@ logger = logging.getLogger(__name__)
 
 
 class UserManager:
-    user_db: AbstractUserDatabase
-    password_helper: AbstractPasswordHelper
-    login_history_service: AbstractLoginHistoryService
+    _user_db: AbstractUserDatabase
+    _password_helper: AbstractPasswordHelper
+    _login_history_service: AbstractLoginHistoryService
 
     def __init__(
             self,
@@ -50,12 +50,12 @@ class UserManager:
             user_db: AbstractUserDatabase,
             password_helper: AbstractPasswordHelper,
             login_history_service: AbstractLoginHistoryService) -> None:
-        self.user_db = user_db
-        self.password_helper = password_helper
-        self.login_history_service = login_history_service
+        self._user_db = user_db
+        self._password_helper = password_helper
+        self._login_history_service = login_history_service
 
     async def get(self, *, user_id: uuid.UUID) -> User:
-        user = await self.user_db.get(user_id=user_id)
+        user = await self._user_db.get(user_id=user_id)
 
         if user is None:
             raise UserDoesNotExist
@@ -63,7 +63,7 @@ class UserManager:
         return user
 
     async def get_by_login(self, *, login: str) -> User:
-        user = await self.user_db.get_by_login(login=login)
+        user = await self._user_db.get_by_login(login=login)
 
         if user is None:
             raise UserDoesNotExist
@@ -71,7 +71,7 @@ class UserManager:
         return user
 
     async def get_by_email(self, *, email: str) -> User:
-        user = await self.user_db.get_by_email(email=email)
+        user = await self._user_db.get_by_email(email=email)
 
         if user is None:
             raise UserDoesNotExist
@@ -79,19 +79,19 @@ class UserManager:
         return user
 
     async def get_list(self, *, page_params: PageParams) -> Sequence[User]:
-        return await self.user_db.get_list(page_params=page_params)
+        return await self._user_db.get_list(page_params=page_params)
 
     async def create(self, *, user_create: UserCreate) -> User:
-        existing_user = await self.user_db.get_by_login(login=user_create.login)
+        existing_user = await self._user_db.get_by_login(login=user_create.login)
 
         if existing_user is not None:
             raise UserAlreadyExists(message='REGISTER_USER_ALREADY_EXISTS')
 
         user_create_dict = user_create.model_dump()
         password = user_create_dict.pop('password')
-        user_create_dict['password'] = self.password_helper.hash(password=password)
+        user_create_dict['password'] = self._password_helper.hash(password=password)
 
-        created_user = await self.user_db.create(create_dict=user_create_dict)
+        created_user = await self._user_db.create(create_dict=user_create_dict)
 
         return created_user
 
@@ -108,12 +108,12 @@ class UserManager:
                     update_dict['login'] = value
 
             elif field == 'password' and value is not None:
-                update_dict['password'] = self.password_helper.hash(password=value)
+                update_dict['password'] = self._password_helper.hash(password=value)
 
             else:
                 update_dict[field] = value
 
-        updated_user = await self.user_db.update(user_id=user.id, update_dict=update_dict)
+        updated_user = await self._user_db.update(user_id=user.id, update_dict=update_dict)
 
         if updated_user is None:
             raise UserDoesNotExist
@@ -141,13 +141,13 @@ class UserManager:
         except UserDoesNotExist:
             # Вычисляем хеш пароля, чтобы исключить возможность атаки по времени
             # https://code.djangoproject.com/ticket/20760
-            self.password_helper.hash(password=credentials.password)
+            self._password_helper.hash(password=credentials.password)
             return None
 
         if user.password is None:
             return None
 
-        verified, updated_password_hash = self.password_helper.verify_and_update(
+        verified, updated_password_hash = self._password_helper.verify_and_update(
             password=credentials.password,
             password_hash=user.password,
         )
@@ -157,7 +157,7 @@ class UserManager:
 
         # Обновляем хеш пароля, если был использован более надежный алгоритм
         if updated_password_hash is not None:
-            await self.user_db.update(user_id=user.id, update_dict={
+            await self._user_db.update(user_id=user.id, update_dict={
                 'password': updated_password_hash,
             })
 
@@ -171,7 +171,7 @@ class UserManager:
         )
 
         try:
-            await self.login_history_service.create(
+            await self._login_history_service.create(
                 user_id=user.id,
                 login_history_create=login_history_create,
             )
@@ -180,7 +180,7 @@ class UserManager:
             logger.exception(e)
 
     async def get_by_oauth_account(self, *, oauth_name: str, account_id: str) -> User:
-        user = await self.user_db.get_by_oauth_account(
+        user = await self._user_db.get_by_oauth_account(
             oauth_name=oauth_name,
             account_id=account_id,
         )
@@ -216,13 +216,13 @@ class UserManager:
                 user = await self.get_by_email(email=account_email)
 
             except UserDoesNotExist:
-                password = self.password_helper.generate()
-                user = await self.user_db.create(create_dict={
+                password = self._password_helper.generate()
+                user = await self._user_db.create(create_dict={
                     'email': account_email,
-                    'password': self.password_helper.hash(password=password),
+                    'password': self._password_helper.hash(password=password),
                 })
 
-            await self.user_db.add_oauth_account(user_id=user.id, create_dict=oauth_account_dict)
+            await self._user_db.add_oauth_account(user_id=user.id, create_dict=oauth_account_dict)
 
             return user
 
@@ -231,7 +231,7 @@ class UserManager:
                 oauth_account.oauth_name == oauth_name,
                 oauth_account.account_id == account_id,
             ]):
-                await self.user_db.update_oauth_account(
+                await self._user_db.update_oauth_account(
                     user_id=user.id,
                     oauth_account=oauth_account,
                     update_dict=oauth_account_dict,

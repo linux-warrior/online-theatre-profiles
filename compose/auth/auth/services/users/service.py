@@ -94,10 +94,10 @@ class AbstractUserService(abc.ABC):
 
 
 class UserService(AbstractUserService):
-    auth_backend: AuthenticationBackend
-    user_manager: UserManager
-    oauth_service: AbstractOAuthService
-    ext_user_service: AbstractExtendedUserService
+    _auth_backend: AuthenticationBackend
+    _user_manager: UserManager
+    _oauth_service: AbstractOAuthService
+    _ext_user_service: AbstractExtendedUserService
 
     def __init__(self,
                  *,
@@ -105,49 +105,49 @@ class UserService(AbstractUserService):
                  oauth_service: AbstractOAuthService,
                  auth_backend: AuthenticationBackend,
                  ext_user_service: AbstractExtendedUserService) -> None:
-        self.user_manager = user_manager
-        self.oauth_service = oauth_service
-        self.auth_backend = auth_backend
-        self.ext_user_service = ext_user_service
+        self._user_manager = user_manager
+        self._oauth_service = oauth_service
+        self._auth_backend = auth_backend
+        self._ext_user_service = ext_user_service
 
     async def login(self, *, request: Request, credentials: OAuth2PasswordRequestForm) -> Response:
-        user = await self.user_manager.authenticate(
+        user = await self._user_manager.authenticate(
             request=request,
             credentials=credentials,
         )
-        return await self.auth_backend.login(user)
+        return await self._auth_backend.login(user)
 
     async def logout(self, *, user: User, token: str) -> Response:
-        return await self.auth_backend.logout(user=user, token=token)
+        return await self._auth_backend.logout(user=user, token=token)
 
     async def refresh(self, *, refresh_token: str) -> Response:
-        user = await self.auth_backend.authenticate_refresh(
-            user_manager=self.user_manager,
+        user = await self._auth_backend.authenticate_refresh(
+            user_manager=self._user_manager,
             token=refresh_token,
         )
 
         if user is None:
             raise InvalidToken(message='REFRESH_INVALID_TOKEN')
 
-        return await self.auth_backend.refresh(user=user, token=refresh_token)
+        return await self._auth_backend.refresh(user=user, token=refresh_token)
 
     async def register(self, *, user_create: UserCreate) -> ExtendedCurrentUserResponse:
-        user = await self.user_manager.create(user_create=user_create)
-        return await self.ext_user_service.extend_current_user(user=user)
+        user = await self._user_manager.create(user_create=user_create)
+        return await self._ext_user_service.extend_current_user(user=user)
 
     async def get_current_user(self, *, user: User) -> ExtendedCurrentUserResponse:
-        return await self.ext_user_service.extend_current_user(user=user)
+        return await self._ext_user_service.extend_current_user(user=user)
 
     async def patch_current_user(self, *, user: User, user_update: UserUpdate) -> ExtendedCurrentUserResponse:
-        user = await self.user_manager.update(user=user, user_update=user_update)
-        return await self.ext_user_service.extend_current_user(user=user)
+        user = await self._user_manager.update(user=user, user_update=user_update)
+        return await self._ext_user_service.extend_current_user(user=user)
 
     async def get_user(self, *, user_id: uuid.UUID) -> ExtendedReadUserResponse:
-        user = await self.user_manager.get(user_id=user_id)
-        return await self.ext_user_service.extend_user(user=user)
+        user = await self._user_manager.get(user_id=user_id)
+        return await self._ext_user_service.extend_user(user=user)
 
     async def get_users_list(self, *, page_params: PageParams) -> list[ReadUserResponse]:
-        users_list = await self.user_manager.get_list(page_params=page_params)
+        users_list = await self._user_manager.get_list(page_params=page_params)
 
         return [
             ReadUserResponse.model_validate(user, from_attributes=True)
@@ -160,7 +160,7 @@ class UserService(AbstractUserService):
                               provider_name: str,
                               scope: Iterable[str] | None = None) -> OAuth2AuthorizeResponse:
         try:
-            authorization_url = await self.oauth_service.get_authorization_url(
+            authorization_url = await self._oauth_service.get_authorization_url(
                 request=request,
                 provider_name=provider_name,
                 scope=scope,
@@ -180,7 +180,7 @@ class UserService(AbstractUserService):
                              state: str | None = None,
                              error: str | None = None) -> Response:
         try:
-            oauth_result = await self.oauth_service.authorize(
+            oauth_result = await self._oauth_service.authorize(
                 request=request,
                 provider_name=provider_name,
                 code=code,
@@ -198,7 +198,7 @@ class UserService(AbstractUserService):
         if oauth_result.user_email is None:
             raise OAuthEmailNotAvailable
 
-        user = await self.user_manager.oauth_callback(
+        user = await self._user_manager.oauth_callback(
             oauth_name=oauth_result.client_name,
             access_token=oauth_result.token['access_token'],
             account_id=oauth_result.user_id,
@@ -207,7 +207,7 @@ class UserService(AbstractUserService):
             refresh_token=oauth_result.token.get('refresh_token'),
         )
 
-        return await self.auth_backend.login(user)
+        return await self._auth_backend.login(user)
 
 
 async def get_user_service(user_manager: UserManagerDep,
