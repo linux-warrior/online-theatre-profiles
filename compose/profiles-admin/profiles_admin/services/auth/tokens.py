@@ -8,9 +8,9 @@ from ..http import HttpClient
 
 
 class AuthTokensProcessor:
-    http_client: HttpClient
-    user_login: str
-    user_password: str
+    _http_client: HttpClient
+    _user_login: str
+    _user_password: str
 
     _auth_tokens: AuthTokens | None
 
@@ -19,12 +19,12 @@ class AuthTokensProcessor:
                  httpx_client: httpx.Client,
                  user_login: str,
                  user_password: str) -> None:
-        self.http_client = HttpClient(
+        self._http_client = HttpClient(
             httpx_client=httpx_client,
             base_url=auth_config.api_v1_url,
         )
-        self.user_login = user_login
-        self.user_password = user_password
+        self._user_login = user_login
+        self._user_password = user_password
 
         self._auth_tokens = None
 
@@ -32,12 +32,12 @@ class AuthTokensProcessor:
         if self._auth_tokens is not None:
             return self._auth_tokens
 
-        response = self.http_client.post(
+        response = self._http_client.post(
             auth_config.get_login_url(),
             data={
                 'grant_type': 'password',
-                'username': self.user_login,
-                'password': self.user_password,
+                'username': self._user_login,
+                'password': self._user_password,
             },
         )
 
@@ -48,7 +48,7 @@ class AuthTokensProcessor:
         if self._auth_tokens is None:
             return self.login()
 
-        response = self.http_client.post(
+        response = self._http_client.post(
             auth_config.get_refresh_url(),
             data={
                 'refresh_token': self._auth_tokens.refresh_token,

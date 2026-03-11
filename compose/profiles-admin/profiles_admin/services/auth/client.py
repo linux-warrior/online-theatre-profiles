@@ -19,20 +19,20 @@ from ..http import (
 
 
 class AuthServiceClient:
-    http_client: HttpClient
+    _http_client: HttpClient
 
     def __init__(self,
                  *,
                  httpx_client: httpx.Client,
                  auth_tokens_processor: AuthTokensProcessor) -> None:
-        self.http_client = AuthenticatedHttpClient(
+        self._http_client = AuthenticatedHttpClient(
             httpx_client=httpx_client,
             base_url=auth_config.api_v1_url,
             auth_tokens_processor=auth_tokens_processor,
         )
 
     def get_user_profile(self) -> CurrentUser:
-        response = self.http_client.get(
+        response = self._http_client.get(
             url=auth_config.get_user_profile_url(),
         )
 
@@ -40,11 +40,11 @@ class AuthServiceClient:
 
 
 class AuthenticatedHttpClient(HttpClient):
-    auth_tokens_processor: AuthTokensProcessor
+    _auth_tokens_processor: AuthTokensProcessor
 
     def __init__(self, *, auth_tokens_processor: AuthTokensProcessor, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.auth_tokens_processor = auth_tokens_processor
+        self._auth_tokens_processor = auth_tokens_processor
 
     def send_request(self,
                      method: str,
@@ -52,7 +52,7 @@ class AuthenticatedHttpClient(HttpClient):
                      *,
                      headers: dict | None = None,
                      **kwargs: Any) -> HttpResponse:
-        auth_tokens = self.auth_tokens_processor.login()
+        auth_tokens = self._auth_tokens_processor.login()
 
         try:
             return self._send_authenticated_request(
@@ -65,7 +65,7 @@ class AuthenticatedHttpClient(HttpClient):
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == httpx.codes.UNAUTHORIZED:
-                auth_tokens = self.auth_tokens_processor.refresh()
+                auth_tokens = self._auth_tokens_processor.refresh()
 
                 return self._send_authenticated_request(
                     method,
