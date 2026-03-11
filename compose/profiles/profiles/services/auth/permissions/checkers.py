@@ -22,10 +22,10 @@ class AbstractPermissionChecker(abc.ABC):
 
 
 class PermissionChecker(AbstractPermissionChecker):
-    current_user: CurrentUser
+    _current_user: CurrentUser
 
     def __init__(self, *, current_user: CurrentUser) -> None:
-        self.current_user = current_user
+        self._current_user = current_user
 
     async def check_read_permission(self, *, user_id: uuid.UUID | None = None) -> None:
         if user_id is None:
@@ -46,7 +46,7 @@ class PermissionChecker(AbstractPermissionChecker):
         await self._check_current_user(user_id=user_id)
 
     async def _check_current_user(self, *, user_id: uuid.UUID) -> None:
-        if self.current_user.id == user_id or self.current_user.is_admin:
+        if self._current_user.id == user_id or self._current_user.is_admin:
             return
 
         raise PermissionDenied

@@ -74,23 +74,23 @@ class AbstractReviewService(abc.ABC):
 
 
 class ReviewService(AbstractReviewService):
-    repository: ReviewRepository
-    permission_checker: AbstractPermissionChecker
+    _repository: ReviewRepository
+    _permission_checker: AbstractPermissionChecker
 
     def __init__(self,
                  *,
                  repository: ReviewRepository,
                  permission_service: AbstractPermissionService) -> None:
-        self.repository = repository
-        self.permission_checker = permission_service.get_permission_checker()
+        self._repository = repository
+        self._permission_checker = permission_service.get_permission_checker()
 
     async def get_list(self,
                        *,
                        user_id: uuid.UUID,
                        page_params: PageParams) -> list[ReadReviewResponse]:
-        await self.permission_checker.check_read_permission(user_id=user_id)
+        await self._permission_checker.check_read_permission(user_id=user_id)
 
-        reviews_list = await self.repository.get_list(
+        reviews_list = await self._repository.get_list(
             user_id=user_id,
             page_params=page_params,
         )
@@ -98,9 +98,9 @@ class ReviewService(AbstractReviewService):
         return [self._get_read_review_response(review=review) for review in reviews_list]
 
     async def get(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadReviewResponse:
-        await self.permission_checker.check_read_permission(user_id=user_id)
+        await self._permission_checker.check_read_permission(user_id=user_id)
 
-        review = await self.repository.get(user_id=user_id, film_id=film_id)
+        review = await self._repository.get(user_id=user_id, film_id=film_id)
 
         if review is None:
             raise ReviewNotFound
@@ -112,10 +112,10 @@ class ReviewService(AbstractReviewService):
                      user_id: uuid.UUID,
                      film_id: uuid.UUID,
                      review_create: ReviewCreate) -> ReadReviewResponse:
-        await self.permission_checker.check_create_permission(user_id=user_id)
+        await self._permission_checker.check_create_permission(user_id=user_id)
 
         try:
-            review = await self.repository.create(
+            review = await self._repository.create(
                 user_id=user_id,
                 film_id=film_id,
                 review_create=review_create,
@@ -131,10 +131,10 @@ class ReviewService(AbstractReviewService):
                      user_id: uuid.UUID,
                      film_id: uuid.UUID,
                      review_update: ReviewUpdate) -> ReadReviewResponse:
-        await self.permission_checker.check_update_permission(user_id=user_id)
+        await self._permission_checker.check_update_permission(user_id=user_id)
 
         try:
-            update_review_result = await self.repository.update(
+            update_review_result = await self._repository.update(
                 user_id=user_id,
                 film_id=film_id,
                 review_update=review_update,
@@ -152,9 +152,9 @@ class ReviewService(AbstractReviewService):
         )
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteReviewResponse:
-        await self.permission_checker.check_delete_permission(user_id=user_id)
+        await self._permission_checker.check_delete_permission(user_id=user_id)
 
-        delete_review_result = await self.repository.delete(user_id=user_id, film_id=film_id)
+        delete_review_result = await self._repository.delete(user_id=user_id, film_id=film_id)
 
         if delete_review_result is None:
             raise ReviewNotFound
@@ -169,13 +169,13 @@ class ReviewService(AbstractReviewService):
                                *,
                                film_id: uuid.UUID,
                                page_params: PageParams) -> FilmReviewsResponse:
-        await self.permission_checker.check_read_permission()
+        await self._permission_checker.check_read_permission()
 
-        reviews_list = await self.repository.get_film_reviews(
+        reviews_list = await self._repository.get_film_reviews(
             film_id=film_id,
             page_params=page_params,
         )
-        film_rating_result = await self.repository.get_film_rating(film_id=film_id)
+        film_rating_result = await self._repository.get_film_rating(film_id=film_id)
 
         return FilmReviewsResponse(
             reviews=[self._get_read_review_response(review=review) for review in reviews_list],

@@ -43,15 +43,15 @@ class DeleteProfileResult:
 
 
 class ProfileRepository:
-    session: AsyncSession
-    profile_encryption_tool: AbstractDictEncryptionTool
+    _session: AsyncSession
+    _profile_encryption_tool: AbstractDictEncryptionTool
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  cryptography_service: AbstractCryptographyService) -> None:
-        self.session = session
-        self.profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
+        self._session = session
+        self._profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
             fields=['phone_number'],
             salt='profiles.models.sqlalchemy.Profile',
         )
@@ -59,7 +59,7 @@ class ProfileRepository:
     async def get(self, *, user_id: uuid.UUID) -> Profile | None:
         statement = select(Profile).where(Profile.user_id == user_id)
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
@@ -71,12 +71,12 @@ class ProfileRepository:
             **profile_create.model_dump(),
             'user_id': user_id,
         }
-        profile_create_dict = self.profile_encryption_tool.encrypt(profile_create_dict)
+        profile_create_dict = self._profile_encryption_tool.encrypt(profile_create_dict)
 
         statement = insert(Profile).values(profile_create_dict).returning(Profile)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -86,7 +86,7 @@ class ProfileRepository:
                      uuid.UUID,
                      profile_update: ProfileUpdate) -> UpdateProfileResult | None:
         profile_update_dict = profile_update.model_dump(exclude_unset=True)
-        profile_update_dict = self.profile_encryption_tool.encrypt(profile_update_dict)
+        profile_update_dict = self._profile_encryption_tool.encrypt(profile_update_dict)
 
         statement = update(Profile).where(
             Profile.user_id == user_id,
@@ -95,8 +95,8 @@ class ProfileRepository:
             Profile.user_id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         update_profile_row = result.one_or_none()
 
@@ -116,8 +116,8 @@ class ProfileRepository:
             Profile.user_id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         delete_profile_row = result.one_or_none()
 

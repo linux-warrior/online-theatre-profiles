@@ -61,26 +61,26 @@ class AbstractProfileService(abc.ABC):
 
 
 class ProfileService(AbstractProfileService):
-    repository: ProfileRepository
-    profile_encryption_tool: AbstractDictEncryptionTool
-    permission_checker: AbstractPermissionChecker
+    _repository: ProfileRepository
+    _profile_encryption_tool: AbstractDictEncryptionTool
+    _permission_checker: AbstractPermissionChecker
 
     def __init__(self,
                  *,
                  repository: ProfileRepository,
                  cryptography_service: AbstractCryptographyService,
                  permission_service: AbstractPermissionService) -> None:
-        self.repository = repository
-        self.profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
+        self._repository = repository
+        self._profile_encryption_tool = cryptography_service.get_dict_encryption_tool(
             fields=['phone_number'],
             salt='profiles.models.sqlalchemy.Profile',
         )
-        self.permission_checker = permission_service.get_permission_checker()
+        self._permission_checker = permission_service.get_permission_checker()
 
     async def get(self, *, user_id: uuid.UUID) -> ReadProfileResponse:
-        await self.permission_checker.check_read_permission(user_id=user_id)
+        await self._permission_checker.check_read_permission(user_id=user_id)
 
-        profile = await self.repository.get(user_id=user_id)
+        profile = await self._repository.get(user_id=user_id)
 
         if profile is None:
             raise ProfileNotFound
@@ -91,10 +91,10 @@ class ProfileService(AbstractProfileService):
                      *,
                      user_id: uuid.UUID,
                      profile_create: ProfileCreate) -> ReadProfileResponse:
-        await self.permission_checker.check_create_permission(user_id=user_id)
+        await self._permission_checker.check_create_permission(user_id=user_id)
 
         try:
-            profile = await self.repository.create(
+            profile = await self._repository.create(
                 user_id=user_id,
                 profile_create=profile_create,
             )
@@ -108,10 +108,10 @@ class ProfileService(AbstractProfileService):
                      *,
                      user_id: uuid.UUID,
                      profile_update: ProfileUpdate) -> ReadProfileResponse:
-        await self.permission_checker.check_update_permission(user_id=user_id)
+        await self._permission_checker.check_update_permission(user_id=user_id)
 
         try:
-            update_profile_result = await self.repository.update(
+            update_profile_result = await self._repository.update(
                 user_id=user_id,
                 profile_update=profile_update,
             )
@@ -125,9 +125,9 @@ class ProfileService(AbstractProfileService):
         return await self.get(user_id=update_profile_result.user_id)
 
     async def delete(self, *, user_id: uuid.UUID) -> DeleteProfileResponse:
-        await self.permission_checker.check_delete_permission(user_id=user_id)
+        await self._permission_checker.check_delete_permission(user_id=user_id)
 
-        delete_profile_result = await self.repository.delete(user_id=user_id)
+        delete_profile_result = await self._repository.delete(user_id=user_id)
 
         if delete_profile_result is None:
             raise ProfileNotFound
@@ -140,7 +140,7 @@ class ProfileService(AbstractProfileService):
     def _get_read_profile_response(self, *, profile: Profile) -> ReadProfileResponse:
         profile_schema = ProfileSchema.model_validate(profile, from_attributes=True)
         read_profile_response_dict = profile_schema.model_dump()
-        read_profile_response_dict = self.profile_encryption_tool.decrypt(read_profile_response_dict)
+        read_profile_response_dict = self._profile_encryption_tool.decrypt(read_profile_response_dict)
 
         return ReadProfileResponse.model_validate(read_profile_response_dict)
 

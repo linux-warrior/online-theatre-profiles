@@ -71,23 +71,23 @@ class AbstractRatingService(abc.ABC):
 
 
 class RatingService(AbstractRatingService):
-    repository: RatingRepository
-    permission_checker: AbstractPermissionChecker
+    _repository: RatingRepository
+    _permission_checker: AbstractPermissionChecker
 
     def __init__(self,
                  *,
                  repository: RatingRepository,
                  permission_service: AbstractPermissionService) -> None:
-        self.repository = repository
-        self.permission_checker = permission_service.get_permission_checker()
+        self._repository = repository
+        self._permission_checker = permission_service.get_permission_checker()
 
     async def get_list(self,
                        *,
                        user_id: uuid.UUID,
                        page_params: PageParams) -> list[ReadRatingResponse]:
-        await self.permission_checker.check_read_permission(user_id=user_id)
+        await self._permission_checker.check_read_permission(user_id=user_id)
 
-        ratings_list = await self.repository.get_list(
+        ratings_list = await self._repository.get_list(
             user_id=user_id,
             page_params=page_params,
         )
@@ -95,9 +95,9 @@ class RatingService(AbstractRatingService):
         return [self._get_read_rating_response(rating=rating) for rating in ratings_list]
 
     async def get(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadRatingResponse:
-        await self.permission_checker.check_read_permission(user_id=user_id)
+        await self._permission_checker.check_read_permission(user_id=user_id)
 
-        rating = await self.repository.get(user_id=user_id, film_id=film_id)
+        rating = await self._repository.get(user_id=user_id, film_id=film_id)
 
         if rating is None:
             raise RatingNotFound
@@ -109,10 +109,10 @@ class RatingService(AbstractRatingService):
                      user_id: uuid.UUID,
                      film_id: uuid.UUID,
                      rating_create: RatingCreate) -> ReadRatingResponse:
-        await self.permission_checker.check_create_permission(user_id=user_id)
+        await self._permission_checker.check_create_permission(user_id=user_id)
 
         try:
-            rating = await self.repository.create(
+            rating = await self._repository.create(
                 user_id=user_id,
                 film_id=film_id,
                 rating_create=rating_create,
@@ -128,10 +128,10 @@ class RatingService(AbstractRatingService):
                      user_id: uuid.UUID,
                      film_id: uuid.UUID,
                      rating_update: RatingUpdate) -> ReadRatingResponse:
-        await self.permission_checker.check_update_permission(user_id=user_id)
+        await self._permission_checker.check_update_permission(user_id=user_id)
 
         try:
-            update_rating_result = await self.repository.update(
+            update_rating_result = await self._repository.update(
                 user_id=user_id,
                 film_id=film_id,
                 rating_update=rating_update,
@@ -149,9 +149,9 @@ class RatingService(AbstractRatingService):
         )
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteRatingResponse:
-        await self.permission_checker.check_delete_permission(user_id=user_id)
+        await self._permission_checker.check_delete_permission(user_id=user_id)
 
-        delete_rating_result = await self.repository.delete(user_id=user_id, film_id=film_id)
+        delete_rating_result = await self._repository.delete(user_id=user_id, film_id=film_id)
 
         if delete_rating_result is None:
             raise RatingNotFound
@@ -163,9 +163,9 @@ class RatingService(AbstractRatingService):
         )
 
     async def get_film_rating(self, *, film_id: uuid.UUID) -> FilmRatingResponse:
-        await self.permission_checker.check_read_permission()
+        await self._permission_checker.check_read_permission()
 
-        film_rating_result = await self.repository.get_film_rating(film_id=film_id)
+        film_rating_result = await self._repository.get_film_rating(film_id=film_id)
 
         return FilmRatingResponse(
             rating=film_rating_result.rating,

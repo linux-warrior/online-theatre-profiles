@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import datetime
 import uuid
-from typing import Any
+from typing import Any, ClassVar
 
 from sqlalchemy import (
     and_,
@@ -26,11 +26,12 @@ class AbstractPaginator[TSelectable: tuple[Any, ...]](abc.ABC):
 
 
 class Paginator[TSelectable: tuple[Any, ...]](AbstractPaginator[TSelectable]):
-    page_size: int = 100
+    page_size: ClassVar[int] = 100
 
-    statement: Select[TSelectable]
-    id_column: SQLColumnExpression[uuid.UUID]
-    timestamp_column: SQLColumnExpression[datetime.datetime]
+    _statement: Select[TSelectable]
+    _id_column: SQLColumnExpression[uuid.UUID]
+    _timestamp_column: SQLColumnExpression[datetime.datetime]
+    _page_size: int
 
     def __init__(self,
                  *,
@@ -38,10 +39,10 @@ class Paginator[TSelectable: tuple[Any, ...]](AbstractPaginator[TSelectable]):
                  id_column: SQLColumnExpression[uuid.UUID],
                  timestamp_column: SQLColumnExpression[datetime.datetime],
                  page_size: int | None = None) -> None:
-        self.statement = statement
-        self.id_column = id_column
-        self.timestamp_column = timestamp_column
-        self.page_size = page_size or self.page_size
+        self._statement = statement
+        self._id_column = id_column
+        self._timestamp_column = timestamp_column
+        self._page_size = page_size or self.page_size
 
     def get_page(self, *, page_params: PageParams) -> Select[TSelectable]:
         timestamp_clauses: list[ColumnElement[bool]] = []
@@ -51,9 +52,9 @@ class Paginator[TSelectable: tuple[Any, ...]](AbstractPaginator[TSelectable]):
             timestamp_comparison_clause: ColumnElement[bool]
 
             if is_descending:
-                timestamp_comparison_clause = self.timestamp_column < page_params.timestamp
+                timestamp_comparison_clause = self._timestamp_column < page_params.timestamp
             else:
-                timestamp_comparison_clause = self.timestamp_column > page_params.timestamp
+                timestamp_comparison_clause = self._timestamp_column > page_params.timestamp
 
             timestamp_clauses.append(timestamp_comparison_clause)
 
@@ -61,24 +62,24 @@ class Paginator[TSelectable: tuple[Any, ...]](AbstractPaginator[TSelectable]):
             id_comparison_clause: ColumnElement[bool]
 
             if is_descending:
-                id_comparison_clause = self.id_column < page_params.id
+                id_comparison_clause = self._id_column < page_params.id
             else:
-                id_comparison_clause = self.id_column > page_params.id
+                id_comparison_clause = self._id_column > page_params.id
 
             timestamp_clauses.append(and_(
-                self.timestamp_column == page_params.timestamp,
+                self._timestamp_column == page_params.timestamp,
                 id_comparison_clause,
             ))
 
         page_order_by_clauses: list[SQLColumnExpression[Any]] = [
-            self.timestamp_column,
-            self.id_column,
+            self._timestamp_column,
+            self._id_column,
         ]
 
         if is_descending:
             page_order_by_clauses = [order_by_clause.desc() for order_by_clause in page_order_by_clauses]
 
-        return self.statement.where(
+        return self._statement.where(
             or_(*timestamp_clauses) if timestamp_clauses else true(),
         ).limit(
             page_params.size or self.page_size,

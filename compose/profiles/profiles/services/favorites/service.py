@@ -50,23 +50,23 @@ class AbstractFavoriteService(abc.ABC):
 
 
 class FavoriteService(AbstractFavoriteService):
-    repository: FavoriteRepository
-    permission_checker: AbstractPermissionChecker
+    _repository: FavoriteRepository
+    _permission_checker: AbstractPermissionChecker
 
     def __init__(self,
                  *,
                  repository: FavoriteRepository,
                  permission_service: AbstractPermissionService) -> None:
-        self.repository = repository
-        self.permission_checker = permission_service.get_permission_checker()
+        self._repository = repository
+        self._permission_checker = permission_service.get_permission_checker()
 
     async def get_list(self,
                        *,
                        user_id: uuid.UUID,
                        page_params: PageParams) -> list[ReadFavoriteResponse]:
-        await self.permission_checker.check_read_permission(user_id=user_id)
+        await self._permission_checker.check_read_permission(user_id=user_id)
 
-        favorites_list = await self.repository.get_list(
+        favorites_list = await self._repository.get_list(
             user_id=user_id,
             page_params=page_params,
         )
@@ -74,19 +74,19 @@ class FavoriteService(AbstractFavoriteService):
         return [self._get_read_favorite_response(favorite=favorite) for favorite in favorites_list]
 
     async def create(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> ReadFavoriteResponse:
-        await self.permission_checker.check_create_permission(user_id=user_id)
+        await self._permission_checker.check_create_permission(user_id=user_id)
 
         try:
-            favorite = await self.repository.create(user_id=user_id, film_id=film_id)
+            favorite = await self._repository.create(user_id=user_id, film_id=film_id)
         except IntegrityError as e:
             raise FavoriteCreateError from e
 
         return self._get_read_favorite_response(favorite=favorite)
 
     async def delete(self, *, user_id: uuid.UUID, film_id: uuid.UUID) -> DeleteFavoriteResponse:
-        await self.permission_checker.check_delete_permission(user_id=user_id)
+        await self._permission_checker.check_delete_permission(user_id=user_id)
 
-        delete_favorite_result = await self.repository.delete(user_id=user_id, film_id=film_id)
+        delete_favorite_result = await self._repository.delete(user_id=user_id, film_id=film_id)
 
         if delete_favorite_result is None:
             raise FavoriteNotFound
