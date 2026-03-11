@@ -59,15 +59,15 @@ class FilmRatingResult:
 
 
 class RatingRepository:
-    session: AsyncSession
-    pagination_service: AbstractPaginationService
+    _session: AsyncSession
+    _pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  pagination_service: AbstractPaginationService) -> None:
-        self.session = session
-        self.pagination_service = pagination_service
+        self._session = session
+        self._pagination_service = pagination_service
 
     async def get_list(self,
                        *,
@@ -79,14 +79,14 @@ class RatingRepository:
             Profile.user_id == user_id,
         )
 
-        paginator: AbstractPaginator[tuple[Rating]] = self.pagination_service.get_paginator(
+        paginator: AbstractPaginator[tuple[Rating]] = self._pagination_service.get_paginator(
             statement=statement,
             id_column=Rating.id,
             timestamp_column=Rating.modified,
         )
         page_statement = paginator.get_page(page_params=page_params)
 
-        result = await self.session.execute(page_statement)
+        result = await self._session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -98,7 +98,7 @@ class RatingRepository:
             Rating.film_id == film_id,
         )
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
@@ -114,8 +114,8 @@ class RatingRepository:
         }
         statement = insert(Rating).values(rating_create_dict).returning(Rating)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -135,8 +135,8 @@ class RatingRepository:
             Rating.film_id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         update_rating_row = result.one_or_none()
 
@@ -160,8 +160,8 @@ class RatingRepository:
             Rating.film_id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         delete_rating_row = result.one_or_none()
 
@@ -183,7 +183,7 @@ class RatingRepository:
             Rating.film_id,
         )
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         rating_avg = result.scalar_one_or_none()
 

@@ -36,15 +36,15 @@ class DeleteFavoriteResult:
 
 
 class FavoriteRepository:
-    session: AsyncSession
-    pagination_service: AbstractPaginationService
+    _session: AsyncSession
+    _pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  pagination_service: AbstractPaginationService) -> None:
-        self.session = session
-        self.pagination_service = pagination_service
+        self._session = session
+        self._pagination_service = pagination_service
 
     async def get_list(self,
                        *,
@@ -56,14 +56,14 @@ class FavoriteRepository:
             Profile.user_id == user_id,
         )
 
-        paginator: AbstractPaginator[tuple[Favorite]] = self.pagination_service.get_paginator(
+        paginator: AbstractPaginator[tuple[Favorite]] = self._pagination_service.get_paginator(
             statement=statement,
             id_column=Favorite.id,
             timestamp_column=Favorite.created,
         )
         page_statement = paginator.get_page(page_params=page_params)
 
-        result = await self.session.execute(page_statement)
+        result = await self._session.execute(page_statement)
 
         return result.scalars().all()
 
@@ -74,8 +74,8 @@ class FavoriteRepository:
         }
         statement = insert(Favorite).values(favorite_create_dict).returning(Favorite)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -90,8 +90,8 @@ class FavoriteRepository:
             Favorite.film_id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         delete_favorite_row = result.one_or_none()
 
