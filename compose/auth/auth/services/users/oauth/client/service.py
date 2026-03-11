@@ -21,13 +21,13 @@ class AbstractOAuthClientService(abc.ABC):
 
 
 class OAuthClientService(AbstractOAuthClientService):
-    client_factories: Mapping[str, AbstractOAuthClientFactory]
+    _client_factories: Mapping[str, AbstractOAuthClientFactory]
 
     def __init__(self, *, client_factories: Mapping[str, AbstractOAuthClientFactory]) -> None:
-        self.client_factories = client_factories
+        self._client_factories = client_factories
 
     def create_client(self, *, provider_name: str) -> BaseOAuth2 | None:
-        client_factory = self.client_factories.get(provider_name)
+        client_factory = self._client_factories.get(provider_name)
 
         if client_factory is None:
             return None

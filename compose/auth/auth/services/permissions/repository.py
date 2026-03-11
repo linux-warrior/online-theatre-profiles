@@ -43,34 +43,34 @@ class DeletePermissionResult:
 
 
 class PermissionRepository:
-    session: AsyncSession
-    pagination_service: AbstractPaginationService
+    _session: AsyncSession
+    _pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  pagination_service: AbstractPaginationService) -> None:
-        self.session = session
-        self.pagination_service = pagination_service
+        self._session = session
+        self._pagination_service = pagination_service
 
     async def get_list(self, *, page_params: PageParams) -> Sequence[Permission]:
         statement = select(Permission)
 
-        paginator: AbstractPaginator[tuple[Permission]] = self.pagination_service.get_paginator(
+        paginator: AbstractPaginator[tuple[Permission]] = self._pagination_service.get_paginator(
             statement=statement,
             id_column=Permission.id,
             timestamp_column=Permission.modified,
         )
         page_statement = paginator.get_page(page_params=page_params)
 
-        result = await self.session.execute(page_statement)
+        result = await self._session.execute(page_statement)
 
         return result.scalars().all()
 
     async def get(self, *, permission_id: uuid.UUID) -> Permission | None:
         statement = select(Permission).where(Permission.id == permission_id)
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
@@ -78,8 +78,8 @@ class PermissionRepository:
         permission_create_dict = permission_create.model_dump()
         statement = insert(Permission).values(permission_create_dict).returning(Permission)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -94,8 +94,8 @@ class PermissionRepository:
             Permission.id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         update_permission_row = result.one_or_none()
 
@@ -113,8 +113,8 @@ class PermissionRepository:
             Permission.id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         delete_permission_row = result.one_or_none()
 

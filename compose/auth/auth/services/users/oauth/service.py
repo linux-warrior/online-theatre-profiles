@@ -55,15 +55,15 @@ class AbstractOAuthService(abc.ABC):
 class OAuthService(AbstractOAuthService):
     state_token_audience: ClassVar[str] = 'users:oauth-state:{provider_name}'
 
-    oauth_client_service: AbstractOAuthClientService
-    jwt_helper: AbstractJWTHelper
+    _oauth_client_service: AbstractOAuthClientService
+    _jwt_helper: AbstractJWTHelper
 
     def __init__(self,
                  *,
                  oauth_client_service: AbstractOAuthClientService,
                  jwt_service: AbstractJWTService) -> None:
-        self.oauth_client_service = oauth_client_service
-        self.jwt_helper = jwt_service.get_jwt_helper()
+        self._oauth_client_service = oauth_client_service
+        self._jwt_helper = jwt_service.get_jwt_helper()
 
     async def get_authorization_url(self,
                                     *,
@@ -75,7 +75,7 @@ class OAuthService(AbstractOAuthService):
 
         authorize_redirect_url = str(request.url_for('oauth:callback', provider_name=provider_name))
         audience = self._get_state_token_audience(provider_name=provider_name)
-        state = self.jwt_helper.encode({}, audience=audience)
+        state = self._jwt_helper.encode({}, audience=audience)
 
         return await oauth_client.get_authorization_url(
             authorize_redirect_url,
@@ -98,7 +98,7 @@ class OAuthService(AbstractOAuthService):
 
         audience = self._get_state_token_audience(provider_name=provider_name)
         try:
-            self.jwt_helper.decode(state, audience=audience)
+            self._jwt_helper.decode(state, audience=audience)
         except jwt.DecodeError:
             raise InvalidStateToken(state=state)
 
@@ -125,7 +125,7 @@ class OAuthService(AbstractOAuthService):
         )
 
     def _create_oauth_client(self, *, provider_name: str) -> BaseOAuth2:
-        oauth_client = self.oauth_client_service.create_client(provider_name=provider_name)
+        oauth_client = self._oauth_client_service.create_client(provider_name=provider_name)
         if oauth_client is None:
             raise InvalidOAuthProvider(provider_name=provider_name)
 

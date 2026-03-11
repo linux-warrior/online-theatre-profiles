@@ -23,13 +23,13 @@ class AbstractPasswordHelper(abc.ABC):
 
 class PasswordHelper(AbstractPasswordHelper):
     def __init__(self, password_hash: PasswordHash) -> None:
-        self.password_hash = password_hash
+        self._password_hash = password_hash
 
     def verify_and_update(self, *, password: str, password_hash: str) -> tuple[bool, str | None]:
-        return self.password_hash.verify_and_update(password, password_hash)
+        return self._password_hash.verify_and_update(password, password_hash)
 
     def hash(self, *, password: str) -> str:
-        return self.password_hash.hash(password)
+        return self._password_hash.hash(password)
 
     def generate(self) -> str:
         return secrets.token_urlsafe()

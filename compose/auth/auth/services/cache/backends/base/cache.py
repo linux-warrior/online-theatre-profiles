@@ -19,15 +19,15 @@ class AbstractCache(abc.ABC):
 
 
 class BaseCache(AbstractCache):
-    key_prefix: str
-    key_version: str
+    _key_prefix: str
+    _key_version: str
 
     def __init__(self,
                  *,
                  key_prefix: str | None = None,
                  key_version: str | None = None) -> None:
-        self.key_prefix = key_prefix or 'cache'
-        self.key_version = key_version or '1.0'
+        self._key_prefix = key_prefix or 'cache'
+        self._key_version = key_version or '1.0'
 
     async def get(self, key: str) -> str | None:
         cache_key = self._create_cache_key(key)
@@ -48,7 +48,7 @@ class BaseCache(AbstractCache):
     async def _set_value(self, key: str, value: str, *, timeout: int | None) -> None: ...
 
     def _create_cache_key(self, key: str) -> str:
-        return f'{self.key_prefix}:{self.key_version}:{key}'
+        return f'{self._key_prefix}:{self._key_version}:{key}'
 
     async def delete(self, key: str) -> None:
         cache_key = self._create_cache_key(key)

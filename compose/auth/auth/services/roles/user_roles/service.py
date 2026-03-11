@@ -45,16 +45,16 @@ class AbstractUserRoleService(abc.ABC):
 
 
 class UserRoleService(AbstractUserRoleService):
-    repository: UserRoleRepository
+    _repository: UserRoleRepository
 
     def __init__(self, *, repository: UserRoleRepository) -> None:
-        self.repository = repository
+        self._repository = repository
 
     async def get_list(self,
                        *,
                        user_id: uuid.UUID,
                        page_params: PageParams) -> list[ReadUserRoleResponse]:
-        user_roles_list = await self.repository.get_list(
+        user_roles_list = await self._repository.get_list(
             user_id=user_id,
             page_params=page_params,
         )
@@ -63,14 +63,14 @@ class UserRoleService(AbstractUserRoleService):
 
     async def create(self, *, user_id: uuid.UUID, role_id: uuid.UUID) -> ReadUserRoleResponse:
         try:
-            user_role = await self.repository.create(user_id=user_id, role_id=role_id)
+            user_role = await self._repository.create(user_id=user_id, role_id=role_id)
         except IntegrityError as e:
             raise UserRoleCreateError from e
 
         return self._get_read_user_role_response(user_role=user_role)
 
     async def delete(self, *, user_id: uuid.UUID, role_id: uuid.UUID) -> DeleteUserRoleResponse:
-        delete_user_role_result = await self.repository.delete(user_id=user_id, role_id=role_id)
+        delete_user_role_result = await self._repository.delete(user_id=user_id, role_id=role_id)
 
         if delete_user_role_result is None:
             raise UserRoleNotFound

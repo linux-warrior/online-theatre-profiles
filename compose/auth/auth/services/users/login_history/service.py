@@ -44,16 +44,16 @@ class AbstractLoginHistoryService(abc.ABC):
 
 
 class LoginHistoryService(AbstractLoginHistoryService):
-    repository: LoginHistoryRepository
+    _repository: LoginHistoryRepository
 
     def __init__(self, *, repository: LoginHistoryRepository) -> None:
-        self.repository = repository
+        self._repository = repository
 
     async def get_list(self,
                        *,
                        user_id: uuid.UUID,
                        page_params: PageParams) -> list[ReadLoginHistoryResponse]:
-        login_history_list = await self.repository.get_list(
+        login_history_list = await self._repository.get_list(
             user_id=user_id,
             page_params=page_params,
         )
@@ -68,7 +68,7 @@ class LoginHistoryService(AbstractLoginHistoryService):
                      user_id: uuid.UUID,
                      login_history_create: LoginHistoryCreate) -> ReadLoginHistoryResponse:
         try:
-            login_history = await self.repository.create(
+            login_history = await self._repository.create(
                 user_id=user_id,
                 login_history_create=login_history_create,
             )

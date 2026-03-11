@@ -27,10 +27,10 @@ class AbstractExtendedUserService(abc.ABC):
 
 
 class ExtendedUserService(AbstractExtendedUserService):
-    repository: ExtendedUserRepository
+    _repository: ExtendedUserRepository
 
     def __init__(self, *, repository: ExtendedUserRepository) -> None:
-        self.repository = repository
+        self._repository = repository
 
     async def extend_current_user(self, *, user: User) -> ExtendedCurrentUserResponse:
         extended_current_user_response = ExtendedCurrentUserResponse.model_validate(
@@ -51,7 +51,7 @@ class ExtendedUserService(AbstractExtendedUserService):
         return extended_read_user_response
 
     async def get_user_permissions(self, *, user: User) -> list[str]:
-        permissions_list = await self.repository.get_user_permissions(user_id=user.id)
+        permissions_list = await self._repository.get_user_permissions(user_id=user.id)
 
         return [permission.code for permission in permissions_list]
 

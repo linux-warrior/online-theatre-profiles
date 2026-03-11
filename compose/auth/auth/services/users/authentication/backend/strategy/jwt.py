@@ -21,9 +21,9 @@ from .....jwt import (
 
 
 class JWTStrategy(BaseTokenStrategy):
-    lifetime: int | None
-    audience: Iterable[str]
-    jwt_helper: AbstractJWTHelper
+    _lifetime: int | None
+    _audience: Iterable[str]
+    _jwt_helper: AbstractJWTHelper
 
     def __init__(self,
                  *,
@@ -33,7 +33,7 @@ class JWTStrategy(BaseTokenStrategy):
                  **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
-        self.lifetime = lifetime
+        self._lifetime = lifetime
 
         if audience is None:
             audience = 'users:auth'
@@ -41,12 +41,12 @@ class JWTStrategy(BaseTokenStrategy):
         if isinstance(audience, str):
             audience = [audience]
 
-        self.audience = audience
-        self.jwt_helper = jwt_service.get_jwt_helper()
+        self._audience = audience
+        self._jwt_helper = jwt_service.get_jwt_helper()
 
     def decode_token(self, token: str) -> TokenData:
         try:
-            jwt_payload = self.jwt_helper.decode(token, audience=self.audience)
+            jwt_payload = self._jwt_helper.decode(token, audience=self._audience)
         except jwt.PyJWTError:
             raise InvalidToken
 
@@ -72,8 +72,8 @@ class JWTStrategy(BaseTokenStrategy):
         if token_dict['parent_id'] is not None:
             jwt_payload['parent_id'] = token_dict['parent_id']
 
-        return self.jwt_helper.encode(
+        return self._jwt_helper.encode(
             jwt_payload,
-            audience=self.audience,
-            lifetime=self.lifetime,
+            audience=self._audience,
+            lifetime=self._lifetime,
         )

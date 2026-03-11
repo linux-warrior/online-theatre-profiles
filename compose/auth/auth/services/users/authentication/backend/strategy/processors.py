@@ -22,10 +22,10 @@ class AbstractTokenProcessor(abc.ABC):
 
 
 class BaseTokenProcessor(AbstractTokenProcessor):
-    cache: AbstractCache
+    _cache: AbstractCache
 
     def __init__(self, *, cache: AbstractCache) -> None:
-        self.cache = cache
+        self._cache = cache
 
     async def validate_token(self, *, token_id: uuid.UUID) -> None:
         cache_key = self._create_cache_key(token_id=token_id)
@@ -65,13 +65,13 @@ class AccessTokenProcessor(BaseTokenProcessor):
         return f'access-{token_id}'
 
     async def _is_cache_valid(self, *, cache_key: str) -> bool:
-        return await self.cache.get(cache_key) is None
+        return await self._cache.get(cache_key) is None
 
     async def _save_cache(self, *, cache_key: str) -> None:
         pass
 
     async def _delete_cache(self, *, cache_key: str) -> None:
-        await self.cache.set(cache_key, 'access', timeout=self.lifetime)
+        await self._cache.set(cache_key, 'access', timeout=self.lifetime)
 
 
 class RefreshTokenProcessor(BaseTokenProcessor):
@@ -85,10 +85,10 @@ class RefreshTokenProcessor(BaseTokenProcessor):
         return f'refresh-{token_id}'
 
     async def _is_cache_valid(self, *, cache_key: str) -> bool:
-        return await self.cache.get(cache_key) is not None
+        return await self._cache.get(cache_key) is not None
 
     async def _save_cache(self, *, cache_key: str) -> None:
-        await self.cache.set(cache_key, 'refresh', timeout=self.lifetime)
+        await self._cache.set(cache_key, 'refresh', timeout=self.lifetime)
 
     async def _delete_cache(self, *, cache_key: str) -> None:
-        await self.cache.delete(cache_key)
+        await self._cache.delete(cache_key)

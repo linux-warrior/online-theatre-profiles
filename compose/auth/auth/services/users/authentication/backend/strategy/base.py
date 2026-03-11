@@ -29,12 +29,12 @@ class AbstractTokenStrategy(abc.ABC):
 
 
 class BaseTokenStrategy(AbstractTokenStrategy):
-    token_processor: AbstractTokenProcessor
+    _token_processor: AbstractTokenProcessor
 
     def __init__(self,
                  *,
                  token_processor: AbstractTokenProcessor) -> None:
-        self.token_processor = token_processor
+        self._token_processor = token_processor
 
     async def read_token(self, *, token: str, user_manager: UserManager) -> User | None:
         try:
@@ -43,7 +43,7 @@ class BaseTokenStrategy(AbstractTokenStrategy):
             return None
 
         try:
-            await self.token_processor.validate_token(token_id=token_data.token_id)
+            await self._token_processor.validate_token(token_id=token_data.token_id)
         except InvalidToken:
             return None
 
@@ -66,7 +66,7 @@ class BaseTokenStrategy(AbstractTokenStrategy):
         )
         token = self.encode_token(token_data)
 
-        await self.token_processor.save_token(token_id=token_data.token_id)
+        await self._token_processor.save_token(token_id=token_data.token_id)
 
         return Token(
             token_id=token_data.token_id,
@@ -84,7 +84,7 @@ class BaseTokenStrategy(AbstractTokenStrategy):
         except InvalidToken:
             return None
 
-        await self.token_processor.destroy_token(token_id=token_data.token_id)
+        await self._token_processor.destroy_token(token_id=token_data.token_id)
 
         return Token(
             token_id=token_data.token_id,
@@ -93,4 +93,4 @@ class BaseTokenStrategy(AbstractTokenStrategy):
         )
 
     async def destroy_token_id(self, *, token_id: uuid.UUID) -> None:
-        await self.token_processor.destroy_token(token_id=token_id)
+        await self._token_processor.destroy_token(token_id=token_id)

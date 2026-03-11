@@ -51,16 +51,16 @@ class AbstractRolePermissionService(abc.ABC):
 
 
 class RolePermissionService(AbstractRolePermissionService):
-    repository: RolePermissionRepository
+    _repository: RolePermissionRepository
 
     def __init__(self, *, repository: RolePermissionRepository) -> None:
-        self.repository = repository
+        self._repository = repository
 
     async def get_list(self,
                        *,
                        role_id: uuid.UUID,
                        page_params: PageParams) -> list[ReadRolePermissionResponse]:
-        role_permissions_list = await self.repository.get_list(
+        role_permissions_list = await self._repository.get_list(
             role_id=role_id,
             page_params=page_params,
         )
@@ -75,7 +75,7 @@ class RolePermissionService(AbstractRolePermissionService):
                      role_id: uuid.UUID,
                      permission_id: uuid.UUID) -> ReadRolePermissionResponse:
         try:
-            role_permission = await self.repository.create(
+            role_permission = await self._repository.create(
                 role_id=role_id,
                 permission_id=permission_id,
             )
@@ -89,7 +89,7 @@ class RolePermissionService(AbstractRolePermissionService):
                      *,
                      role_id: uuid.UUID,
                      permission_id: uuid.UUID) -> DeleteRolePermissionResponse:
-        delete_role_permission_result = await self.repository.delete(
+        delete_role_permission_result = await self._repository.delete(
             role_id=role_id,
             permission_id=permission_id,
         )

@@ -6,26 +6,26 @@ class OAuthServiceException(Exception):
 
 
 class InvalidOAuthProvider(OAuthServiceException):
-    provider_name: str
+    _provider_name: str
 
     def __init__(self, *, provider_name: str) -> None:
         super().__init__()
-        self.provider_name = provider_name
+        self._provider_name = provider_name
 
     def __str__(self) -> str:
         return 'Invalid OAuth provider: {provider_name}'.format(
-            provider_name=self.provider_name,
+            provider_name=self._provider_name,
         )
 
 
 class InvalidStateToken(OAuthServiceException):
-    state: str
+    _state: str
 
     def __init__(self, *, state: str) -> None:
         super().__init__()
-        self.state = state
+        self._state = state
 
     def __str__(self) -> str:
         return 'Invalid state token: {state}'.format(
-            state=self.state,
+            state=self._state,
         )

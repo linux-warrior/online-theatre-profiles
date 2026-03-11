@@ -43,34 +43,34 @@ class DeleteRoleResult:
 
 
 class RoleRepository:
-    session: AsyncSession
-    pagination_service: AbstractPaginationService
+    _session: AsyncSession
+    _pagination_service: AbstractPaginationService
 
     def __init__(self,
                  *,
                  session: AsyncSession,
                  pagination_service: AbstractPaginationService) -> None:
-        self.session = session
-        self.pagination_service = pagination_service
+        self._session = session
+        self._pagination_service = pagination_service
 
     async def get_list(self, *, page_params: PageParams) -> Sequence[Role]:
         statement = select(Role)
 
-        paginator: AbstractPaginator[tuple[Role]] = self.pagination_service.get_paginator(
+        paginator: AbstractPaginator[tuple[Role]] = self._pagination_service.get_paginator(
             statement=statement,
             id_column=Role.id,
             timestamp_column=Role.modified,
         )
         page_statement = paginator.get_page(page_params=page_params)
 
-        result = await self.session.execute(page_statement)
+        result = await self._session.execute(page_statement)
 
         return result.scalars().all()
 
     async def get(self, *, role_id: uuid.UUID) -> Role | None:
         statement = select(Role).where(Role.id == role_id)
 
-        result = await self.session.execute(statement)
+        result = await self._session.execute(statement)
 
         return result.scalar_one_or_none()
 
@@ -78,8 +78,8 @@ class RoleRepository:
         role_create_dict = role_create.model_dump()
         statement = insert(Role).values(role_create_dict).returning(Role)
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         return result.scalar_one()
 
@@ -91,8 +91,8 @@ class RoleRepository:
             Role.id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         update_role_row = result.one_or_none()
 
@@ -110,8 +110,8 @@ class RoleRepository:
             Role.id,
         )
 
-        result = await self.session.execute(statement)
-        await self.session.commit()
+        result = await self._session.execute(statement)
+        await self._session.commit()
 
         delete_role_row = result.one_or_none()
 

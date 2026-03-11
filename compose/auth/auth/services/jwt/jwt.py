@@ -9,7 +9,6 @@ import jwt
 
 from ...core import settings
 
-
 type JWTPayload = dict[str, Any]
 
 
@@ -29,12 +28,12 @@ class AbstractJWTHelper(abc.ABC):
 
 
 class JWTHelper(AbstractJWTHelper):
-    secret_key: str
-    algorithm: str
+    _secret_key: str
+    _algorithm: str
 
     def __init__(self, *, secret_key: str | None = None, algorithm: str | None = None) -> None:
-        self.secret_key = secret_key or settings.auth.secret_key
-        self.algorithm = algorithm or 'HS256'
+        self._secret_key = secret_key or settings.auth.secret_key
+        self._algorithm = algorithm or 'HS256'
 
     def encode(self,
                payload: JWTPayload,
@@ -54,7 +53,7 @@ class JWTHelper(AbstractJWTHelper):
         if lifetime is not None:
             payload['exp'] = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=lifetime)
 
-        return jwt.encode(payload, key=self.secret_key, algorithm=self.algorithm)
+        return jwt.encode(payload, key=self._secret_key, algorithm=self._algorithm)
 
     def decode(self,
                value: str,
@@ -62,7 +61,7 @@ class JWTHelper(AbstractJWTHelper):
                audience: str | Iterable[str] | None = None) -> JWTPayload:
         return jwt.decode(
             value,
-            key=self.secret_key,
+            key=self._secret_key,
             audience=audience,
-            algorithms=[self.algorithm],
+            algorithms=[self._algorithm],
         )
