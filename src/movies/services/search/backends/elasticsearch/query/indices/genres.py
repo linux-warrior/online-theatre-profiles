@@ -15,17 +15,17 @@ if TYPE_CHECKING:
 
 
 class GetGenreQuery(ElasticsearchGetQuery):
-    genre_id: uuid.UUID
+    _genre_id: uuid.UUID
 
     def __init__(self, *, backend: ElasticsearchSearchBackend, genre_id: uuid.UUID) -> None:
         super().__init__(backend=backend)
-        self.genre_id = genre_id
+        self._genre_id = genre_id
 
     def get_index(self) -> str:
         return settings.elasticsearch.index_name_genres
 
     def get_id(self) -> str:
-        return str(self.genre_id)
+        return str(self._genre_id)
 
 
 class BaseSearchGenresQuery(ElasticsearchSearchQuery, abc.ABC):
@@ -34,16 +34,16 @@ class BaseSearchGenresQuery(ElasticsearchSearchQuery, abc.ABC):
 
 
 class GenresListQuery(BaseSearchGenresQuery):
-    page_number: int
-    page_size: int
+    _page_number: int
+    _page_size: int
 
     def __init__(self, *, backend: ElasticsearchSearchBackend, page_number: int, page_size: int) -> None:
         super().__init__(backend=backend)
-        self.page_number = page_number
-        self.page_size = page_size
+        self._page_number = page_number
+        self._page_size = page_size
 
     def get_body(self) -> dict:
         return {
-            'size': self.page_size,
-            'from': (self.page_number - 1) * self.page_size,
+            'size': self._page_size,
+            'from': (self._page_number - 1) * self._page_size,
         }

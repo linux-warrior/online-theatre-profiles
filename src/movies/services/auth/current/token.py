@@ -23,14 +23,14 @@ TokenDep = Annotated[str, Depends(get_token)]
 
 
 class TokenHttpClient(HttpClient):
-    token: str
+    _token: str
 
     def __init__(self, *, token: str, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.token = token
+        self._token = token
 
     def get_default_headers(self) -> dict:
         return {
             **super().get_default_headers(),
-            'Authorization': f'Bearer {self.token}',
+            'Authorization': f'Bearer {self._token}',
         }

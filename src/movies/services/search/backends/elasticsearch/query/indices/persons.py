@@ -15,17 +15,17 @@ if TYPE_CHECKING:
 
 
 class GetPersonQuery(ElasticsearchGetQuery):
-    person_id: uuid.UUID
+    _person_id: uuid.UUID
 
     def __init__(self, *, backend: ElasticsearchSearchBackend, person_id: uuid.UUID) -> None:
         super().__init__(backend=backend)
-        self.person_id = person_id
+        self._person_id = person_id
 
     def get_index(self) -> str:
         return settings.elasticsearch.index_name_persons
 
     def get_id(self) -> str:
-        return str(self.person_id)
+        return str(self._person_id)
 
 
 class BaseSearchPersonsQuery(ElasticsearchSearchQuery, abc.ABC):
@@ -34,9 +34,9 @@ class BaseSearchPersonsQuery(ElasticsearchSearchQuery, abc.ABC):
 
 
 class SearchPersonsQuery(BaseSearchPersonsQuery):
-    query: str
-    page_number: int
-    page_size: int
+    _query: str
+    _page_number: int
+    _page_size: int
 
     def __init__(self,
                  *,
@@ -45,17 +45,17 @@ class SearchPersonsQuery(BaseSearchPersonsQuery):
                  page_number: int,
                  page_size: int) -> None:
         super().__init__(backend=backend)
-        self.query = query
-        self.page_number = page_number
-        self.page_size = page_size
+        self._query = query
+        self._page_number = page_number
+        self._page_size = page_size
 
     def get_body(self) -> dict:
         return {
             'query': {
                 'match': {
-                    'full_name': self.query,
+                    'full_name': self._query,
                 },
             },
-            'size': self.page_size,
-            'from': (self.page_number - 1) * self.page_size,
+            'size': self._page_size,
+            'from': (self._page_number - 1) * self._page_size,
         }

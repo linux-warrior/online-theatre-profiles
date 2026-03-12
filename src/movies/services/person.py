@@ -13,10 +13,10 @@ from ..models import Person
 
 
 class PersonService:
-    search_service: AbstractSearchService
+    _search_service: AbstractSearchService
 
     def __init__(self, *, search_service: AbstractSearchService) -> None:
-        self.search_service = search_service
+        self._search_service = search_service
 
     async def search(
             self,
@@ -24,12 +24,12 @@ class PersonService:
             page_number: int,
             page_size: int,
     ) -> list[Person]:
-        search_query = self.search_service.create_query().search_persons(
+        search_query = self._search_service.create_query().search_persons(
             query=query,
             page_number=page_number,
             page_size=page_size,
         )
-        result = await self.search_service.search(query=search_query)
+        result = await self._search_service.search(query=search_query)
 
         if result is None:
             return []
@@ -40,8 +40,8 @@ class PersonService:
             self,
             id: uuid.UUID,
     ) -> Person | None:
-        get_query = self.search_service.create_query().get_person(person_id=id)
-        data = await self.search_service.get(query=get_query)
+        get_query = self._search_service.create_query().get_person(person_id=id)
+        data = await self._search_service.get(query=get_query)
 
         if not data:
             return None

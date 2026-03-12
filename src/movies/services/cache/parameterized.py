@@ -16,14 +16,14 @@ class Parameterizable(abc.ABC):
 
 
 class ParameterizedCache[TParams: Parameterizable, TValue]:
-    cache: AbstractCache
+    _cache: AbstractCache
 
     def __init__(self, *, cache: AbstractCache) -> None:
-        self.cache = cache
+        self._cache = cache
 
     async def get(self, *, params: TParams) -> TValue | None:
         cache_key = self._create_cache_key(params=params)
-        value_json: str | None = await self.cache.get(cache_key)
+        value_json: str | None = await self._cache.get(cache_key)
 
         if value_json is None:
             return None
@@ -34,7 +34,7 @@ class ParameterizedCache[TParams: Parameterizable, TValue]:
         cache_key = self._create_cache_key(params=params)
         value_json = json.dumps(value)
 
-        await self.cache.set(cache_key, value_json)
+        await self._cache.set(cache_key, value_json)
 
     def _create_cache_key(self, *, params: TParams) -> str:
         cache_prefix = params.get_cache_prefix()

@@ -26,29 +26,29 @@ class AbstractProfilesService(abc.ABC):
 
 
 class ProfilesService(AbstractProfilesService):
-    profiles_service_client: ProfilesServiceClient
+    _profiles_service_client: ProfilesServiceClient
 
     def __init__(self, *, profiles_service_client: ProfilesServiceClient) -> None:
-        self.profiles_service_client = profiles_service_client
+        self._profiles_service_client = profiles_service_client
 
     async def get_film_rating(self, *, film_id: uuid.UUID) -> FilmRating | None:
         return await GetFilmRatingRequest(
-            profiles_service_client=self.profiles_service_client,
+            profiles_service_client=self._profiles_service_client,
             film_id=film_id,
         ).send_request()
 
     async def get_film_reviews(self, *, film_id: uuid.UUID) -> FilmReviews | None:
         return await GetFilmReviewsRequest(
-            profiles_service_client=self.profiles_service_client,
+            profiles_service_client=self._profiles_service_client,
             film_id=film_id,
         ).send_request()
 
 
 class ProfilesServiceRequest[TResponse](abc.ABC):
-    profiles_service_client: ProfilesServiceClient
+    _profiles_service_client: ProfilesServiceClient
 
     def __init__(self, *, profiles_service_client: ProfilesServiceClient) -> None:
-        self.profiles_service_client = profiles_service_client
+        self._profiles_service_client = profiles_service_client
 
     async def send_request(self) -> TResponse | None:
         try:
@@ -69,25 +69,25 @@ class ProfilesServiceRequest[TResponse](abc.ABC):
 
 
 class GetFilmRatingRequest(ProfilesServiceRequest[FilmRating]):
-    film_id: uuid.UUID
+    _film_id: uuid.UUID
 
     def __init__(self, *, film_id: uuid.UUID, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.film_id = film_id
+        self._film_id = film_id
 
     async def _send_request(self) -> FilmRating:
-        return await self.profiles_service_client.get_film_rating(film_id=self.film_id)
+        return await self._profiles_service_client.get_film_rating(film_id=self._film_id)
 
 
 class GetFilmReviewsRequest(ProfilesServiceRequest[FilmReviews]):
-    film_id: uuid.UUID
+    _film_id: uuid.UUID
 
     def __init__(self, *, film_id: uuid.UUID, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.film_id = film_id
+        self._film_id = film_id
 
     async def _send_request(self) -> FilmReviews:
-        return await self.profiles_service_client.get_film_reviews(film_id=self.film_id)
+        return await self._profiles_service_client.get_film_reviews(film_id=self._film_id)
 
 
 async def get_profiles_service(profiles_service_client: ProfilesServiceClientDep) -> AbstractProfilesService:
