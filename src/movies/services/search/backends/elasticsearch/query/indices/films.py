@@ -15,17 +15,17 @@ if TYPE_CHECKING:
 
 
 class GetFilmQuery(ElasticsearchGetQuery):
-    film_id: uuid.UUID
+    _film_id: uuid.UUID
 
     def __init__(self, *, backend: ElasticsearchSearchBackend, film_id: uuid.UUID) -> None:
         super().__init__(backend=backend)
-        self.film_id = film_id
+        self._film_id = film_id
 
     def get_index(self) -> str:
         return settings.elasticsearch.index_name_films
 
     def get_id(self) -> str:
-        return str(self.film_id)
+        return str(self._film_id)
 
 
 class BaseSearchFilmsQuery(ElasticsearchSearchQuery, abc.ABC):
@@ -34,11 +34,11 @@ class BaseSearchFilmsQuery(ElasticsearchSearchQuery, abc.ABC):
 
 
 class FilmsByPersonQuery(BaseSearchFilmsQuery):
-    person_id: uuid.UUID
+    _person_id: uuid.UUID
 
     def __init__(self, *, backend: ElasticsearchSearchBackend, person_id: uuid.UUID) -> None:
         super().__init__(backend=backend)
-        self.person_id = person_id
+        self._person_id = person_id
 
     def get_body(self) -> dict:
         return {
@@ -50,7 +50,7 @@ class FilmsByPersonQuery(BaseSearchFilmsQuery):
                                 'path': 'actors',
                                 'query': {
                                     'term': {
-                                        'actors.id': str(self.person_id),
+                                        'actors.id': str(self._person_id),
                                     },
                                 },
                             },
@@ -60,7 +60,7 @@ class FilmsByPersonQuery(BaseSearchFilmsQuery):
                                 'path': 'directors',
                                 'query': {
                                     'term': {
-                                        'directors.id': str(self.person_id),
+                                        'directors.id': str(self._person_id),
                                     },
                                 },
                             },
@@ -70,7 +70,7 @@ class FilmsByPersonQuery(BaseSearchFilmsQuery):
                                 'path': 'writers',
                                 'query': {
                                     'term': {
-                                        'writers.id': str(self.person_id),
+                                        'writers.id': str(self._person_id),
                                     },
                                 },
                             },
@@ -83,10 +83,10 @@ class FilmsByPersonQuery(BaseSearchFilmsQuery):
 
 
 class FilmsListQuery(BaseSearchFilmsQuery):
-    sort: dict
-    page_number: int
-    page_size: int
-    genre_id: uuid.UUID | None
+    _sort: dict
+    _page_number: int
+    _page_size: int
+    _genre_id: uuid.UUID | None
 
     def __init__(self,
                  *,
@@ -96,29 +96,29 @@ class FilmsListQuery(BaseSearchFilmsQuery):
                  page_size: int,
                  genre_id: uuid.UUID | None = None) -> None:
         super().__init__(backend=backend)
-        self.sort = sort
-        self.page_number = page_number
-        self.page_size = page_size
-        self.genre_id = genre_id
+        self._sort = sort
+        self._page_number = page_number
+        self._page_size = page_size
+        self._genre_id = genre_id
 
     def get_body(self) -> dict:
         body = {
             'sort': {
-                self.sort['field']: {
-                    'order': self.sort['order'],
+                self._sort['field']: {
+                    'order': self._sort['order'],
                 },
             },
-            'size': self.page_size,
-            'from': (self.page_number - 1) * self.page_size,
+            'size': self._page_size,
+            'from': (self._page_number - 1) * self._page_size,
         }
 
-        if self.genre_id is not None:
+        if self._genre_id is not None:
             body['query'] = {
                 'nested': {
                     'path': 'genres',
                     'query': {
                         'term': {
-                            'genres.id': str(self.genre_id),
+                            'genres.id': str(self._genre_id),
                         },
                     },
                 },
@@ -128,9 +128,9 @@ class FilmsListQuery(BaseSearchFilmsQuery):
 
 
 class SearchFilmsQuery(BaseSearchFilmsQuery):
-    query: str
-    page_number: int
-    page_size: int
+    _query: str
+    _page_number: int
+    _page_size: int
 
     def __init__(self,
                  *,
@@ -139,17 +139,17 @@ class SearchFilmsQuery(BaseSearchFilmsQuery):
                  page_number: int,
                  page_size: int) -> None:
         super().__init__(backend=backend)
-        self.query = query
-        self.page_number = page_number
-        self.page_size = page_size
+        self._query = query
+        self._page_number = page_number
+        self._page_size = page_size
 
     def get_body(self) -> dict:
         return {
             'query': {
                 'match': {
-                    'title': self.query,
+                    'title': self._query,
                 },
             },
-            'size': self.page_size,
-            'from': (self.page_number - 1) * self.page_size,
+            'size': self._page_size,
+            'from': (self._page_number - 1) * self._page_size,
         }

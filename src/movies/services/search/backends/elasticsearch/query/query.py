@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import abc
-import dataclasses
 from typing import TYPE_CHECKING
 
 from ...base import (
@@ -16,14 +15,14 @@ if TYPE_CHECKING:
 
 
 class ElasticsearchGetQuery(AbstractGetQuery):
-    backend: ElasticsearchSearchBackend
+    _backend: ElasticsearchSearchBackend
 
     def __init__(self, *, backend: ElasticsearchSearchBackend) -> None:
-        self.backend = backend
+        self._backend = backend
 
     def compile(self) -> CompiledElasticsearchGetQuery:
         return CompiledElasticsearchGetQuery(
-            backend=self.backend,
+            backend=self._backend,
             index=self.get_index(),
             id=self.get_id(),
         )
@@ -35,35 +34,51 @@ class ElasticsearchGetQuery(AbstractGetQuery):
     def get_id(self) -> str: ...
 
 
-@dataclasses.dataclass(kw_only=True)
 class CompiledElasticsearchGetQuery(AbstractCompiledGetQuery):
-    backend: ElasticsearchSearchBackend
-    index: str
-    id: str
+    _backend: ElasticsearchSearchBackend
+    _index: str
+    _id: str
+
+    def __init__(self,
+                 *,
+                 backend: ElasticsearchSearchBackend,
+                 index: str,
+                 id: str) -> None:
+        self._backend = backend
+        self._index = index
+        self._id = id
+
+    @property
+    def index(self) -> str:
+        return self._index
+
+    @property
+    def id(self) -> str:
+        return self._id
 
     async def execute(self) -> dict | None:
-        return await self.backend.get(self)
+        return await self._backend.get(self)
 
     def get_cache_prefix(self) -> str:
-        return f'get-{self.index}'
+        return f'get-{self._index}'
 
     def get_cache_params(self) -> dict:
         return {
             'command': 'get',
-            'index': self.index,
-            'id': self.id,
+            'index': self._index,
+            'id': self._id,
         }
 
 
 class ElasticsearchSearchQuery(AbstractSearchQuery):
-    backend: ElasticsearchSearchBackend
+    _backend: ElasticsearchSearchBackend
 
     def __init__(self, *, backend: ElasticsearchSearchBackend) -> None:
-        self.backend = backend
+        self._backend = backend
 
     def compile(self) -> CompiledElasticsearchSearchQuery:
         return CompiledElasticsearchSearchQuery(
-            backend=self.backend,
+            backend=self._backend,
             index=self.get_index(),
             body=self.get_body(),
         )
@@ -75,21 +90,37 @@ class ElasticsearchSearchQuery(AbstractSearchQuery):
     def get_body(self) -> dict: ...
 
 
-@dataclasses.dataclass(kw_only=True)
 class CompiledElasticsearchSearchQuery(AbstractCompiledSearchQuery):
-    backend: ElasticsearchSearchBackend
-    index: str
-    body: dict
+    _backend: ElasticsearchSearchBackend
+    _index: str
+    _body: dict
+
+    def __init__(self,
+                 *,
+                 backend: ElasticsearchSearchBackend,
+                 index: str,
+                 body: dict) -> None:
+        self._backend = backend
+        self._index = index
+        self._body = body
+
+    @property
+    def index(self) -> str:
+        return self._index
+
+    @property
+    def body(self) -> dict:
+        return self._body
 
     async def execute(self) -> list[dict] | None:
-        return await self.backend.search(self)
+        return await self._backend.search(self)
 
     def get_cache_prefix(self) -> str:
-        return f'search-{self.index}'
+        return f'search-{self._index}'
 
     def get_cache_params(self) -> dict:
         return {
             'command': 'search',
-            'index': self.index,
-            'body': self.body,
+            'index': self._index,
+            'body': self._body,
         }

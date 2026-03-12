@@ -20,24 +20,24 @@ from ...dependencies import HTTPXClientDep
 
 
 class ProfilesServiceClient:
-    http_client: HttpClient
+    _http_client: HttpClient
 
     def __init__(self, *, httpx_client: httpx.AsyncClient, token: str) -> None:
-        self.http_client = TokenHttpClient(
+        self._http_client = TokenHttpClient(
             httpx_client=httpx_client,
             base_url=settings.profiles.api_v1_url,
             token=token,
         )
 
     async def get_film_rating(self, *, film_id: uuid.UUID) -> FilmRating:
-        response = await self.http_client.get(
+        response = await self._http_client.get(
             settings.profiles.get_film_rating_url(film_id=film_id),
         )
 
         return FilmRating.model_validate(response.json())
 
     async def get_film_reviews(self, *, film_id: uuid.UUID) -> FilmReviews:
-        response = await self.http_client.get(
+        response = await self._http_client.get(
             settings.profiles.get_film_reviews_url(film_id=film_id),
         )
 

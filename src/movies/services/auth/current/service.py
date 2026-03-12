@@ -19,22 +19,22 @@ class AbstractCurrentUserService(abc.ABC):
 
 
 class CurrentUserService(AbstractCurrentUserService):
-    current_user_client: CurrentUserClient
+    _current_user_client: CurrentUserClient
 
     def __init__(self, *, current_user_client: CurrentUserClient) -> None:
-        self.current_user_client = current_user_client
+        self._current_user_client = current_user_client
 
     async def get_user_profile(self) -> CurrentUser:
         return await GetUserProfileRequest(
-            current_user_client=self.current_user_client,
+            current_user_client=self._current_user_client,
         ).send_request()
 
 
 class CurrentUserServiceRequest[TResponse](abc.ABC):
-    current_user_client: CurrentUserClient
+    _current_user_client: CurrentUserClient
 
     def __init__(self, *, current_user_client: CurrentUserClient) -> None:
-        self.current_user_client = current_user_client
+        self._current_user_client = current_user_client
 
     async def send_request(self) -> TResponse:
         try:
@@ -56,7 +56,7 @@ class CurrentUserServiceRequest[TResponse](abc.ABC):
 
 class GetUserProfileRequest(CurrentUserServiceRequest[CurrentUser]):
     async def _send_request(self) -> CurrentUser:
-        return await self.current_user_client.get_user_profile()
+        return await self._current_user_client.get_user_profile()
 
 
 async def get_current_user_service(current_user_client: CurrentUserClientDep) -> AbstractCurrentUserService:

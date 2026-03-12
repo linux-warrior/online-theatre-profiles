@@ -7,18 +7,18 @@ import httpx
 
 
 class HttpClient:
-    httpx_client: httpx.AsyncClient
-    base_url: str | None
-    headers: dict
+    _httpx_client: httpx.AsyncClient
+    _base_url: str | None
+    _headers: dict
 
     def __init__(self,
                  *,
                  httpx_client: httpx.AsyncClient,
                  base_url: str | None = None,
                  headers: dict | None = None) -> None:
-        self.httpx_client = httpx_client
-        self.base_url = base_url
-        self.headers = headers or {}
+        self._httpx_client = httpx_client
+        self._base_url = base_url
+        self._headers = headers or {}
 
     async def get(self,
                   url: str,
@@ -59,7 +59,7 @@ class HttpClient:
         request_url = self.get_request_url(url)
         request_headers = self.get_request_headers(headers)
 
-        response = await self.httpx_client.request(
+        response = await self._httpx_client.request(
             method,
             request_url,
             data=data,
@@ -72,15 +72,15 @@ class HttpClient:
         return HttpResponse(response=response)
 
     def get_request_url(self, url: str) -> str:
-        if not self.base_url:
+        if not self._base_url:
             return url
 
-        return urljoin(self.base_url, url)
+        return urljoin(self._base_url, url)
 
     def get_request_headers(self, headers: dict | None = None) -> dict:
         return {
             **self.get_default_headers(),
-            **self.headers,
+            **self._headers,
             **(headers or {}),
         }
 
@@ -91,10 +91,10 @@ class HttpClient:
 
 
 class HttpResponse:
-    response: httpx.Response
+    _response: httpx.Response
 
     def __init__(self, *, response: httpx.Response) -> None:
-        self.response = response
+        self._response = response
 
     def json(self) -> Any:
-        return self.response.json()
+        return self._response.json()

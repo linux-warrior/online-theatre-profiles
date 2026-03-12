@@ -13,14 +13,14 @@ from ..models import Film
 
 
 class FilmService:
-    search_service: AbstractSearchService
+    _search_service: AbstractSearchService
 
     def __init__(self, *, search_service: AbstractSearchService) -> None:
-        self.search_service = search_service
+        self._search_service = search_service
 
     async def get_list_by_person(self, person_uuid: uuid.UUID) -> list[Film]:
-        search_query = self.search_service.create_query().films_by_person(person_id=person_uuid)
-        result = await self.search_service.search(query=search_query)
+        search_query = self._search_service.create_query().films_by_person(person_id=person_uuid)
+        result = await self._search_service.search(query=search_query)
 
         if result is None:
             return []
@@ -34,13 +34,13 @@ class FilmService:
             page_size: int,
             genre_uuid: uuid.UUID | None = None,
     ) -> list[Film]:
-        search_query = self.search_service.create_query().films_list(
+        search_query = self._search_service.create_query().films_list(
             sort=sort,
             page_number=page_number,
             page_size=page_size,
             genre_id=genre_uuid,
         )
-        result = await self.search_service.search(query=search_query)
+        result = await self._search_service.search(query=search_query)
 
         if result is None:
             return []
@@ -53,12 +53,12 @@ class FilmService:
             page_number: int,
             page_size: int,
     ) -> list[Film]:
-        search_query = self.search_service.create_query().search_films(
+        search_query = self._search_service.create_query().search_films(
             query=query,
             page_number=page_number,
             page_size=page_size,
         )
-        result = await self.search_service.search(query=search_query)
+        result = await self._search_service.search(query=search_query)
 
         if result is None:
             return []
@@ -69,8 +69,8 @@ class FilmService:
             self,
             id: uuid.UUID,
     ) -> Film | None:
-        get_query = self.search_service.create_query().get_film(film_id=id)
-        data = await self.search_service.get(query=get_query)
+        get_query = self._search_service.create_query().get_film(film_id=id)
+        data = await self._search_service.get(query=get_query)
 
         if not data:
             return None

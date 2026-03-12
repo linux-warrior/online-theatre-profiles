@@ -16,15 +16,15 @@ from .....db import ElasticsearchClientDep
 
 
 class ElasticsearchSearchBackend(AbstractSearchBackend):
-    elasticsearch_client: elasticsearch.AsyncElasticsearch
-    query_factory: ElasticsearchQueryFactory
+    _elasticsearch_client: elasticsearch.AsyncElasticsearch
+    _query_factory: ElasticsearchQueryFactory
 
     def __init__(self, *, elasticsearch_client: elasticsearch.AsyncElasticsearch) -> None:
-        self.elasticsearch_client = elasticsearch_client
-        self.query_factory = ElasticsearchQueryFactory(backend=self)
+        self._elasticsearch_client = elasticsearch_client
+        self._query_factory = ElasticsearchQueryFactory(backend=self)
 
     def create_query(self) -> ElasticsearchQueryFactory:
-        return self.query_factory
+        return self._query_factory
 
     @backoff.on_exception(backoff.expo, (
             elasticsearch.exceptions.ConnectionError,
@@ -32,7 +32,7 @@ class ElasticsearchSearchBackend(AbstractSearchBackend):
     ))
     async def get(self, query: CompiledElasticsearchGetQuery) -> dict | None:
         try:
-            response = await self.elasticsearch_client.get(index=query.index, id=query.id)
+            response = await self._elasticsearch_client.get(index=query.index, id=query.id)
         except elasticsearch.NotFoundError:
             return None
 
@@ -44,7 +44,7 @@ class ElasticsearchSearchBackend(AbstractSearchBackend):
     ))
     async def search(self, query: CompiledElasticsearchSearchQuery) -> list[dict] | None:
         try:
-            response = await self.elasticsearch_client.search(index=query.index, body=query.body)
+            response = await self._elasticsearch_client.search(index=query.index, body=query.body)
         except elasticsearch.NotFoundError:
             return None
 
