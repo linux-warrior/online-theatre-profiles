@@ -5,7 +5,6 @@ from collections.abc import Callable, Awaitable, AsyncGenerator
 import elasticsearch
 import pytest_asyncio
 
-
 from ..data.elasticsearch.schema import indices_data
 from ..settings import settings
 from ..utils.elasticsearch import ElasticsearchIndex

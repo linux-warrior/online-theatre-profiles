@@ -11,14 +11,14 @@ from pydantic_settings import (
 load_dotenv()
 
 
-class RedisSettings(BaseSettings):
+class RedisConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='redis_')
 
     host: str = 'localhost'
     port: int = 6379
 
 
-class ElasticsearchSettings(BaseSettings):
+class ElasticsearchConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='elastic_')
 
     scheme: str = 'http'
@@ -30,14 +30,18 @@ class ElasticsearchSettings(BaseSettings):
         return f'{self.scheme}://{self.host}:{self.port}'
 
 
-class AuthPostgresqlSettings(BaseSettings):
+class AuthPostgreSQLConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='auth_postgresql_')
 
     host: str | None = 'localhost'
     port: int | None = 5432
     database: str
-    username: str | None = None
-    password: str | None = None
+    username: str
+    password: str
+
+    @property
+    def engine_url(self) -> str:
+        return f'postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}'
 
 
 class AuthRedisConfig(BaseSettings):
@@ -47,7 +51,7 @@ class AuthRedisConfig(BaseSettings):
     port: int = 6379
 
 
-class SuperUserSettings(BaseSettings):
+class AuthSuperuserConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='auth_superuser_')
 
     login: str
@@ -63,11 +67,11 @@ class RateLimiterConfig(BaseSettings):
 
 # noinspection PyArgumentList
 class Settings(BaseSettings):
-    redis: RedisSettings = RedisSettings()
-    elasticsearch: ElasticsearchSettings = ElasticsearchSettings()
-    auth_postgresql: AuthPostgresqlSettings = AuthPostgresqlSettings()
+    redis: RedisConfig = RedisConfig()
+    elasticsearch: ElasticsearchConfig = ElasticsearchConfig()
+    auth_postgresql: AuthPostgreSQLConfig = AuthPostgreSQLConfig()
     auth_redis: AuthRedisConfig = AuthRedisConfig()
-    superuser: SuperUserSettings = SuperUserSettings()
+    auth_superuser: AuthSuperuserConfig = AuthSuperuserConfig()
     ratelimiter: RateLimiterConfig = RateLimiterConfig()
 
     movies_url: str = 'http://localhost:8000'
