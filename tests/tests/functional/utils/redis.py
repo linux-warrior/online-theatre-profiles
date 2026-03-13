@@ -4,10 +4,10 @@ import redis.asyncio as redis
 
 
 class RedisCache:
-    client: redis.Redis
+    _client: redis.Redis
 
     def __init__(self, *, client: redis.Redis) -> None:
-        self.client = client
+        self._client = client
 
     async def clear(self) -> None:
-        await self.client.flushall()
+        await self._client.flushall()

@@ -17,11 +17,11 @@ from ....utils.redis import RedisCache
 
 
 class BaseGenreByIdTestCase:
-    redis_cache: RedisCache
-    genres_index: ElasticsearchIndex[Genre]
-    aiohttp_session: aiohttp.ClientSession
-    headers: dict
-    genres_count: int
+    _redis_cache: RedisCache
+    _genres_index: ElasticsearchIndex[Genre]
+    _aiohttp_session: aiohttp.ClientSession
+    _headers: dict
+    _genres_count: int
 
     def __init__(self,
                  *,
@@ -31,11 +31,11 @@ class BaseGenreByIdTestCase:
                  headers: dict,
                  genres_count: int = 10
                  ) -> None:
-        self.genres_index = genres_index
-        self.aiohttp_session = aiohttp_session
-        self.redis_cache = redis_cache
-        self.headers = headers
-        self.genres_count = genres_count
+        self._genres_index = genres_index
+        self._aiohttp_session = aiohttp_session
+        self._redis_cache = redis_cache
+        self._headers = headers
+        self._genres_count = genres_count
 
     async def run(self) -> None:
         genres = list(self.create_genres())
@@ -47,19 +47,18 @@ class BaseGenreByIdTestCase:
         genre_result_data = await self.get_genre_result(genre_id=genre_id)
         self.validate_genre_result(genre=genre, genre_result_data=genre_result_data)
 
-        await self.genres_index.delete_index()
+        await self._genres_index.delete_index()
 
         genre_result_data = await self.get_genre_result(genre_id=genre_id)
         self.validate_genre_result(genre=genre, genre_result_data=genre_result_data)
 
-        await self.redis_cache.clear()
-
+        await self._redis_cache.clear()
 
         genre_result_data = await self.get_genre_result(genre_id=genre_id, expected_status=http.HTTPStatus.NOT_FOUND)
         assert genre_result_data is None
 
     def create_genres(self) -> Iterable[Genre]:
-        return self._generate_genres(count=self.genres_count)
+        return self._generate_genres(count=self._genres_count)
 
     def _generate_genres(self, *, count: int = 1) -> Iterable[Genre]:
         for i in range(1, count + 1):
@@ -69,7 +68,7 @@ class BaseGenreByIdTestCase:
         if not genres:
             return
 
-        await self.genres_index.load_documents(documents=genres)
+        await self._genres_index.load_documents(documents=genres)
 
     def get_genre(self, *, genres: list[Genre]) -> Genre | None:
         if not genres:
@@ -103,7 +102,7 @@ class BaseGenreByIdTestCase:
                                        expected_status: int = http.HTTPStatus.OK) -> Any:
         genre_by_id_api_url = urljoin(settings.movies_api_url, f'v1/genres/{genre_id}')
 
-        async with self.aiohttp_session.get(genre_by_id_api_url, headers=self.headers) as response:
+        async with self._aiohttp_session.get(genre_by_id_api_url, headers=self._headers) as response:
             assert response.status == expected_status
             response_data = await response.json()
 

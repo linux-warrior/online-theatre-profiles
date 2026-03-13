@@ -9,9 +9,9 @@ from .models import Document
 
 
 class ElasticsearchIndex[TDocument: Document]:
-    client: elasticsearch.AsyncElasticsearch
-    index_name: str
-    index_data: dict
+    _client: elasticsearch.AsyncElasticsearch
+    _index_name: str
+    _index_data: dict
 
     _index_created: bool
 
@@ -20,9 +20,9 @@ class ElasticsearchIndex[TDocument: Document]:
                  client: elasticsearch.AsyncElasticsearch,
                  index_name: str,
                  index_data: dict) -> None:
-        self.client = client
-        self.index_name = index_name
-        self.index_data = index_data
+        self._client = client
+        self._index_name = index_name
+        self._index_data = index_data
 
         self._index_created = False
 
@@ -33,7 +33,7 @@ class ElasticsearchIndex[TDocument: Document]:
         await self.delete_index()
 
         try:
-            await self.client.indices.create(index=self.index_name, body=self.index_data)
+            await self._client.indices.create(index=self._index_name, body=self._index_data)
         except elasticsearch.BadRequestError as e:
             if e.error == 'resource_already_exists_exception':
                 pass
@@ -42,7 +42,7 @@ class ElasticsearchIndex[TDocument: Document]:
 
     async def delete_index(self) -> None:
         try:
-            await self.client.indices.delete(index=self.index_name)
+            await self._client.indices.delete(index=self._index_name)
         except elasticsearch.NotFoundError as e:
             if e.error == 'index_not_found_exception':
                 pass
@@ -54,8 +54,8 @@ class ElasticsearchIndex[TDocument: Document]:
 
     async def load_data(self, *, documents: Iterable[dict]) -> None:
         await self.create_index()
-        await elasticsearch.helpers.async_bulk(self.client, ({
-            '_index': self.index_name,
+        await elasticsearch.helpers.async_bulk(self._client, ({
+            '_index': self._index_name,
             '_id': document_data['id'],
             '_source': document_data,
         } for document_data in documents), refresh='wait_for')
