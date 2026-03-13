@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 
 import aiohttp
 import pytest_asyncio
+import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
@@ -92,3 +93,19 @@ async def auth_headers(aiohttp_session: aiohttp.ClientSession) -> dict:
         'Authorization': f'{token_type.title()} {token_jwt}',
         'X-Request-Id': str(uuid.uuid4()),
     }
+
+
+@pytest_asyncio.fixture(scope='session')
+async def _auth_redis_client() -> AsyncGenerator[redis.Redis]:
+    async with (
+        redis.Redis(
+            host=settings.auth_redis.host,
+            port=settings.auth_redis.port,
+        ) as auth_redis_client,
+    ):
+        yield auth_redis_client
+
+
+@pytest_asyncio.fixture(scope='function', autouse=True)
+async def _auth_reset_rate_limit(_auth_redis_client: redis.Redis) -> None:
+    await _auth_redis_client.flushdb()
