@@ -9,7 +9,7 @@ from ...settings import settings
 
 
 @pytest.mark.asyncio(loop_scope='session')
-async def test_register(aiohttp_session, clean_all_tables_before) -> None:
+async def test_register(aiohttp_session, auth_clean_all_tables_before) -> None:
     register_data = {
         'login': 'test_user',
         'password': 'password',
@@ -142,7 +142,7 @@ async def test_get_current_user(aiohttp_session) -> None:
 
 
 @pytest.mark.asyncio(loop_scope='session')
-async def test_patch_current_user(aiohttp_session, clean_all_tables_after) -> None:
+async def test_patch_current_user(aiohttp_session, auth_clean_all_tables_after) -> None:
     login_data = {
         'grant_type': 'password',
         'username': 'test_user',

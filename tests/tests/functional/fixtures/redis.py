@@ -5,7 +5,6 @@ from collections.abc import Callable, Awaitable, AsyncGenerator
 import pytest_asyncio
 import redis.asyncio as redis
 
-
 from ..settings import settings
 from ..utils.redis import RedisCache
 

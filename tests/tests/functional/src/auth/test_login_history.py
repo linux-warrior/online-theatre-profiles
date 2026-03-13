@@ -25,7 +25,7 @@ from ...settings import settings
 @pytest.mark.asyncio(loop_scope='session')
 async def test_get_login_history(
         aiohttp_session,
-        clean_all_tables_before,
+        auth_clean_all_tables_before,
         input_data,
         expected_data,
 ):

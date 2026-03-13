@@ -24,11 +24,11 @@ from ....utils.redis import RedisCache
 
 
 class BasePersonFilmsTestCase:
-    redis_cache: RedisCache
-    films_index: ElasticsearchIndex[Film]
-    aiohttp_session: aiohttp.ClientSession
-    headers: dict
-    films_count: int
+    _redis_cache: RedisCache
+    _films_index: ElasticsearchIndex[Film]
+    _aiohttp_session: aiohttp.ClientSession
+    _headers: dict
+    _films_count: int
 
     def __init__(self,
                  *,
@@ -37,21 +37,21 @@ class BasePersonFilmsTestCase:
                  aiohttp_session: aiohttp.ClientSession,
                  headers: dict,
                  films_count: int = 3) -> None:
-        self.films_index = films_index
-        self.aiohttp_session = aiohttp_session
-        self.headers = headers
-        self.redis_cache = redis_cache
-        self.films_count = films_count
+        self._films_index = films_index
+        self._aiohttp_session = aiohttp_session
+        self._headers = headers
+        self._redis_cache = redis_cache
+        self._films_count = films_count
 
     async def run(self) -> None:
         films = list(self.create_films())
         await self.save_films_to_elasticsearch(films=films)
         await self._run_tests(films=films)
 
-        await self.films_index.delete_index()
+        await self._films_index.delete_index()
         await self._run_tests(films=films)
 
-        await self.redis_cache.clear()
+        await self._redis_cache.clear()
         await self._run_tests(films=films, empty_results=True)
 
     async def _run_tests(self, *, films: Iterable[Film], empty_results: bool = False) -> None:
@@ -74,7 +74,7 @@ class BasePersonFilmsTestCase:
         )
 
     def create_films(self) -> Iterable[Film]:
-        return self._generate_films(count=self.films_count)
+        return self._generate_films(count=self._films_count)
 
     def _generate_films(self, *, count: int = 1) -> Iterable[Film]:
         ratings = [8.0, 9.0, 10.0]
@@ -100,7 +100,7 @@ class BasePersonFilmsTestCase:
         if not films:
             return
 
-        await self.films_index.load_documents(documents=films)
+        await self._films_index.load_documents(documents=films)
 
     def get_film_person(self, *, films: Iterable[Film], role: str) -> FilmPerson | None:
         for film in films:
@@ -135,7 +135,7 @@ class BasePersonFilmsTestCase:
                                               expected_status: int = http.HTTPStatus.OK) -> Any:
         person_films_api_url = urljoin(settings.movies_api_url, f'v1/persons/{person_id}/film/')
 
-        async with self.aiohttp_session.get(person_films_api_url, headers=self.headers) as response:
+        async with self._aiohttp_session.get(person_films_api_url, headers=self._headers) as response:
             assert response.status == expected_status
             response_data = await response.json()
 

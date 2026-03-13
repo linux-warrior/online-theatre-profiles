@@ -20,11 +20,11 @@ from ....utils.redis import RedisCache
 
 
 class BasePersonByIdTestCase:
-    redis_cache: RedisCache
-    persons_index: ElasticsearchIndex[Person]
-    aiohttp_session: aiohttp.ClientSession
-    headers: dict
-    persons_count: int
+    _redis_cache: RedisCache
+    _persons_index: ElasticsearchIndex[Person]
+    _aiohttp_session: aiohttp.ClientSession
+    _headers: dict
+    _persons_count: int
 
     def __init__(self,
                  *,
@@ -33,11 +33,11 @@ class BasePersonByIdTestCase:
                  aiohttp_session: aiohttp.ClientSession,
                  headers: dict,
                  persons_count: int = 3) -> None:
-        self.persons_index = persons_index
-        self.aiohttp_session = aiohttp_session
-        self.headers = headers
-        self.redis_cache = redis_cache
-        self.persons_count = persons_count
+        self._persons_index = persons_index
+        self._aiohttp_session = aiohttp_session
+        self._headers = headers
+        self._redis_cache = redis_cache
+        self._persons_count = persons_count
 
     async def run(self) -> None:
         persons = list(self.create_persons())
@@ -49,12 +49,12 @@ class BasePersonByIdTestCase:
         person_result_data = await self.get_person_result(person_id=person_id)
         self.validate_person_result(person=person, person_result_data=person_result_data)
 
-        await self.persons_index.delete_index()
+        await self._persons_index.delete_index()
 
         person_result_data = await self.get_person_result(person_id=person_id)
         self.validate_person_result(person=person, person_result_data=person_result_data)
 
-        await self.redis_cache.clear()
+        await self._redis_cache.clear()
 
         person_result_data = await self.get_person_result(
             person_id=person_id,
@@ -63,7 +63,7 @@ class BasePersonByIdTestCase:
         assert person_result_data is None
 
     def create_persons(self) -> Iterable[Person]:
-        return self._generate_persons(count=self.persons_count)
+        return self._generate_persons(count=self._persons_count)
 
     def _generate_persons(self, *, count: int = 1) -> Iterable[Person]:
         available_roles = ['director', 'actor', 'writer']
@@ -82,7 +82,7 @@ class BasePersonByIdTestCase:
         if not persons:
             return
 
-        await self.persons_index.load_documents(documents=persons)
+        await self._persons_index.load_documents(documents=persons)
 
     def get_person(self, *, persons: list[Person]) -> Person | None:
         if not persons:
@@ -119,9 +119,9 @@ class BasePersonByIdTestCase:
                                         expected_status: int = http.HTTPStatus.OK) -> Any:
         person_by_id_api_url = urljoin(settings.movies_api_url, f'v1/persons/{person_id}')
 
-        async with self.aiohttp_session.get(
+        async with self._aiohttp_session.get(
                 person_by_id_api_url,
-                headers=self.headers,
+                headers=self._headers,
         ) as response:
             assert response.status == expected_status
             response_data = await response.json()
