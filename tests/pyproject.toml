@@ -9,7 +9,7 @@ asyncpg = "^0.31.0"
 elasticsearch = { version = "^9.3.0", extras = ["async"] }
 pydantic = "^2.12.5"
 pydantic-settings = "^2.13.0"
-pytest = "^9.0.2"
+pytest = "^9.0.3"
 pytest-asyncio = "^1.3.0"
 redis = { version = "^7.2.0", extras = ["hiredis"] }
 SQLAlchemy = { version = "^2.0.46", extras = ["asyncio"] }
