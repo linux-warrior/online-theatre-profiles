@@ -18,7 +18,7 @@ opentelemetry-propagator-jaeger = "^1.39.1"
 opentelemetry-sdk = "^1.39.1"
 pwdlib = { version = "^0.3.0", extras = ["argon2", "bcrypt"] }
 pydantic = { version = "^2.12.5", extras = ["email"] }
-pydantic-settings = "^2.13.0"
+pydantic-settings = "^2.14.2"
 PyJWT = { version = "^2.13.0", extras = ["crypto"] }
 redis = { version = "^7.2.0", extras = ["hiredis"] }
 SQLAlchemy = { version = "^2.0.46", extras = ["asyncio"] }
