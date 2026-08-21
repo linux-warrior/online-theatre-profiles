@@ -16,7 +16,7 @@ opentelemetry-instrumentation-fastapi = "^0.60b1"
 opentelemetry-propagator-jaeger = "^1.39.1"
 opentelemetry-sdk = "^1.39.1"
 pydantic = { version = "^2.12.5", extras = ["email"] }
-pydantic-settings = "^2.13.0"
+pydantic-settings = "^2.14.2"
 SQLAlchemy = { version = "^2.0.46", extras = ["asyncio"] }
 uvicorn-worker = "^0.4.0"
 
