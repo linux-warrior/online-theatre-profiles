@@ -13,7 +13,7 @@ opentelemetry-api = "^1.39.1"
 opentelemetry-exporter-otlp-proto-http = "^1.39.1"
 opentelemetry-instrumentation = "^0.60b1"
 opentelemetry-instrumentation-fastapi = "^0.60b1"
-opentelemetry-propagator-jaeger = "^1.39.1"
+opentelemetry-propagator-jaeger = "^1.45.0"
 opentelemetry-sdk = "^1.39.1"
 pydantic = { version = "^2.12.5", extras = ["email"] }
 pydantic-settings = "^2.14.2"
